@@ -28,12 +28,66 @@
     .btn-complete { background:#27ae60; }
     .highlight { border:2px solid #fff; box-shadow:0 0 8px rgba(255,255,255,0.6); }
     @keyframes fadeIn { from {opacity:0;transform:scale(0.95);} to {opacity:1;transform:scale(1);} }
+    
+    /* Login form styles */
+    #login-form {
+      background: #fff;
+      padding: 15px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-width: 400px;
+      margin-bottom: 20px;
+    }
+    #login-form input {
+      width: calc(100% - 24px);
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #login-form button {
+      background: #2980b9;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+    }
+    #login-error {
+      color: red;
+      font-size: 0.9rem;
+      margin-top: 8px;
+      display: none;
+    }
+    #logout-btn {
+      background: #c0392b;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+      display: none;
+    }
   </style>
 </head>
 <body>
 
   <button class="close-btn" onclick="window.history.back()">Back</button>
   <h2>User Task Details</h2>
+
+  <div id="login-form">
+    <input type="email" id="email" placeholder="Email" autocomplete="username" />
+    <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
+    <button id="login-btn">Login</button>
+    <div id="login-error"></div>
+    <button id="logout-btn">Logout</button>
+  </div>
+
   <p class="user-info" id="userInfo">Loading user...</p>
 
   <table class="task-table" aria-label="User tasks">
@@ -49,233 +103,260 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
-  // Initialize Firebase app
-  firebase.initializeApp({
-    apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-    authDomain: "task-manager-602da.firebaseapp.com",
-    projectId: "task-manager-602da"
-  });
-
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-
-  const taskBody = document.getElementById("task-body");
-  const userInfo = document.getElementById("userInfo");
-
-  // Set persistence to LOCAL to keep user logged in across sessions
-  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-    .catch(err => {
-      console.error("Failed to set persistence:", err);
+    // Initialize Firebase app
+    firebase.initializeApp({
+      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+      authDomain: "task-manager-602da.firebaseapp.com",
+      projectId: "task-manager-602da"
     });
 
-  // Mapping of task statuses to labels and styles
-  const statusLabels = {
-    "not-started": {label:"Not Started", class:"not-started"},
-    "in-progress": {label:"In Progress", class:"in-progress"},
-    "pending": {label:"Pending", class:"pending"},
-    "complete": {label:"Completed", class:"complete"}
-  };
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-  // Format milliseconds as hh:mm:ss string
-  function formatMs(ms) {
-    const s = Math.floor(ms/1000),
-          h = Math.floor(s/3600),
-          m = Math.floor((s%3600)/60),
-          sec = s % 60;
-    return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
-  }
+    const taskBody = document.getElementById("task-body");
+    const userInfo = document.getElementById("userInfo");
+    const loginForm = document.getElementById("login-form");
+    const loginBtn = document.getElementById("login-btn");
+    const logoutBtn = document.getElementById("logout-btn");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginError = document.getElementById("login-error");
 
-  // Calculate total work and pause durations from work sessions
-  function calcTimeDetails(sessions=[]) {
-    let totalWork=0, totalPause=0, pauseCount=0, lastEnd=null;
-    sessions.forEach(sess => {
-      const a = sess.start?.toDate().getTime();
-      const b = sess.end?.toDate().getTime();
-      if (a && b) {
-        totalWork += b - a;
-        if (lastEnd !== null && a > lastEnd) {
-          totalPause += a - lastEnd;
-          pauseCount++;
-        }
-        lastEnd = b;
-      }
-    });
-    return {
-      totalWorkMs: totalWork,
-      totalPauseMs: totalPause,
-      pauseCount,
-      startTime: sessions[0]?.start?.toDate().toLocaleString() || '—',
-      endTime: sessions.at(-1)?.end?.toDate().toLocaleString() || '—'
+    // Set persistence to LOCAL to keep user logged in across sessions
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+      .catch(err => {
+        console.error("Failed to set persistence:", err);
+      });
+
+    // Status labels and styles
+    const statusLabels = {
+      "not-started": {label:"Not Started", class:"not-started"},
+      "in-progress": {label:"In Progress", class:"in-progress"},
+      "pending": {label:"Pending", class:"pending"},
+      "complete": {label:"Completed", class:"complete"}
     };
-  }
 
-  // Return buttons HTML based on task status key
-  function getButtonsHTML(sk) {
-    return {
-      "not-started": `<button class="btn-start highlight" type="button">Start</button>`,
-      "in-progress": `<button class="btn-pending" type="button">Pause</button><button class="btn-complete highlight" type="button">Complete</button>`,
-      "pending": `<button class="btn-continue highlight" type="button">Resume</button>`
-    }[sk] || `<em>No actions</em>`;
-  }
-
-  // Toggle visibility of combo box action row
-  function toggleComboBox(idx) {
-    document.querySelectorAll(".combo-box").forEach((row, i) => {
-      row.style.display = (i === idx && row.style.display !== "table-row") ? "table-row" : "none";
-    });
-  }
-
-  // Render task rows and action combos
-  function renderTasks(tasks) {
-    taskBody.innerHTML = "";
-    if (tasks.length === 0) {
-      taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tasks found.</td></tr>`;
-      return;
+    function formatMs(ms) {
+      const s = Math.floor(ms/1000),
+            h = Math.floor(s/3600),
+            m = Math.floor((s%3600)/60),
+            sec = s % 60;
+      return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
     }
 
-    tasks.forEach((t, idx) => {
-      const sk = (t.Status || "").toLowerCase().replace(/\s+/g,"-");
-      const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(t.workSessions);
+    function calcTimeDetails(sessions=[]) {
+      let totalWork=0, totalPause=0, pauseCount=0, lastEnd=null;
+      sessions.forEach(sess => {
+        const a = sess.start?.toDate().getTime();
+        const b = sess.end?.toDate().getTime();
+        if (a && b) {
+          totalWork += b - a;
+          if (lastEnd !== null && a > lastEnd) {
+            totalPause += a - lastEnd;
+            pauseCount++;
+          }
+          lastEnd = b;
+        }
+      });
+      return {
+        totalWorkMs: totalWork,
+        totalPauseMs: totalPause,
+        pauseCount,
+        startTime: sessions[0]?.start?.toDate().toLocaleString() || '—',
+        endTime: sessions.at(-1)?.end?.toDate().toLocaleString() || '—'
+      };
+    }
 
-      // Main row with task summary
-      const tr = document.createElement("tr");
-      tr.onclick = () => toggleComboBox(idx);
-      tr.innerHTML = `
-        <td>${t.SINO || "-"}</td>
-        <td>${t["Existing Company Name"] || "-"}</td>
-        <td>${t["TYPE OF WORK"] || "-"}</td>
-        <td>${t["Due date"] || "-"}</td>
-        <td class="status ${statusLabels[sk]?.class || ''}">${statusLabels[sk]?.label || t.Status || "-"}</td>
-        <td>${formatMs(totalWorkMs)}</td>
-      `;
-      taskBody.appendChild(tr);
+    function getButtonsHTML(sk) {
+      return {
+        "not-started": `<button class="btn-start highlight" type="button">Start</button>`,
+        "in-progress": `<button class="btn-pending" type="button">Pause</button><button class="btn-complete highlight" type="button">Complete</button>`,
+        "pending": `<button class="btn-continue highlight" type="button">Resume</button>`
+      }[sk] || `<em>No actions</em>`;
+    }
 
-      // Combo box row with detailed info and action buttons
-      const cr = document.createElement("tr");
-      cr.className = "combo-box";
-      cr.style.display = "none";
-      cr.innerHTML = `<td colspan="6">
-        <div><strong>Started:</strong> ${startTime}</div>
-        <div><strong>Ended:</strong> ${endTime}</div>
-        <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
-        <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
-        <div><strong>Remarks:</strong> ${pauseCount > 1 ? '-' : (t.Remarks || '')}</div>
-        <hr style="margin:8px 0;">${getButtonsHTML(sk)}
-      </td>`;
-      taskBody.appendChild(cr);
-    });
+    function toggleComboBox(idx) {
+      document.querySelectorAll(".combo-box").forEach((row, i) => {
+        row.style.display = (i === idx && row.style.display !== "table-row") ? "table-row" : "none";
+      });
+    }
 
-    attachActions(tasks);
-  }
+    function renderTasks(tasks) {
+      taskBody.innerHTML = "";
+      if (tasks.length === 0) {
+        taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tasks found.</td></tr>`;
+        return;
+      }
 
-  // Attach click handlers for buttons in combo boxes
-  function attachActions(tasks) {
-    document.querySelectorAll(".combo-box").forEach((comboRow, idx) => {
-      comboRow.querySelectorAll("button").forEach(btn => {
-        btn.onclick = async e => {
-          e.stopPropagation();
-          const t = tasks[idx];
-          const ref = db.collection("tasks").doc(t.id);
-          const ts = firebase.firestore.Timestamp.now();
-          const sess = t.workSessions || [];
+      tasks.forEach((t, idx) => {
+        const sk = (t.Status || "").toLowerCase().replace(/\s+/g,"-");
+        const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(t.workSessions);
 
-          try {
-            if (btn.classList.contains("btn-start")) {
-              if (sess.some(s => !s.end)) return alert("Task is already running");
-              sess.push({start: ts, end: null});
-              await ref.update({Status: "In Progress", workSessions: sess});
-            } else if (btn.classList.contains("btn-pending")) {
-              const i = sess.findIndex(s => !s.end);
-              if (i < 0) return alert("Task is not running");
-              sess[i].end = ts;
-              await ref.update({Status: "Pending", workSessions: sess});
-            } else if (btn.classList.contains("btn-continue")) {
-              if (sess.some(s => !s.end)) return alert("Task is already running");
-              sess.push({start: ts, end: null});
-              await ref.update({Status: "In Progress", workSessions: sess});
-            } else if (btn.classList.contains("btn-complete")) {
-              const i = sess.findIndex(s => !s.end);
-              if (i > -1) sess[i].end = ts;
+        const tr = document.createElement("tr");
+        tr.onclick = () => toggleComboBox(idx);
+        tr.innerHTML = `
+          <td>${t.SINO || "-"}</td>
+          <td>${t["Existing Company Name"] || "-"}</td>
+          <td>${t["TYPE OF WORK"] || "-"}</td>
+          <td>${t["Due date"] || "-"}</td>
+          <td class="status ${statusLabels[sk]?.class || ''}">${statusLabels[sk]?.label || t.Status || "-"}</td>
+          <td>${formatMs(totalWorkMs)}</td>
+        `;
+        taskBody.appendChild(tr);
 
-              let totalW = 0, totalP = 0, lastEnd = null;
-              sess.forEach(s => {
-                const a = s.start.toDate().getTime(), b = s.end.toDate().getTime();
-                totalW += (b - a);
-                if (lastEnd && a > lastEnd) totalP += a - lastEnd;
-                lastEnd = b;
-              });
+        const cr = document.createElement("tr");
+        cr.className = "combo-box";
+        cr.style.display = "none";
+        cr.innerHTML = `<td colspan="6">
+          <div><strong>Started:</strong> ${startTime}</div>
+          <div><strong>Ended:</strong> ${endTime}</div>
+          <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
+          <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
+          <div><strong>Remarks:</strong> ${pauseCount > 1 ? '-' : (t.Remarks || '')}</div>
+          <hr style="margin:8px 0;">${getButtonsHTML(sk)}
+        </td>`;
+        taskBody.appendChild(cr);
+      });
 
-              const st = sess[0].start, et = sess.at(-1).end;
+      attachActions(tasks);
+    }
 
-              function formatHours(ms) {
-                const h = Math.floor(ms / 3600000);
-                const m = Math.floor((ms % 3600000) / 60000);
-                return `${h}h ${m}m`;
+    function attachActions(tasks) {
+      document.querySelectorAll(".combo-box").forEach((comboRow, idx) => {
+        comboRow.querySelectorAll("button").forEach(btn => {
+          btn.onclick = async e => {
+            e.stopPropagation();
+            const t = tasks[idx];
+            const ref = db.collection("tasks").doc(t.id);
+            const ts = firebase.firestore.Timestamp.now();
+            const sess = t.workSessions || [];
+
+            try {
+              if (btn.classList.contains("btn-start")) {
+                if (sess.some(s => !s.end)) return alert("Task is already running");
+                sess.push({start: ts, end: null});
+                await ref.update({Status: "In Progress", workSessions: sess});
+              } else if (btn.classList.contains("btn-pending")) {
+                const i = sess.findIndex(s => !s.end);
+                if (i < 0) return alert("Task is not running");
+                sess[i].end = ts;
+                await ref.update({Status: "Pending", workSessions: sess});
+              } else if (btn.classList.contains("btn-continue")) {
+                if (sess.some(s => !s.end)) return alert("Task is already running");
+                sess.push({start: ts, end: null});
+                await ref.update({Status: "In Progress", workSessions: sess});
+              } else if (btn.classList.contains("btn-complete")) {
+                const i = sess.findIndex(s => !s.end);
+                if (i > -1) sess[i].end = ts;
+
+                let totalW = 0, totalP = 0, lastEnd = null;
+                sess.forEach(s => {
+                  const a = s.start.toDate().getTime(), b = s.end.toDate().getTime();
+                  totalW += (b - a);
+                  if (lastEnd && a > lastEnd) totalP += a - lastEnd;
+                  lastEnd = b;
+                });
+
+                const st = sess[0].start, et = sess.at(-1).end;
+
+                function formatHours(ms) {
+                  const h = Math.floor(ms / 3600000);
+                  const m = Math.floor((ms % 3600000) / 60000);
+                  return `${h}h ${m}m`;
+                }
+
+                await ref.update({
+                  Status: "Complete",
+                  taskStart: st,
+                  taskEnd: et,
+                  workSessions: sess,
+                  TimeStarted: st.toDate().toLocaleString(),
+                  TimeEnd: et.toDate().toLocaleString(),
+                  TotalWorkHours: formatHours(totalW),
+                  TotalPauseHours: formatHours(totalP),
+                  Remarks: totalP > 0 ? "-" : (t.Remarks || "")
+                });
               }
 
-              await ref.update({
-                Status: "Complete",
-                taskStart: st,
-                taskEnd: et,
-                workSessions: sess,
-                TimeStarted: st.toDate().toLocaleString(),
-                TimeEnd: et.toDate().toLocaleString(),
-                TotalWorkHours: formatHours(totalW),
-                TotalPauseHours: formatHours(totalP),
-                Remarks: totalP > 0 ? "-" : (t.Remarks || "")
-              });
+              await loadUserTasks();
+
+            } catch (err) {
+              console.error(err);
+              alert("Failed to update task. Please try again.");
             }
-
-            // Reload updated tasks list after update
-            await loadUserTasks();
-
-          } catch (err) {
-            console.error(err);
-            alert("Failed to update task. Please try again.");
-          }
-        };
+          };
+        });
       });
+    }
+
+    async function loadUserTasks() {
+      const user = auth.currentUser;
+      if (!user) return;
+      const nameOrEmail = user.displayName || user.email || user.uid;
+      userInfo.textContent = `Logged in as: ${nameOrEmail}`;
+
+      // Hide login form and show logout button
+      loginForm.style.display = 'none';
+      logoutBtn.style.display = 'inline-block';
+
+      try {
+        const allowedStatuses = ["Not Started", "In Progress", "Pending"];
+        const tasksRef = db.collection("tasks");
+        const querySnapshot = await tasksRef
+          .where("Task", "==", nameOrEmail)
+          .where("Status", "in", allowedStatuses)
+          .get();
+
+        const tasks = [];
+        querySnapshot.forEach(doc => {
+          const data = doc.data();
+          data.id = doc.id;
+          tasks.push(data);
+        });
+
+        renderTasks(tasks);
+      } catch (err) {
+        console.error(err);
+        taskBody.innerHTML = `<tr><td colspan="6" style="color:red;">Failed to load tasks</td></tr>`;
+      }
+    }
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        loginError.style.display = "none";
+        loadUserTasks();
+      } else {
+        userInfo.textContent = "Not logged in. Please log in to see your tasks.";
+        taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No user logged in.</td></tr>`;
+        loginForm.style.display = 'block';
+        logoutBtn.style.display = 'none';
+      }
     });
-  }
 
-  // Load current user's active tasks (Not Started, In Progress, Pending)
-  async function loadUserTasks() {
-    const user = auth.currentUser;
-    if (!user) return;
-    const nameOrEmail = user.displayName || user.email;
-    userInfo.textContent = `Logged in as: ${nameOrEmail}`;
+    loginBtn.onclick = async () => {
+      loginError.style.display = "none";
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      if (!email || !password) {
+        loginError.textContent = "Please enter email and password.";
+        loginError.style.display = "block";
+        return;
+      }
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+      } catch (err) {
+        loginError.textContent = "Login failed: " + err.message;
+        loginError.style.display = "block";
+      }
+    };
 
-    try {
-      const allowedStatuses = ["Not Started", "In Progress", "Pending"];
-      const tasksRef = db.collection("tasks");
-      const querySnapshot = await tasksRef
-        .where("Task", "==", nameOrEmail)
-        .where("Status", "in", allowedStatuses)
-        .get();
-
-      const tasks = [];
-      querySnapshot.forEach(doc => {
-        const data = doc.data();
-        data.id = doc.id;
-        tasks.push(data);
-      });
-
-      renderTasks(tasks);
-    } catch (err) {
-      console.error(err);
-      taskBody.innerHTML = `<tr><td colspan="6" style="color:red;">Failed to load tasks</td></tr>`;
-    }
-  }
-
-  // Listen for auth state changes (don't redirect on logout)
-  auth.onAuthStateChanged(async user => {
-    if (user) {
-      await loadUserTasks();
-    } else {
-      userInfo.textContent = "Not logged in. Please log in to see your tasks.";
-      taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No user logged in.</td></tr>`;
-    }
-  });
+    logoutBtn.onclick = async () => {
+      try {
+        await auth.signOut();
+      } catch (err) {
+        alert("Logout failed: " + err.message);
+      }
+    };
   </script>
 
 </body>
