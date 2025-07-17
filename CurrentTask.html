@@ -270,14 +270,15 @@
   // Flag to check if auth state initialized
   let authInitialized = false;
 
-  // Listen for auth state changes, redirect if not logged in
-  auth.onAuthStateChanged(async user => {
-    authInitialized = true;
-    if (user) {
-      await loadUserTasks();
-    } else {
-      // Redirect immediately if no user detected
-      window.location.href = "index.html";
-    }
-  });
+  // Listen for auth state changes, but do NOT redirect on logout
+auth.onAuthStateChanged(async user => {
+  authInitialized = true;
+  if (user) {
+    await loadUserTasks();
+  } else {
+    userInfo.textContent = "Not logged in. Please log in to see your tasks.";
+    taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No user logged in.</td></tr>`;
+  }
+});
+
 </script>
