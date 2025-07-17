@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User - Current Tasks</title>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #ecf0f1; padding: 20px; }
+    .close-btn { background: #e74c3c; color: white; border: none; padding: 8px 14px; font-weight: bold; border-radius: 3px; cursor: pointer; float: right; }
+    h2 { margin-top: 0; }
+    .task-table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden; }
+    .task-table th, .task-table td { padding: 12px; text-align: left; }
+    .task-table th { background: #34495e; color: white; }
+    .task-table tr { background: #fdfdfd; }
+    .status { font-weight: bold; color: white; border-radius: 4px; padding: 6px 10px; display: inline-block; }
+    .not-started { background: #95a5a6; }
+    .in-progress { background: #3498db; }
+    .pending { background: #f1c40f; color: black; }
+  </style>
+</head>
+<body>
+
+  <button class="close-btn" onclick="window.history.back()">Back</button>
+  <h2>Your Current Tasks</h2>
+
+  <table class="task-table">
+    <thead>
+      <tr>
+        <th>SINO</th>
+        <th>Company</th>
+        <th>Task</th>
+        <th>Due Date</th>
+        <th>Status</th>
+        <th>Work Hours</th>
+      </tr>
+    </thead>
+    <tbody id="task-body">
+      <tr><td colspan="6" style="text-align:center;">Loading tasks...</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+    // Initialize Firebase
+    firebase.initializeApp({
+      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+      authDomain: "task-manager-602da.firebaseapp.com",
+      projectId: "task-manager-602da",
+      storageBucket: "task-manager-602da.appspot.com",
+      messagingSenderId: "438978699329",
+      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+    });
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    const taskBody = document.getElementById("task-body");
+
+    function formatMs(ms) {
+      const s = Math.floor(ms / 1000);
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const sec = s % 60;
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+    }
+
+    function calcWorkHours(sessions = []) {
+      let totalMs = 0;
+      sessions.forEach(sess => {
+        const startMs = sess.start?.toDate().getTime();
+        const endMs = sess.end?.toDate().getTime();
+        if (startMs && endMs) {
+          totalMs += (endMs - startMs);
+        }
+      });
+      return totalMs;
+    }
+
+    function statusClass(status) {
+      return {
+        "Not Started": "not-started",
+        "In Progress": "in-progress",
+        "Pending": "pending"
+      }[status] || "";
+    }
+
+    async function loadUserTasks(userEmail) {
+      try {
+        const snapshot = await db.collection("tasks")
+          .where("Status", "in", ["Not Started", "In Progress", "Pending"])
+          .where("AssignedTo", "==", userEmail)
+          .get();
+
+        if (snapshot.empty) {
+          taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No current tasks found.</td></tr>`;
+          return;
+        }
+
+        taskBody.innerHTML = "";
+        snapshot.forEach(doc => {
+          const task = doc.data();
+          const workMs = calcWorkHours(task.workSessions || []);
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${task.SINO || "-"}</td>
+            <td>${task["Existing Company Name"] || "-"}</td>
+            <td>${task["TYPE OF WORK"] || "-"}</td>
+            <td>${task["Due date"] || "-"}</td>
+            <td><span class="status ${statusClass(task.Status)}">${task.Status}</span></td>
+            <td>${formatMs(workMs)}</td>
+          `;
+          taskBody.appendChild(tr);
+        });
+      } catch (error) {
+        console.error("Error loading tasks:", error);
+        taskBody.innerHTML = `<tr><td colspan="6" style="color:red; text-align:center;">Failed to load tasks.</td></tr>`;
+      }
+    }
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        loadUserTasks(user.email);
+      } else {
+        taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">You must be logged in to see tasks.</td></tr>`;
+      }
+    });
+  </script>
+</body>
+</html>
