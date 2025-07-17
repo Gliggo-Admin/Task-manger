@@ -48,6 +48,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
+    // Initialize Firebase app
     firebase.initializeApp({
       apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
       authDomain: "task-manager-602da.firebaseapp.com",
@@ -56,17 +57,19 @@
 
     const auth = firebase.auth();
     const db = firebase.firestore();
+
     const taskBody = document.getElementById("task-body");
     const userInfo = document.getElementById("userInfo");
 
+    // Status labels and their CSS classes for styling
     const statusLabels = {
       "not-started": {label:"Not Started", class:"not-started"},
       "in-progress": {label:"In Progress", class:"in-progress"},
       "pending": {label:"Pending", class:"pending"},
       "complete": {label:"Completed", class:"complete"}
     };
-    const now = () => firebase.firestore.Timestamp.now();
 
+    // Helper function to format milliseconds to hh:mm:ss
     function formatMs(ms) {
       const s = Math.floor(ms/1000),
             h = Math.floor(s/3600),
@@ -75,6 +78,7 @@
       return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
     }
 
+    // Calculate total work and pause durations from workSessions array
     function calcTimeDetails(sessions=[]) {
       let totalWork=0, totalPause=0, pauseCount=0, lastEnd=null;
       sessions.forEach(sess => {
@@ -98,6 +102,7 @@
       };
     }
 
+    // Returns action buttons HTML based on current task status key
     function getButtonsHTML(sk) {
       return {
         "not-started": `<button class="btn-start highlight">Start</button>`,
@@ -106,34 +111,39 @@
       }[sk] || `<em>No actions</em>`;
     }
 
+    // Show/hide combo box with action buttons for a selected row
     function toggleComboBox(idx) {
       document.querySelectorAll(".combo-box").forEach((r,i) => {
-        r.style.display = (i===idx && r.style.display!=="table-row") ? "table-row" : "none";
+        r.style.display = (i === idx && r.style.display !== "table-row") ? "table-row" : "none";
       });
     }
 
+    // Render task rows and combo boxes for the user's tasks
     function renderTasks(tasks) {
       taskBody.innerHTML = "";
       if (tasks.length === 0) {
         taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tasks found.</td></tr>`;
         return;
       }
+
       tasks.forEach((t, idx) => {
-        const sk = (t.Status||"").toLowerCase().replace(/\s+/g,"-");
+        const sk = (t.Status || "").toLowerCase().replace(/\s+/g,"-");
         const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(t.workSessions);
 
+        // Main row showing task summary
         const tr = document.createElement("tr");
         tr.onclick = () => toggleComboBox(idx);
         tr.innerHTML = `
-          <td>${t.SINO||"-"}</td>
-          <td>${t["Existing Company Name"]||"-"}</td>
-          <td>${t["TYPE OF WORK"]||"-"}</td>
-          <td>${t["Due date"]||"-"}</td>
-          <td class="status ${statusLabels[sk].class}">${statusLabels[sk].label}</td>
+          <td>${t.SINO || "-"}</td>
+          <td>${t["Existing Company Name"] || "-"}</td>
+          <td>${t["TYPE OF WORK"] || "-"}</td>
+          <td>${t["Due date"] || "-"}</td>
+          <td class="status ${statusLabels[sk]?.class || ''}">${statusLabels[sk]?.label || t.Status || "-"}</td>
           <td>${formatMs(totalWorkMs)}</td>
         `;
         taskBody.appendChild(tr);
 
+        // Hidden combo-box row with details and action buttons
         const cr = document.createElement("tr");
         cr.className = "combo-box";
         cr.style.display = "none";
@@ -142,7 +152,7 @@
           <div><strong>Ended:</strong> ${endTime}</div>
           <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
           <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
-          <div><strong>Remarks:</strong> ${pauseCount>1?'-':''}</div>
+          <div><strong>Remarks:</strong> ${pauseCount > 1 ? '-' : (t.Remarks || '')}</div>
           <hr style="margin:8px 0;">${getButtonsHTML(sk)}
         </td>`;
         taskBody.appendChild(cr);
@@ -150,6 +160,7 @@
       attachActions(tasks);
     }
 
+    // Attach click handlers to action buttons inside combo boxes
     function attachActions(tasks) {
       document.querySelectorAll(".combo-box").forEach((cr, idx) => {
         cr.querySelectorAll("button").forEach(btn => {
@@ -157,62 +168,76 @@
             e.stopPropagation();
             const t = tasks[idx];
             const ref = db.collection("tasks").doc(t.id);
-            const ts = now();
+            const ts = firebase.firestore.Timestamp.now();
             const sess = t.workSessions || [];
 
             try {
               if (btn.classList.contains("btn-start")) {
-                if (sess.some(s=>!s.end)) return alert("Already running");
-                sess.push({start:ts, end:null});
-                await ref.update({Status:"In Progress", workSessions:sess});
+                // Start a new session if none running
+                if (sess.some(s => !s.end)) return alert("Task is already running");
+                sess.push({start: ts, end: null});
+                await ref.update({Status: "In Progress", workSessions: sess});
               }
               if (btn.classList.contains("btn-pending")) {
-                const i = sess.findIndex(s=>!s.end);
-                if (i<0) return alert("Not running");
+                // Pause running session
+                const i = sess.findIndex(s => !s.end);
+                if (i < 0) return alert("Task is not running");
                 sess[i].end = ts;
-                await ref.update({Status:"Pending", workSessions:sess});
+                await ref.update({Status: "Pending", workSessions: sess});
               }
               if (btn.classList.contains("btn-continue")) {
-                if (sess.some(s=>!s.end)) return alert("Already running");
-                sess.push({start:ts, end:null});
-                await ref.update({Status:"In Progress", workSessions:sess});
+                // Resume from pending
+                if (sess.some(s => !s.end)) return alert("Task is already running");
+                sess.push({start: ts, end: null});
+                await ref.update({Status: "In Progress", workSessions: sess});
               }
               if (btn.classList.contains("btn-complete")) {
-                const i = sess.findIndex(s=>!s.end); if (i>-1) sess[i].end=ts;
-                let totalW=0, totalP=0, lastEnd=null;
-                sess.forEach(s=>{
-                  const a=s.start.toDate().getTime(), b=s.end.toDate().getTime();
-                  totalW += (b-a);
-                  if(lastEnd && a>lastEnd){ totalP+=a-lastEnd; }
-                  lastEnd=b;
+                // Complete task and finalize session times
+                const i = sess.findIndex(s => !s.end);
+                if (i > -1) sess[i].end = ts;
+
+                let totalW = 0, totalP = 0, lastEnd = null;
+                sess.forEach(s => {
+                  const a = s.start.toDate().getTime(), b = s.end.toDate().getTime();
+                  totalW += (b - a);
+                  if (lastEnd && a > lastEnd) totalP += a - lastEnd;
+                  lastEnd = b;
                 });
+
                 const st = sess[0].start, et = sess.at(-1).end;
-                function ft(ms){
-                  const h=Math.floor(ms/3600000), m=Math.floor((ms%3600000)/60000);
+
+                function formatHours(ms) {
+                  const h = Math.floor(ms / 3600000);
+                  const m = Math.floor((ms % 3600000) / 60000);
                   return `${h}h ${m}m`;
                 }
+
                 await ref.update({
-                  Status:"Complete",
-                  taskStart:st,
-                  taskEnd:et,
-                  workSessions:sess,
-                  TimeStarted:st.toDate().toLocaleString(),
-                  TimeEnd:et.toDate().toLocaleString(),
-                  TotalWorkHours:ft(totalW),
-                  TotalPauseHours:ft(totalP),
-                  Remarks: totalP>0?"-":(t.Remarks||"")
+                  Status: "Complete",
+                  taskStart: st,
+                  taskEnd: et,
+                  workSessions: sess,
+                  TimeStarted: st.toDate().toLocaleString(),
+                  TimeEnd: et.toDate().toLocaleString(),
+                  TotalWorkHours: formatHours(totalW),
+                  TotalPauseHours: formatHours(totalP),
+                  Remarks: totalP > 0 ? "-" : (t.Remarks || "")
                 });
               }
-              loadUserTasks(); // refresh
-            } catch(err) {
+
+              // Reload updated tasks
+              await loadUserTasks();
+
+            } catch (err) {
               console.error(err);
-              alert("Update failed");
+              alert("Failed to update task. Please try again.");
             }
           };
         });
       });
     }
 
+    // Load current user's tasks that are active (not completed)
     async function loadUserTasks() {
       const user = auth.currentUser;
       if (!user) return;
@@ -220,35 +245,41 @@
       userInfo.textContent = `Logged in as: ${nameOrEmail}`;
 
       try {
-        const snap = await db.collection("tasks").get();
-        const arr = [];
-        snap.forEach(doc => {
-          const d = doc.data();
-          d.id = doc.id;
-          if (d.Task === nameOrEmail && ["Not Started","In Progress","Pending"].includes(d.Status)) {
-            arr.push(d);
-          }
+        // Query tasks where 'Task' matches user and status in allowed states
+        const allowedStatuses = ["Not Started", "In Progress", "Pending"];
+        const tasksRef = db.collection("tasks");
+        const querySnapshot = await tasksRef
+          .where("Task", "==", nameOrEmail)
+          .where("Status", "in", allowedStatuses)
+          .get();
+
+        const tasks = [];
+        querySnapshot.forEach(doc => {
+          const data = doc.data();
+          data.id = doc.id;
+          tasks.push(data);
         });
-        renderTasks(arr);
+
+        renderTasks(tasks);
       } catch (err) {
         console.error(err);
         taskBody.innerHTML = `<tr><td colspan="6" style="color:red;">Failed to load tasks</td></tr>`;
       }
     }
 
-auth.onAuthStateChanged(user => {
-  if (user) {
-    loadUserTasks();
-  } else {
-    // Delay redirect to avoid false-negative on page reload
-    setTimeout(() => {
-      if (!firebase.auth().currentUser) {
-        window.location.href = "index.html";
+    // Listen for auth state changes and load tasks if logged in
+    auth.onAuthStateChanged(async user => {
+      if (user) {
+        await loadUserTasks();
+      } else {
+        // Delay redirect to allow Firebase to confirm auth state on page reload
+        setTimeout(() => {
+          if (!firebase.auth().currentUser) {
+            window.location.href = "index.html";
+          }
+        }, 1500);
       }
-    }, 1500); // 1.5s delay gives Firebase time to confirm user
-  }
-});
-
+    });
   </script>
 </body>
 </html>
