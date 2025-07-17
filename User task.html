@@ -495,27 +495,28 @@ async function loadTasks() {
 }
 
 
-async function generateSINOFromDB() {
-  try {
-    const snapshot = await db.collection('tasks')
-      .orderBy('SINO', 'desc')
-      .limit(1)
-      .get();
-
-    if (snapshot.empty) {
-      return '001';
+    function generateSINO() {
+      let maxNum = 0;
+      allTasks.forEach(t => {
+        if (t.SINO) {
+          const match = t.SINO.match(/(\d+)$/);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > maxNum) maxNum = num;
+          }
+        }
+      });
+      return String(maxNum + 1).padStart(3, '0');
     }
 
-    const latestSINO = snapshot.docs[0].data().SINO;
-    const match = latestSINO.match(/(\d+)$/);
-    const nextNumber = match ? String(parseInt(match[1], 10) + 1).padStart(3, '0') : '001';
-    return nextNumber;
-  } catch (err) {
-    console.error('Failed to fetch last SINO:', err);
-    return '001'; // fallback
+function pickField(task, ...fields) {
+  for (const field of fields) {
+    if (task[field] !== undefined && task[field] !== null && task[field].toString().trim() !== '') {
+      return task[field];
+    }
   }
+  return ''; // fallback if none found
 }
-
 
 
 
@@ -786,10 +787,7 @@ createTaskBtn.onclick = () => {
   });
   ownerInput.value = username;
   TaskInput.value = `Daily task for ${username}`;
-generateSINOFromDB().then(sino => {
-  SINOinput.value = sino;
-});
-
+  SINOinput.value = generateSINO();
   taskModal.style.display = 'flex';
 };
 
@@ -863,15 +861,14 @@ function addUniqueOptions(datalist, valuesArray) {
 }
 
 // When opening modal:
-createTaskBtn.onclick = async () => {
-  // Reset form
+createTaskBtn.onclick = () => {
   taskForm.reset();
+  SINOinput.value = generateSINO();
   ownerInput.value = username;
-  ownerInput.setAttribute("readonly", true);
+  ownerInput.setAttribute("readonly", true); // ❌ can't change
   TaskInput.value = `Daily task for ${username}`;
   periodInput.style.display = 'none';
 
-  // Pre-fill dropdowns
   const companies = allTasks.map(t => t['Existing Company Name']);
   const workTypes = allTasks.map(t => t['TYPE OF WORK']);
   const assignedByListArr = allTasks.map(t => t['Assigned By']);
@@ -880,13 +877,8 @@ createTaskBtn.onclick = async () => {
   addUniqueOptions(workTypeList, workTypes);
   addUniqueOptions(assignedByList, assignedByListArr);
 
-  // Get next SINO from DB
-  const nextSino = await generateSINOFromDB();
-  SINOinput.value = nextSino;
-
   taskModal.style.display = 'flex';
 };
-
 
 
   </script>
