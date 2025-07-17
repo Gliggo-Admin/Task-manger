@@ -174,7 +174,7 @@
         <div><strong>Ended:</strong> ${endTime}</div>
         <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
         <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
-        <div><strong>Remarks:</strong> ${pauseCount>1?'-':''}</div>
+<div><strong>Remarks:</strong> ${pauseCount > 1 ? '-' : (task.Remarks || '')}</div>
         <hr style="margin:8px 0;">
         ${getButtonsHTML(sk)}
       </td>`;
@@ -211,12 +211,10 @@
               await ref.update({Status:"In Progress", workSessions:sess});
               alert("Resumed");
             }
-            if (btn.classList.contains("btn-complete")) {
-  // Close running session
+if (btn.classList.contains("btn-complete")) {
   const i = sess.findIndex(s => !s.end);
   if (i > -1) sess[i].end = ts;
 
-  // Calculate time details
   let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
   sess.forEach(s => {
     const startMs = s.start?.toDate?.().getTime();
@@ -237,12 +235,6 @@
   const startTime = sess[0]?.start || ts;
   const endTime = sess.at(-1)?.end || ts;
 
-  const formatMs = ms => {
-    const hrs = Math.floor(ms / 3600000);
-    const mins = Math.floor((ms % 3600000) / 60000);
-    return `${hrs}h ${mins}m`;
-  };
-
   await ref.update({
     Status: "Complete",
     taskStart: startTime,
@@ -257,6 +249,7 @@
 
   alert("Completed with time calculations");
 }
+
 
             loadTasks();
           } catch {
