@@ -267,18 +267,16 @@
     }
   }
 
-  // Flag to check if auth state initialized
-  let authInitialized = false;
+  // Listen for auth state changes (don't redirect on logout)
+  auth.onAuthStateChanged(async user => {
+    if (user) {
+      await loadUserTasks();
+    } else {
+      userInfo.textContent = "Not logged in. Please log in to see your tasks.";
+      taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No user logged in.</td></tr>`;
+    }
+  });
+  </script>
 
-  // Listen for auth state changes, but do NOT redirect on logout
-auth.onAuthStateChanged(async user => {
-  authInitialized = true;
-  if (user) {
-    await loadUserTasks();
-  } else {
-    userInfo.textContent = "Not logged in. Please log in to see your tasks.";
-    taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No user logged in.</td></tr>`;
-  }
-});
-
-</script>
+</body>
+</html>
