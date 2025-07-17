@@ -2,283 +2,246 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>User Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>User Current Task</title>
   <style>
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      background: #34495e;
-      color: white;
-      display: flex;
-      height: 100vh;
-    }
-    .left-panel {
-      background: #2c3e50;
-      width: 250px;
-      padding: 30px;
-      box-sizing: border-box;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .left-panel .header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .left-panel .header h2 {
-      margin: 0 0 8px;
-    }
-    .left-panel .profile-image {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      background: #7f8c8d;
-      margin: 0 auto 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 50px;
-      color: white;
-      user-select: none;
-    }
-    .summary {
-      margin-top: 20px;
-    }
-    .summary h3 {
-      border-bottom: 1px solid #7f8c8d;
-      padding-bottom: 5px;
-      margin-bottom: 15px;
-      font-weight: 600;
-    }
-    .summary p {
-      margin: 8px 0;
-      font-weight: 600;
-    }
-    .logout-button {
-      background: #e74c3c;
-      border: none;
-      color: white;
-      padding: 12px 0;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 20px;
-      width: 100%;
-      transition: background 0.3s;
-    }
-    .logout-button:hover {
-      background: #c0392b;
-    }
-    .right-panel {
-      background: white;
-      flex: 1;
-      padding: 30px;
-      box-sizing: border-box;
-      color: #2c3e50;
-      overflow-y: auto;
-    }
-    .right-panel h1 {
-      margin-top: 0;
-      font-weight: 700;
-      margin-bottom: 20px;
-    }
-    .todo-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-    .todo-list li {
-      padding: 12px 15px;
-      border-bottom: 1px solid #bdc3c7;
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
-    }
-    .todo-list li.completed label {
-      text-decoration: line-through;
-      color: #95a5a6;
-    }
-    .todo-list li input[type="checkbox"] {
-      margin-right: 12px;
-      cursor: pointer;
-      width: 18px;
-      height: 18px;
-    }
+    body { font-family:'Segoe UI',sans-serif; margin:0; background:#ecf0f1; padding:20px; }
+    .close-btn { background:#e74c3c; color:#fff; border:none; padding:8px 14px; font-weight:bold; border-radius:3px; cursor:pointer; float:right; }
+    h2 { margin-top:0; }
+    .user-info { font-weight:bold; margin-bottom:10px; }
+    .task-table { width:100%; border-collapse:collapse; margin-top:20px; box-shadow:0 2px 10px rgba(0,0,0,0.1); border-radius:10px; overflow:hidden; }
+    .task-table th, .task-table td { padding:12px; text-align:left; }
+    .task-table th { background:#34495e; color:#fff; }
+    .task-table tr { background:#fff; cursor:pointer; transition:background-color 0.3s; }
+    .task-table tr:hover { background:#f1f1f1; }
+    td.status { font-weight:bold; color:#fff; border-radius:4px; padding:6px 10px; }
+    .status.not-started { background:#95a5a6; }
+    .status.in-progress { background:#3498db; }
+    .status.pending { background:#f1c40f; color:#000; }
+    .status.complete { background:#2ecc71; }
+    .combo-box { display:none; animation:fadeIn 0.4s ease-in-out; }
+    .combo-box button { margin:5px; padding:8px 16px; border:none; border-radius:6px; cursor:pointer; transition:transform 0.3s ease; font-weight:bold; color:#fff}
+    .btn-start { background:#2980b9; }
+    .btn-pending { background:#e67e22; }
+    .btn-continue { background:#8e44ad; }
+    .btn-complete { background:#27ae60; }
+    .highlight { border:2px solid #fff; box-shadow:0 0 8px rgba(255,255,255,0.6); }
+    @keyframes fadeIn { from {opacity:0;transform:scale(0.95);} to {opacity:1;transform:scale(1);} }
   </style>
 </head>
 <body>
-  <div class="left-panel">
-    <div class="header">
-      <div class="profile-image" id="profileImage">?</div>
-      <h2 id="profileName">Loading...</h2>
-      <p id="profileEmail" style="color:#bdc3c7; font-weight: 400; font-size: 14px;">&nbsp;</p>
-    </div>
 
-    <div class="summary">
-      <h3>Summary</h3>
-      <p>Total Tasks: <span id="totalTasks">0</span></p>
-      <p>Completed: <span id="completedTasks">0</span></p>
-      <p>Pending: <span id="pendingTasks">0</span></p>
-    </div>
+  <button class="close-btn" onclick="window.history.back()">Back</button>
+  <h2>User Task Details</h2>
+  <p class="user-info" id="userInfo">Loading user...</p>
 
-    <button id="logoutBtn" class="logout-button">Logout</button>
-  </div>
+  <table class="task-table">
+    <thead>
+      <tr><th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Work Hours</th></tr>
+    </thead>
+    <tbody id="task-body"><tr><td colspan="6" style="text-align:center;">Loading...</td></tr></tbody>
+  </table>
 
-  <div class="right-panel">
-    <h1>Your Tasks</h1>
-    <ul id="todoList" class="todo-list">
-      <li>Loading tasks...</li>
-    </ul>
-  </div>
-
-  <!-- Firebase SDK -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // Firebase config and initialization
-    const firebaseConfig = {
+    firebase.initializeApp({
       apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
       authDomain: "task-manager-602da.firebaseapp.com",
-      projectId: "task-manager-602da",
-      storageBucket: "task-manager-602da.appspot.com",
-      messagingSenderId: "438978699329",
-      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    const profileNameEl = document.getElementById("profileName");
-    const profileEmailEl = document.getElementById("profileEmail");
-    const profileImageEl = document.getElementById("profileImage");
-    const todoListEl = document.getElementById("todoList");
-    const totalTasksEl = document.getElementById("totalTasks");
-    const completedTasksEl = document.getElementById("completedTasks");
-    const pendingTasksEl = document.getElementById("pendingTasks");
-    const logoutBtn = document.getElementById("logoutBtn");
-
-    // Set profile image initials from name
-    function getInitials(name) {
-      if (!name) return "?";
-      const parts = name.trim().split(" ");
-      if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
-    }
-
-    // Render tasks in checklist
-    function renderTasks(tasks) {
-      todoListEl.innerHTML = "";
-
-      if (tasks.length === 0) {
-        todoListEl.innerHTML = "<li>No tasks assigned.</li>";
-        totalTasksEl.textContent = "0";
-        completedTasksEl.textContent = "0";
-        pendingTasksEl.textContent = "0";
-        return;
-      }
-
-      let completedCount = 0;
-      tasks.forEach((task, i) => {
-        const li = document.createElement("li");
-        if (task.completed) {
-          li.classList.add("completed");
-          completedCount++;
-        }
-
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.checked = task.completed || false;
-        checkbox.id = `task-${i}`;
-
-        const label = document.createElement("label");
-        label.htmlFor = checkbox.id;
-        label.textContent = task["TYPE OF WORK"] || task.text || "Untitled Task";
-
-        // Toggle completed on checkbox change
-        checkbox.addEventListener("change", () => {
-          const newCompleted = checkbox.checked;
-          li.classList.toggle("completed", newCompleted);
-
-          // Update Firestore task document
-          updateTaskCompletion(task.docId, newCompleted);
-        });
-
-        li.appendChild(checkbox);
-        li.appendChild(label);
-        todoListEl.appendChild(li);
-      });
-
-      totalTasksEl.textContent = tasks.length;
-      completedTasksEl.textContent = completedCount;
-      pendingTasksEl.textContent = tasks.length - completedCount;
-    }
-
-    // Update task completion status in Firestore
-    async function updateTaskCompletion(docId, completed) {
-      if (!docId) return;
-      try {
-        await db.collection("tasks").doc(docId).update({ completed });
-      } catch (err) {
-        console.error("Error updating task completion:", err);
-        alert("Failed to update task. Please try again.");
-      }
-    }
-
-    // Load user tasks from Firestore filtering by assigned email
-    async function loadTasksForUser(userEmail) {
-      try {
-        const snapshot = await db.collection("tasks")
-          .where("AssignedTo", "==", userEmail)
-          .get();
-
-        if (snapshot.empty) {
-          renderTasks([]);
-          return;
-        }
-
-        const tasks = [];
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          data.docId = doc.id; // save doc ID for updates
-          tasks.push(data);
-        });
-
-        renderTasks(tasks);
-      } catch (error) {
-        console.error("Error loading tasks:", error);
-        todoListEl.innerHTML = "<li style='color:red'>Failed to load tasks.</li>";
-      }
-    }
-
-    // Listen to auth state changes
-auth.onAuthStateChanged(user => {
-  if (user) {
-    const displayName = user.displayName || user.email || "User";
-    profileNameEl.textContent = displayName;
-    profileEmailEl.textContent = user.email || "";
-    profileImageEl.textContent = getInitials(displayName);
-    loadTasksForUser(user.email); // <-- this is filtering tasks based on user session
-  }
- else {
-        // Not logged in, redirect to login page (index.html)
-        window.location.href = "index.html";
-      }
+      projectId: "task-manager-602da"
     });
 
-    // Logout button handler
-    logoutBtn.addEventListener("click", () => {
-      auth.signOut()
-        .then(() => {
-          window.location.href = "index.html";
-        })
-        .catch(error => {
-          console.error("Logout failed:", error);
-          alert("Logout failed, please try again.");
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const taskBody = document.getElementById("task-body");
+    const userInfo = document.getElementById("userInfo");
+
+    const statusLabels = {
+      "not-started": {label:"Not Started", class:"not-started"},
+      "in-progress": {label:"In Progress", class:"in-progress"},
+      "pending": {label:"Pending", class:"pending"},
+      "complete": {label:"Completed", class:"complete"}
+    };
+    const now = () => firebase.firestore.Timestamp.now();
+
+    function formatMs(ms) {
+      const s = Math.floor(ms/1000),
+            h = Math.floor(s/3600),
+            m = Math.floor((s%3600)/60),
+            sec = s % 60;
+      return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+    }
+
+    function calcTimeDetails(sessions=[]) {
+      let totalWork=0, totalPause=0, pauseCount=0, lastEnd=null;
+      sessions.forEach(sess => {
+        const a = sess.start?.toDate().getTime();
+        const b = sess.end?.toDate().getTime();
+        if (a && b) {
+          totalWork += b - a;
+          if (lastEnd !== null && a > lastEnd) {
+            totalPause += a - lastEnd;
+            pauseCount++;
+          }
+          lastEnd = b;
+        }
+      });
+      return {
+        totalWorkMs: totalWork,
+        totalPauseMs: totalPause,
+        pauseCount,
+        startTime: sessions[0]?.start?.toDate().toLocaleString() || '—',
+        endTime: sessions.at(-1)?.end?.toDate().toLocaleString() || '—'
+      };
+    }
+
+    function getButtonsHTML(sk) {
+      return {
+        "not-started": `<button class="btn-start highlight">Start</button>`,
+        "in-progress": `<button class="btn-pending">Pause</button><button class="btn-complete highlight">Complete</button>`,
+        "pending": `<button class="btn-continue highlight">Resume</button>`
+      }[sk] || `<em>No actions</em>`;
+    }
+
+    function toggleComboBox(idx) {
+      document.querySelectorAll(".combo-box").forEach((r,i) => {
+        r.style.display = (i===idx && r.style.display!=="table-row") ? "table-row" : "none";
+      });
+    }
+
+    function renderTasks(tasks) {
+      taskBody.innerHTML = "";
+      if (tasks.length === 0) {
+        taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tasks found.</td></tr>`;
+        return;
+      }
+      tasks.forEach((t, idx) => {
+        const sk = (t.Status||"").toLowerCase().replace(/\s+/g,"-");
+        const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(t.workSessions);
+
+        const tr = document.createElement("tr");
+        tr.onclick = () => toggleComboBox(idx);
+        tr.innerHTML = `
+          <td>${t.SINO||"-"}</td>
+          <td>${t["Existing Company Name"]||"-"}</td>
+          <td>${t["TYPE OF WORK"]||"-"}</td>
+          <td>${t["Due date"]||"-"}</td>
+          <td class="status ${statusLabels[sk].class}">${statusLabels[sk].label}</td>
+          <td>${formatMs(totalWorkMs)}</td>
+        `;
+        taskBody.appendChild(tr);
+
+        const cr = document.createElement("tr");
+        cr.className = "combo-box";
+        cr.style.display = "none";
+        cr.innerHTML = `<td colspan="6">
+          <div><strong>Started:</strong> ${startTime}</div>
+          <div><strong>Ended:</strong> ${endTime}</div>
+          <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
+          <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
+          <div><strong>Remarks:</strong> ${pauseCount>1?'-':''}</div>
+          <hr style="margin:8px 0;">${getButtonsHTML(sk)}
+        </td>`;
+        taskBody.appendChild(cr);
+      });
+      attachActions(tasks);
+    }
+
+    function attachActions(tasks) {
+      document.querySelectorAll(".combo-box").forEach((cr, idx) => {
+        cr.querySelectorAll("button").forEach(btn => {
+          btn.onclick = async e => {
+            e.stopPropagation();
+            const t = tasks[idx];
+            const ref = db.collection("tasks").doc(t.id);
+            const ts = now();
+            const sess = t.workSessions || [];
+
+            try {
+              if (btn.classList.contains("btn-start")) {
+                if (sess.some(s=>!s.end)) return alert("Already running");
+                sess.push({start:ts, end:null});
+                await ref.update({Status:"In Progress", workSessions:sess});
+              }
+              if (btn.classList.contains("btn-pending")) {
+                const i = sess.findIndex(s=>!s.end);
+                if (i<0) return alert("Not running");
+                sess[i].end = ts;
+                await ref.update({Status:"Pending", workSessions:sess});
+              }
+              if (btn.classList.contains("btn-continue")) {
+                if (sess.some(s=>!s.end)) return alert("Already running");
+                sess.push({start:ts, end:null});
+                await ref.update({Status:"In Progress", workSessions:sess});
+              }
+              if (btn.classList.contains("btn-complete")) {
+                const i = sess.findIndex(s=>!s.end); if (i>-1) sess[i].end=ts;
+                let totalW=0, totalP=0, lastEnd=null;
+                sess.forEach(s=>{
+                  const a=s.start.toDate().getTime(), b=s.end.toDate().getTime();
+                  totalW += (b-a);
+                  if(lastEnd && a>lastEnd){ totalP+=a-lastEnd; }
+                  lastEnd=b;
+                });
+                const st = sess[0].start, et = sess.at(-1).end;
+                function ft(ms){
+                  const h=Math.floor(ms/3600000), m=Math.floor((ms%3600000)/60000);
+                  return `${h}h ${m}m`;
+                }
+                await ref.update({
+                  Status:"Complete",
+                  taskStart:st,
+                  taskEnd:et,
+                  workSessions:sess,
+                  TimeStarted:st.toDate().toLocaleString(),
+                  TimeEnd:et.toDate().toLocaleString(),
+                  TotalWorkHours:ft(totalW),
+                  TotalPauseHours:ft(totalP),
+                  Remarks: totalP>0?"-":(t.Remarks||"")
+                });
+              }
+              loadUserTasks(); // refresh
+            } catch(err) {
+              console.error(err);
+              alert("Update failed");
+            }
+          };
         });
+      });
+    }
+
+    async function loadUserTasks() {
+      const user = auth.currentUser;
+      if (!user) return;
+      const nameOrEmail = user.displayName || user.email;
+      userInfo.textContent = `Logged in as: ${nameOrEmail}`;
+
+      try {
+        const snap = await db.collection("tasks").get();
+        const arr = [];
+        snap.forEach(doc => {
+          const d = doc.data();
+          d.id = doc.id;
+          if (d.Task === nameOrEmail && ["Not Started","In Progress","Pending"].includes(d.Status)) {
+            arr.push(d);
+          }
+        });
+        renderTasks(arr);
+      } catch (err) {
+        console.error(err);
+        taskBody.innerHTML = `<tr><td colspan="6" style="color:red;">Failed to load tasks</td></tr>`;
+      }
+    }
+
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        window.location.href = "index.html";
+      } else {
+        loadUserTasks();
+      }
     });
   </script>
 </body>
