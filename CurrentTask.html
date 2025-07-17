@@ -255,14 +255,15 @@
     }
 
     // Listen to auth state changes
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        const displayName = user.displayName || user.email || "User";
-        profileNameEl.textContent = displayName;
-        profileEmailEl.textContent = user.email || "";
-        profileImageEl.textContent = getInitials(displayName);
-        loadTasksForUser(user.email);
-      } else {
+auth.onAuthStateChanged(user => {
+  if (user) {
+    const displayName = user.displayName || user.email || "User";
+    profileNameEl.textContent = displayName;
+    profileEmailEl.textContent = user.email || "";
+    profileImageEl.textContent = getInitials(displayName);
+    loadTasksForUser(user.email); // <-- this is filtering tasks based on user session
+  }
+ else {
         // Not logged in, redirect to login page (index.html)
         window.location.href = "index.html";
       }
