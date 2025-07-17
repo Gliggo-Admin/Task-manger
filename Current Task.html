@@ -27,12 +27,54 @@
     .btn-complete { background: #27ae60; }
     .highlight { border: 2px solid #fff; box-shadow: 0 0 8px rgba(255, 255, 255, 0.6); }
     @keyframes fadeIn { from { opacity:0; transform: scale(0.95); } to { opacity:1; transform: scale(1); } }
+    #login-form {
+  background: #fff;
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  max-width: 400px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+#login-form input {
+  width: calc(100% - 24px);
+  padding: 10px;
+  margin-bottom: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+#login-form button {
+  background: #2980b9;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  font-weight: bold;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+}
+#login-error {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 8px;
+  display: none;
+}
+
   </style>
 </head>
 <body>
 
   <button class="close-btn" onclick="window.history.back()">Back</button>
   <h2>Apple Task Details</h2>
+
+  <div id="login-form">
+  <input type="text" id="username" placeholder="Enter your username" />
+  <button id="load-btn">Load My Tasks</button>
+  <div id="login-error"></div>
+</div>
+<p id="user-display" style="font-weight: bold; font-size: 1.1rem; margin-top: 10px;"></p>
+
 
   <table class="task-table">
     <thead>
@@ -225,17 +267,49 @@
     });
   }
 
-  async function loadTasks() {
-    const snap = await db.collection("tasks").get();
+ const loadBtn = document.getElementById("load-btn");
+const usernameInput = document.getElementById("username");
+const loginError = document.getElementById("login-error");
+const userDisplay = document.getElementById("user-display");
+
+loadBtn.onclick = async () => {
+  const username = usernameInput.value.trim();
+  if (!username) {
+    loginError.textContent = "Please enter a username.";
+    loginError.style.display = "block";
+    return;
+  }
+
+  loginError.style.display = "none";
+  userDisplay.textContent = `Showing tasks for: ${username}`;
+  taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Loading tasks...</td></tr>`;
+
+  try {
+    const snap = await db.collection("tasks")
+      .where("OwnerName", "==", username)
+      .where("Status", "in", ["Not Started", "In Progress", "Pending"])
+      .get();
+
     const arr = [];
     snap.forEach(doc => {
       const d = doc.data();
-      if (["Not Started","In Progress","Pending"].includes(d.Status)) arr.push({id:doc.id,...d});
+      arr.push({ id: doc.id, ...d });
     });
-    renderTasks(arr);
-  }
 
-  window.onload = loadTasks;
+    if (arr.length === 0) {
+      taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tasks found for "${username}".</td></tr>`;
+    } else {
+      renderTasks(arr);
+    }
+
+  } catch (err) {
+    console.error(err);
+    loginError.textContent = "Failed to load tasks.";
+    loginError.style.display = "block";
+    taskBody.innerHTML = `<tr><td colspan="6" style="color:red;">Error loading tasks</td></tr>`;
+  }
+};
+
   </script>
 </body>
 </html>
