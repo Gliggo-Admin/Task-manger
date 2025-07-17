@@ -87,38 +87,38 @@
       }[status] || "";
     }
 
-    async function loadUserTasks(userEmail) {
-      try {
-        const snapshot = await db.collection("tasks")
-          .where("Status", "in", ["Not Started", "In Progress", "Pending"])
-          .where("AssignedTo", "==", userEmail)
-          .get();
+async function loadUserTasks(userEmail) {
+  try {
+    const snapshot = await db.collection("tasks")
+      .where("AssignedTo", "==", userEmail)
+      .get();
 
-        if (snapshot.empty) {
-          taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No current tasks found.</td></tr>`;
-          return;
-        }
-
-        taskBody.innerHTML = "";
-        snapshot.forEach(doc => {
-          const task = doc.data();
-          const workMs = calcWorkHours(task.workSessions || []);
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${task.SINO || "-"}</td>
-            <td>${task["Existing Company Name"] || "-"}</td>
-            <td>${task["TYPE OF WORK"] || "-"}</td>
-            <td>${task["Due date"] || "-"}</td>
-            <td><span class="status ${statusClass(task.Status)}">${task.Status}</span></td>
-            <td>${formatMs(workMs)}</td>
-          `;
-          taskBody.appendChild(tr);
-        });
-      } catch (error) {
-        console.error("Error loading tasks:", error);
-        taskBody.innerHTML = `<tr><td colspan="6" style="color:red; text-align:center;">Failed to load tasks.</td></tr>`;
-      }
+    if (snapshot.empty) {
+      taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No current tasks found.</td></tr>`;
+      return;
     }
+
+    taskBody.innerHTML = "";
+    snapshot.forEach(doc => {
+      const task = doc.data();
+      const workMs = calcWorkHours(task.workSessions || []);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${task.SINO || "-"}</td>
+        <td>${task["Existing Company Name"] || "-"}</td>
+        <td>${task["TYPE OF WORK"] || "-"}</td>
+        <td>${task["Due date"] || "-"}</td>
+        <td><span class="status ${statusClass(task.Status)}">${task.Status}</span></td>
+        <td>${formatMs(workMs)}</td>
+      `;
+      taskBody.appendChild(tr);
+    });
+  } catch (error) {
+    console.error("Error loading tasks:", error);
+    taskBody.innerHTML = `<tr><td colspan="6" style="color:red; text-align:center;">Failed to load tasks.</td></tr>`;
+  }
+}
+
 
     auth.onAuthStateChanged(user => {
       if (user) {
