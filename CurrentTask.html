@@ -21,7 +21,7 @@
 <body>
 
   <button class="close-btn" onclick="window.history.back()">Back</button>
-  <h2>Your Current Tasks</h2>
+  <h2>Your Current Tasks — <span id="username" style="font-weight:normal; color:#555;">Loading...</span></h2>
 
   <table class="task-table">
     <thead>
@@ -56,6 +56,7 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    const usernameSpan = document.getElementById("username");
     const taskBody = document.getElementById("task-body");
 
     function formatMs(ms) {
@@ -121,8 +122,10 @@
 
     auth.onAuthStateChanged(user => {
       if (user) {
+        usernameSpan.textContent = user.displayName || user.email || "User";
         loadUserTasks(user.email);
       } else {
+        usernameSpan.textContent = "Not logged in";
         taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">You must be logged in to see tasks.</td></tr>`;
       }
     });
