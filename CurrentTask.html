@@ -44,15 +44,12 @@
 <body>
 
   <button class="close-btn" onclick="window.history.back()">Back</button>
-  <h2>User Task Details</h2>
+<h2>User Task Details</h2>
+<p id="userInfo">Loading user...</p>
 
-  <div id="login-form">
-    <input type="text" id="username" placeholder="Enter username" autocomplete="off" />
-    <button id="load-btn">Load Tasks</button>
-    <div id="login-error"></div>
-  </div>
+<p><strong>Logged in as:</strong> <span id="usernameDisplay"></span> 
+<button onclick="logout()">Logout</button></p>
 
-  <p class="user-info" id="userInfo">Please enter your username and load tasks.</p>
 
   <table class="task-table" aria-label="User tasks">
     <thead>
@@ -65,157 +62,154 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-  <script>
-    firebase.initializeApp({
-      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-      authDomain: "task-manager-602da.firebaseapp.com",
-      projectId: "task-manager-602da"
-    });
+    <script>
+  firebase.initializeApp({
+    apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+    authDomain: "task-manager-602da.firebaseapp.com",
+    projectId: "task-manager-602da"
+  });
 
-    const db = firebase.firestore();
+  const db = firebase.firestore();
 
-    const taskBody = document.getElementById("task-body");
-    const userInfo = document.getElementById("userInfo");
-    const loginForm = document.getElementById("login-form");
-    const loadBtn = document.getElementById("load-btn");
-    const usernameInput = document.getElementById("username");
-    const loginError = document.getElementById("login-error");
+  const taskBody = document.getElementById("task-body");
+  const userInfo = document.getElementById("userInfo");
+  const usernameDisplay = document.getElementById("usernameDisplay");
 
-    const statusLabels = {
-      "not-started": {label:"Not Started", class:"not-started"},
-      "in-progress": {label:"In Progress", class:"in-progress"},
-      "pending": {label:"Pending", class:"pending"},
-      "complete": {label:"Completed", class:"complete"}
-    };
+  const statusLabels = {
+    "not-started": {label:"Not Started", class:"not-started"},
+    "in-progress": {label:"In Progress", class:"in-progress"},
+    "pending": {label:"Pending", class:"pending"},
+    "complete": {label:"Completed", class:"complete"}
+  };
 
-    function formatMs(ms) {
-      const s = Math.floor(ms/1000),
-            h = Math.floor(s/3600),
-            m = Math.floor((s%3600)/60),
-            sec = s % 60;
-      return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
-    }
+  function formatMs(ms) {
+    const s = Math.floor(ms/1000),
+          h = Math.floor(s/3600),
+          m = Math.floor((s%3600)/60),
+          sec = s % 60;
+    return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+  }
 
-    function calcTimeDetails(sessions=[]) {
-      let totalWork=0, totalPause=0, pauseCount=0, lastEnd=null;
-      sessions.forEach(sess => {
-        const a = sess.start?.toDate().getTime();
-        const b = sess.end?.toDate().getTime();
-        if (a && b) {
-          totalWork += b - a;
-          if (lastEnd !== null && a > lastEnd) {
-            totalPause += a - lastEnd;
-            pauseCount++;
-          }
-          lastEnd = b;
+  function calcTimeDetails(sessions=[]) {
+    let totalWork=0, totalPause=0, pauseCount=0, lastEnd=null;
+    sessions.forEach(sess => {
+      const a = sess.start?.toDate().getTime();
+      const b = sess.end?.toDate().getTime();
+      if (a && b) {
+        totalWork += b - a;
+        if (lastEnd !== null && a > lastEnd) {
+          totalPause += a - lastEnd;
+          pauseCount++;
         }
-      });
-      return {
-        totalWorkMs: totalWork,
-        totalPauseMs: totalPause,
-        pauseCount,
-        startTime: sessions[0]?.start?.toDate().toLocaleString() || '—',
-        endTime: sessions.at(-1)?.end?.toDate().toLocaleString() || '—'
-      };
-    }
-
-    function getButtonsHTML(sk) {
-      return {
-        "not-started": `<button class="btn-start highlight" type="button">Start</button>`,
-        "in-progress": `<button class="btn-pending" type="button">Pause</button><button class="btn-complete highlight" type="button">Complete</button>`,
-        "pending": `<button class="btn-continue highlight" type="button">Resume</button>`
-      }[sk] || `<em>No actions</em>`;
-    }
-
-    function toggleComboBox(idx) {
-      document.querySelectorAll(".combo-box").forEach((row, i) => {
-        row.style.display = (i === idx && row.style.display !== "table-row") ? "table-row" : "none";
-      });
-    }
-
-    function renderTasks(tasks) {
-      taskBody.innerHTML = "";
-      if (tasks.length === 0) {
-        taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tasks found.</td></tr>`;
-        return;
+        lastEnd = b;
       }
-
-      tasks.forEach((t, idx) => {
-        const sk = (t.Status || "").toLowerCase().replace(/\s+/g,"-");
-        const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(t.workSessions);
-
-        const tr = document.createElement("tr");
-        tr.onclick = () => toggleComboBox(idx);
-        tr.innerHTML = `
-          <td>${t.SINO || "-"}</td>
-          <td>${t["Existing Company Name"] || "-"}</td>
-          <td>${t["TYPE OF WORK"] || "-"}</td>
-          <td>${t["Due date"] || "-"}</td>
-          <td class="status ${statusLabels[sk]?.class || ''}">${statusLabels[sk]?.label || t.Status || "-"}</td>
-          <td>${formatMs(totalWorkMs)}</td>
-        `;
-        taskBody.appendChild(tr);
-
-        const cr = document.createElement("tr");
-        cr.className = "combo-box";
-        cr.style.display = "none";
-        cr.innerHTML = `<td colspan="6">
-          <div><strong>Started:</strong> ${startTime}</div>
-          <div><strong>Ended:</strong> ${endTime}</div>
-          <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
-          <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
-          <div><strong>Remarks:</strong> ${pauseCount > 1 ? '-' : (t.Remarks || '')}</div>
-          <hr style="margin:8px 0;">${getButtonsHTML(sk)}
-        </td>`;
-        taskBody.appendChild(cr);
-      });
-
-      // If you want, you can attach action handlers here as before
-      // attachActions(tasks);
-    }
-
-    async function loadUserTasks(username) {
-      if (!username) {
-        loginError.textContent = "Please enter a username.";
-        loginError.style.display = "block";
-        return;
-      }
-      loginError.style.display = "none";
-      userInfo.textContent = `Loading tasks for: ${username}...`;
-      taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Loading...</td></tr>`;
-
-      try {
-        // Adjust the query field here as per your Firestore field for username
-        // For example, if tasks have "OwnerName" field:
-        const allowedStatuses = ["Not Started", "In Progress", "Pending"];
-        const tasksRef = db.collection("tasks");
-        const querySnapshot = await tasksRef
-          .where("OwnerName", "==", username)
-          .where("Status", "in", allowedStatuses)
-          .get();
-
-        const tasks = [];
-        querySnapshot.forEach(doc => {
-          const data = doc.data();
-          data.id = doc.id;
-          tasks.push(data);
-        });
-
-        userInfo.textContent = `Tasks for: ${username}`;
-        renderTasks(tasks);
-      } catch (err) {
-        console.error(err);
-        loginError.textContent = "Failed to load tasks. Please try again.";
-        loginError.style.display = "block";
-        taskBody.innerHTML = `<tr><td colspan="6" style="color:red;">Failed to load tasks</td></tr>`;
-      }
-    }
-
-    loadBtn.onclick = () => {
-      const username = usernameInput.value.trim();
-      loadUserTasks(username);
+    });
+    return {
+      totalWorkMs: totalWork,
+      totalPauseMs: totalPause,
+      pauseCount,
+      startTime: sessions[0]?.start?.toDate().toLocaleString() || '—',
+      endTime: sessions.at(-1)?.end?.toDate().toLocaleString() || '—'
     };
-  </script>
+  }
 
-</body>
-</html>
+  function getButtonsHTML(sk) {
+    return {
+      "not-started": `<button class="btn-start highlight" type="button">Start</button>`,
+      "in-progress": `<button class="btn-pending" type="button">Pause</button><button class="btn-complete highlight" type="button">Complete</button>`,
+      "pending": `<button class="btn-continue highlight" type="button">Resume</button>`
+    }[sk] || `<em>No actions</em>`;
+  }
+
+  function toggleComboBox(idx) {
+    document.querySelectorAll(".combo-box").forEach((row, i) => {
+      row.style.display = (i === idx && row.style.display !== "table-row") ? "table-row" : "none";
+    });
+  }
+
+  function renderTasks(tasks) {
+    taskBody.innerHTML = "";
+    if (tasks.length === 0) {
+      taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tasks found.</td></tr>`;
+      return;
+    }
+
+    tasks.forEach((t, idx) => {
+      const sk = (t.Status || "").toLowerCase().replace(/\s+/g,"-");
+      const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(t.workSessions);
+
+      const tr = document.createElement("tr");
+      tr.onclick = () => toggleComboBox(idx);
+      tr.innerHTML = `
+        <td>${t.SINO || "-"}</td>
+        <td>${t["Existing Company Name"] || "-"}</td>
+        <td>${t["TYPE OF WORK"] || "-"}</td>
+        <td>${t["Due date"] || "-"}</td>
+        <td class="status ${statusLabels[sk]?.class || ''}">${statusLabels[sk]?.label || t.Status || "-"}</td>
+        <td>${formatMs(totalWorkMs)}</td>
+      `;
+      taskBody.appendChild(tr);
+
+      const cr = document.createElement("tr");
+      cr.className = "combo-box";
+      cr.style.display = "none";
+      cr.innerHTML = `<td colspan="6">
+        <div><strong>Started:</strong> ${startTime}</div>
+        <div><strong>Ended:</strong> ${endTime}</div>
+        <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
+        <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
+        <div><strong>Remarks:</strong> ${pauseCount > 1 ? '-' : (t.Remarks || '')}</div>
+        <hr style="margin:8px 0;">${getButtonsHTML(sk)}
+      </td>`;
+      taskBody.appendChild(cr);
+    });
+  }
+
+  async function loadUserTasks(username) {
+    if (!username) {
+      userInfo.textContent = "No user session found.";
+      return;
+    }
+
+    userInfo.textContent = `Loading tasks for: ${username}`;
+    taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Loading...</td></tr>`;
+
+    try {
+      const allowedStatuses = ["Not Started", "In Progress", "Pending"];
+      const tasksRef = db.collection("tasks");
+      const querySnapshot = await tasksRef
+        .where("OwnerName", "==", username)
+        .where("Status", "in", allowedStatuses)
+        .get();
+
+      const tasks = [];
+      querySnapshot.forEach(doc => {
+        const data = doc.data();
+        data.id = doc.id;
+        tasks.push(data);
+      });
+
+      userInfo.textContent = `Tasks for: ${username}`;
+      renderTasks(tasks);
+    } catch (err) {
+      console.error(err);
+      userInfo.textContent = "Failed to load tasks.";
+      taskBody.innerHTML = `<tr><td colspan="6" style="color:red;">Failed to load tasks</td></tr>`;
+    }
+  }
+
+  function logout() {
+    sessionStorage.clear();
+    window.location.href = "index.html";
+  }
+
+  // Start here
+  const sessionUsername = sessionStorage.getItem("username");
+  if (!sessionUsername) {
+    userInfo.textContent = "No user session. Redirecting...";
+    setTimeout(() => window.location.href = "index.html", 1500);
+  } else {
+    document.getElementById("usernameDisplay").textContent = sessionUsername;
+    loadUserTasks(sessionUsername);
+  }
+</script>
