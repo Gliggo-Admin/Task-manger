@@ -217,16 +217,54 @@
 
   <!-- Task creation modal -->
   <div id="taskModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <form id="taskForm">
-      <h3 id="modalTitle">Create Task</h3>
-      <label>Company Name:<br/><input type="text" name="company" required></label><br/><br/>
-      <label>Type of Work:<br/><input type="text" name="typeOfWork" required></label><br/><br/>
-      <label>Due Date:<br/><input type="date" name="dueDate" required></label><br/><br/>
-      <label>Owner:<br/><input type="text" name="owner" required></label><br/><br/>
-      <label>Notes:<br/><textarea name="notes"></textarea></label><br/><br/>
-      <button type="submit">Save Task</button>
-      <button type="button" id="cancelBtn">Cancel</button>
-    </form>
+<form id="taskForm">
+  <h3 id="modalTitle">Create Task</h3>
+
+  <!-- WORK FOR -->
+  <label>WORK FOR:<br/>
+    <select name="workFor" id="workFor" required>
+      <option value="">-- Select --</option>
+      <option value="Existing">Existing</option>
+      <option value="New">New</option>
+    </select>
+  </label><br/><br/>
+
+  <!-- COMPANY NAME -->
+  <label>Company Name:<br/>
+    <input type="text" name="companyName" id="companyName" required>
+  </label><br/><br/>
+
+  <!-- TYPE OF WORK -->
+  <label>TYPE OF WORK:<br/>
+    <select name="typeOfWork" id="typeOfWork" required>
+      <option value="">-- Select Work Type --</option>
+      <option value="Data Entry">Data Entry</option>
+      <option value="Research">Research</option>
+      <option value="Reporting">Reporting</option>
+      <option value="Email Follow-Up">Email Follow-Up</option>
+      <option value="Other">Other</option>
+    </select>
+  </label><br/><br/>
+
+  <!-- DUE DATE -->
+  <label>Due Date:<br/>
+    <input type="date" name="dueDate" required>
+  </label><br/><br/>
+
+  <!-- OWNER (readonly - current user) -->
+  <label>Owner:<br/>
+    <input type="text" name="owner" id="ownerInput" readonly>
+  </label><br/><br/>
+
+  <!-- NOTES -->
+  <label>Notes:<br/>
+    <textarea name="notes"></textarea>
+  </label><br/><br/>
+
+  <button type="submit">Save Task</button>
+  <button type="button" id="cancelBtn">Cancel</button>
+</form>
+
   </div>
 
   <!-- Firebase SDK -->
@@ -555,6 +593,25 @@ detailRow.innerHTML = `
 
     // Load user tasks on page load
     window.onload = loadTasks;
+    // Fill OWNER with current username automatically
+document.getElementById('ownerInput').value = username;
+
+// WORK FOR logic: toggle behavior for Company Name
+document.getElementById('workFor').addEventListener('change', function () {
+  const companyInput = document.getElementById('companyName');
+  const value = this.value;
+  if (value === 'Existing') {
+    companyInput.placeholder = "Select from known companies";
+    companyInput.disabled = false;
+  } else if (value === 'New') {
+    companyInput.placeholder = "Enter new company name";
+    companyInput.disabled = false;
+  } else {
+    companyInput.placeholder = "";
+    companyInput.disabled = true;
+  }
+});
+
   </script>
 
 </body>
