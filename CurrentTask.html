@@ -5,31 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>User Current Task</title>
   <style>
-    body { font-family:'Segoe UI',sans-serif; margin:0; background:#ecf0f1; padding:20px; }
-    .close-btn { background:#e74c3c; color:#fff; border:none; padding:8px 14px; font-weight:bold; border-radius:3px; cursor:pointer; float:right; }
-    h2 { margin-top:0; }
-    .user-info { font-weight:bold; margin-bottom:10px; }
-    .task-table { width:100%; border-collapse:collapse; margin-top:20px; box-shadow:0 2px 10px rgba(0,0,0,0.1); border-radius:10px; overflow:hidden; }
-    .task-table th, .task-table td { padding:12px; text-align:left; user-select:none; }
-    .task-table th { background:#34495e; color:#fff; }
-    .task-table tr { background:#fff; cursor:pointer; transition:background-color 0.3s; }
-    .task-table tr:hover { background:#f1f1f1; }
-    td.status { font-weight:bold; color:#fff; border-radius:4px; padding:6px 10px; white-space: nowrap; }
-    .status.not-started { background:#95a5a6; }
-    .status.in-progress { background:#3498db; }
-    .status.pending { background:#f1c40f; color:#000; }
-    .status.complete { background:#2ecc71; }
-    .combo-box { display:none; animation:fadeIn 0.4s ease-in-out; }
-    .combo-box td { padding: 12px 20px; }
-    .combo-box button { margin:5px 8px 5px 0; padding:8px 16px; border:none; border-radius:6px; cursor:pointer; transition:transform 0.3s ease; font-weight:bold; color:#fff; user-select:none; }
-    .btn-start { background:#2980b9; }
-    .btn-pending { background:#e67e22; }
-    .btn-continue { background:#8e44ad; }
-    .btn-complete { background:#27ae60; }
-    .highlight { border:2px solid #fff; box-shadow:0 0 8px rgba(255,255,255,0.6); }
-    @keyframes fadeIn { from {opacity:0;transform:scale(0.95);} to {opacity:1;transform:scale(1);} }
-    
-    /* Login form styles */
+    /* ... your existing styles ... */
+    /* Remove login form styles related to email/password and adjust for username */
     #login-form {
       background: #fff;
       padding: 15px 20px;
@@ -62,17 +39,6 @@
       margin-top: 8px;
       display: none;
     }
-    #logout-btn {
-      background: #c0392b;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      font-weight: bold;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-top: 10px;
-      display: none;
-    }
   </style>
 </head>
 <body>
@@ -81,54 +47,40 @@
   <h2>User Task Details</h2>
 
   <div id="login-form">
-    <input type="email" id="email" placeholder="Email" autocomplete="username" />
-    <input type="password" id="password" placeholder="Password" autocomplete="current-password" />
-    <button id="login-btn">Login</button>
+    <input type="text" id="username" placeholder="Enter username" autocomplete="off" />
+    <button id="load-btn">Load Tasks</button>
     <div id="login-error"></div>
-    <button id="logout-btn">Logout</button>
   </div>
 
-  <p class="user-info" id="userInfo">Loading user...</p>
+  <p class="user-info" id="userInfo">Please enter your username and load tasks.</p>
 
   <table class="task-table" aria-label="User tasks">
     <thead>
       <tr><th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Work Hours</th></tr>
     </thead>
-    <tbody id="task-body"><tr><td colspan="6" style="text-align:center;">Loading...</td></tr></tbody>
+    <tbody id="task-body"><tr><td colspan="6" style="text-align:center;">No tasks loaded.</td></tr></tbody>
   </table>
 
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // Initialize Firebase app
     firebase.initializeApp({
       apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
       authDomain: "task-manager-602da.firebaseapp.com",
       projectId: "task-manager-602da"
     });
 
-    const auth = firebase.auth();
     const db = firebase.firestore();
 
     const taskBody = document.getElementById("task-body");
     const userInfo = document.getElementById("userInfo");
     const loginForm = document.getElementById("login-form");
-    const loginBtn = document.getElementById("login-btn");
-    const logoutBtn = document.getElementById("logout-btn");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
+    const loadBtn = document.getElementById("load-btn");
+    const usernameInput = document.getElementById("username");
     const loginError = document.getElementById("login-error");
 
-    // Set persistence to LOCAL to keep user logged in across sessions
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-      .catch(err => {
-        console.error("Failed to set persistence:", err);
-      });
-
-    // Status labels and styles
     const statusLabels = {
       "not-started": {label:"Not Started", class:"not-started"},
       "in-progress": {label:"In Progress", class:"in-progress"},
@@ -218,92 +170,27 @@
         taskBody.appendChild(cr);
       });
 
-      attachActions(tasks);
+      // If you want, you can attach action handlers here as before
+      // attachActions(tasks);
     }
 
-    function attachActions(tasks) {
-      document.querySelectorAll(".combo-box").forEach((comboRow, idx) => {
-        comboRow.querySelectorAll("button").forEach(btn => {
-          btn.onclick = async e => {
-            e.stopPropagation();
-            const t = tasks[idx];
-            const ref = db.collection("tasks").doc(t.id);
-            const ts = firebase.firestore.Timestamp.now();
-            const sess = t.workSessions || [];
-
-            try {
-              if (btn.classList.contains("btn-start")) {
-                if (sess.some(s => !s.end)) return alert("Task is already running");
-                sess.push({start: ts, end: null});
-                await ref.update({Status: "In Progress", workSessions: sess});
-              } else if (btn.classList.contains("btn-pending")) {
-                const i = sess.findIndex(s => !s.end);
-                if (i < 0) return alert("Task is not running");
-                sess[i].end = ts;
-                await ref.update({Status: "Pending", workSessions: sess});
-              } else if (btn.classList.contains("btn-continue")) {
-                if (sess.some(s => !s.end)) return alert("Task is already running");
-                sess.push({start: ts, end: null});
-                await ref.update({Status: "In Progress", workSessions: sess});
-              } else if (btn.classList.contains("btn-complete")) {
-                const i = sess.findIndex(s => !s.end);
-                if (i > -1) sess[i].end = ts;
-
-                let totalW = 0, totalP = 0, lastEnd = null;
-                sess.forEach(s => {
-                  const a = s.start.toDate().getTime(), b = s.end.toDate().getTime();
-                  totalW += (b - a);
-                  if (lastEnd && a > lastEnd) totalP += a - lastEnd;
-                  lastEnd = b;
-                });
-
-                const st = sess[0].start, et = sess.at(-1).end;
-
-                function formatHours(ms) {
-                  const h = Math.floor(ms / 3600000);
-                  const m = Math.floor((ms % 3600000) / 60000);
-                  return `${h}h ${m}m`;
-                }
-
-                await ref.update({
-                  Status: "Complete",
-                  taskStart: st,
-                  taskEnd: et,
-                  workSessions: sess,
-                  TimeStarted: st.toDate().toLocaleString(),
-                  TimeEnd: et.toDate().toLocaleString(),
-                  TotalWorkHours: formatHours(totalW),
-                  TotalPauseHours: formatHours(totalP),
-                  Remarks: totalP > 0 ? "-" : (t.Remarks || "")
-                });
-              }
-
-              await loadUserTasks();
-
-            } catch (err) {
-              console.error(err);
-              alert("Failed to update task. Please try again.");
-            }
-          };
-        });
-      });
-    }
-
-    async function loadUserTasks() {
-      const user = auth.currentUser;
-      if (!user) return;
-      const nameOrEmail = user.displayName || user.email || user.uid;
-      userInfo.textContent = `Logged in as: ${nameOrEmail}`;
-
-      // Hide login form and show logout button
-      loginForm.style.display = 'none';
-      logoutBtn.style.display = 'inline-block';
+    async function loadUserTasks(username) {
+      if (!username) {
+        loginError.textContent = "Please enter a username.";
+        loginError.style.display = "block";
+        return;
+      }
+      loginError.style.display = "none";
+      userInfo.textContent = `Loading tasks for: ${username}...`;
+      taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Loading...</td></tr>`;
 
       try {
+        // Adjust the query field here as per your Firestore field for username
+        // For example, if tasks have "OwnerName" field:
         const allowedStatuses = ["Not Started", "In Progress", "Pending"];
         const tasksRef = db.collection("tasks");
         const querySnapshot = await tasksRef
-          .where("Task", "==", nameOrEmail)
+          .where("OwnerName", "==", username)
           .where("Status", "in", allowedStatuses)
           .get();
 
@@ -314,48 +201,19 @@
           tasks.push(data);
         });
 
+        userInfo.textContent = `Tasks for: ${username}`;
         renderTasks(tasks);
       } catch (err) {
         console.error(err);
+        loginError.textContent = "Failed to load tasks. Please try again.";
+        loginError.style.display = "block";
         taskBody.innerHTML = `<tr><td colspan="6" style="color:red;">Failed to load tasks</td></tr>`;
       }
     }
 
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        loginError.style.display = "none";
-        loadUserTasks();
-      } else {
-        userInfo.textContent = "Not logged in. Please log in to see your tasks.";
-        taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No user logged in.</td></tr>`;
-        loginForm.style.display = 'block';
-        logoutBtn.style.display = 'none';
-      }
-    });
-
-    loginBtn.onclick = async () => {
-      loginError.style.display = "none";
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-      if (!email || !password) {
-        loginError.textContent = "Please enter email and password.";
-        loginError.style.display = "block";
-        return;
-      }
-      try {
-        await auth.signInWithEmailAndPassword(email, password);
-      } catch (err) {
-        loginError.textContent = "Login failed: " + err.message;
-        loginError.style.display = "block";
-      }
-    };
-
-    logoutBtn.onclick = async () => {
-      try {
-        await auth.signOut();
-      } catch (err) {
-        alert("Logout failed: " + err.message);
-      }
+    loadBtn.onclick = () => {
+      const username = usernameInput.value.trim();
+      loadUserTasks(username);
     };
   </script>
 
