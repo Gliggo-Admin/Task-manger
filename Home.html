@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Task Manager Dashboard</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+
+  <style>
+    /* Reset & basics */
+    * { box-sizing: border-box; }
+    body, html {
+      margin: 0; padding: 0; height: 100%;
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      color: #2c3e50;
+    }
+    a {
+      color: #ecf0f1;
+      text-decoration: none;
+      display: block;
+    }
+    a:hover { text-decoration: none; }
+
+    /* Topbar */
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      background: #007BFF;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      box-shadow: 0 2px 5px rgb(255, 255, 255);
+      z-index: 10;
+    }
+
+    #dateTime { font-weight: bold; font-size: 16px; color: hsl(0, 0%, 98%); }
+
+    /* Right-side top controls: bell + profile */
+    .top-right-controls { display: flex; align-items: center; gap: 20px; position: relative; }
+
+    .bell-icon {
+      position: relative;
+      width: 35px !important;
+      height: 29px !important;
+      color: gold !important;
+      filter: drop-shadow(0 0 5px gold) !important;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .bell-icon:hover, .bell-icon:focus {
+      transform: scale(1.3) !important; 
+      filter: drop-shadow(0 0 12px gold) !important;
+      outline: none;
+    }
+
+    /* Notification badge on bell icon */
+    .badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 12px;
+      height: 12px;
+      background: #e74c3c;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #b33a3a;
+      pointer-events: none;
+      display: none; /* Hidden by default */
+    }
+
+    /* Profile */
+    .profile {
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+    }
+    .profile img {
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      margin-right: 8px;
+    }
+    .profile span {
+      font-weight: bold;
+      color: #2c3e50;
+      margin-right: 5px;
+    }
+    .profile svg {
+      width: 12px;
+      height: 12px;
+      fill: #2c3e50;
+      transition: transform 0.3s ease;
+    }
+    .profile.open svg {
+      transform: rotate(180deg);
+    }
+
+    /* Profile dropdown */
+    #profileDropdown {
+      display: none;
+      position: absolute;
+      top: 50px;
+      right: 0;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      min-width: 140px;
+      z-index: 20;
+    }
+    #profileDropdown a, #profileDropdown button {
+      display: block;
+      width: 100%;
+      padding: 10px 15px;
+      text-align: left;
+      border: none;
+      background: none;
+      color: #333;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #profileDropdown a:hover, #profileDropdown button:hover {
+      background: #f0f0f0;
+    }
+    #profileDropdown button {
+      color: #e74c3c;
+    }
+
+    /* Container */
+    .container {
+      display: flex;
+      height: 100vh;
+      padding-top: 60px; /* leave space for topbar */
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+      position: fixed;
+      top: 60px;
+      left: -260px; /* hidden by default */
+      height: calc(100% - 60px);
+      border-top-right-radius: 15px;
+      border-bottom-right-radius: 15px;
+      box-shadow:
+        inset 0 0 8px rgba(255,255,255,0.1),
+        5px 0 20px rgba(0,0,0,0.3);
+      transition: left 0.3s ease;
+      z-index: 15;
+      perspective: 800px;
+    }
+    .sidebar.open {
+      left: 0;
+    }
+    .sidebar h2 {
+      margin-top: 0;
+      margin-bottom: 25px;
+      font-weight: 700;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+    .menu {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+    .menu-item {
+      margin-bottom: 14px;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #34495e, #2c3e50);
+      box-shadow:
+        3px 3px 6px #22303f,
+        -3px -3px 6px #3d5369;
+      transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        background 0.3s ease;
+      cursor: pointer;
+      transform-style: preserve-3d;
+    }
+    .menu-item a {
+      color: #ecf0f1;
+      font-weight: 600;
+      padding: 12px 20px;
+      display: block;
+      border-radius: 10px;
+      user-select: none;
+      transition: color 0.3s ease;
+    }
+    /* 3D hover effect */
+    .menu-item:hover {
+      transform: translateZ(10px) translateY(-4px) rotateX(5deg);
+      box-shadow:
+        5px 8px 15px rgba(0,0,0,0.4),
+        inset 0 0 10px rgba(255,255,255,0.2);
+      background: linear-gradient(145deg, #4a6a91, #3a506e);
+    }
+    .menu-item:hover a {
+      color: #ffd700; /* golden highlight on hover */
+    }
+
+    /* Main content */
+    .main-content {
+      flex: 1;
+      padding: 80px 30px 30px 30px;
+      margin-left: 0;
+      width: 100%;
+      background: #f9f9f9;
+      min-height: calc(100vh - 60px);
+      overflow-y: auto;
+      border-top-left-radius: 20px;
+      position: relative;
+      transition: margin-left 0.3s ease, width 0.3s ease;
+    }
+
+    /* When sidebar is open, push main content */
+    .sidebar.open ~ .main-content {
+      margin-left: 250px;
+      width: calc(100% - 250px);
+    }
+
+    /* Toggle button */
+    .menu-btn {
+      font-size: 24px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      position: absolute;
+      top: 70px;
+      left: 20px;
+      z-index: 25;
+      color: #2c3e50;
+      transition: transform 0.2s;
+    }
+    .menu-btn:hover {
+      transform: scale(1.2);
+    }
+  </style>
+
+  <script defer>
+    document.addEventListener("DOMContentLoaded", () => {
+      const sidebar = document.getElementById("sidebar");
+      const profileDiv = document.querySelector(".profile");
+      const profileDropdownId = "profileDropdown";
+
+      // Show date/time
+      const dateTime = document.getElementById("dateTime");
+      setInterval(() => {
+        const now = new Date();
+        dateTime.textContent = now.toLocaleString();
+      }, 1000);
+
+      // Get username from sessionStorage or fallback
+      const username = sessionStorage.getItem("username") || "Guest User";
+
+      // Build profile HTML with bell icon and badge container
+      profileDiv.innerHTML = `
+        <div class="top-right-controls">
+          <svg tabindex="0" role="button" aria-label="Notifications" title="Notifications" class="bell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" >
+            <path fill="currentColor" d="M12 24c1.104 0 2-.896 2-2h-4c0 1.104.896 2 2 2zm6-6v-5c0-3.072-1.63-5.64-4.5-6.32V6c0-.828-.672-1.5-1.5-1.5S10.5 5.172 10.5 6v.68C7.63 7.36 6 9.928 6 13v5l-2 2v1h16v-1l-2-2z"/>
+          </svg>
+          <span class="badge" aria-label="New notifications"></span>
+
+          <div id="profileToggle" style="display:flex; align-items:center; cursor:pointer;" tabindex="0">
+            <img src="https://i.pravatar.cc/40" alt="User" />
+            <span>${username}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+        </div>
+        <div id="${profileDropdownId}">
+          <a href="#" id="settingsLink">Settings</a>
+          <button id="logoutBtn">Logout</button>
+        </div>
+      `;
+
+      const profileToggle = document.getElementById("profileToggle");
+      const profileDropdown = document.getElementById(profileDropdownId);
+      const logoutBtn = document.getElementById("logoutBtn");
+      const bellIcon = profileDiv.querySelector(".bell-icon");
+      const notificationBadge = profileDiv.querySelector(".badge");
+
+      // Function to update badge visibility
+      function updateNotificationBadge() {
+        const hasNew = localStorage.getItem('hasNewNotifications') === 'true';
+        if (hasNew) {
+          notificationBadge.style.display = 'block';
+        } else {
+          notificationBadge.style.display = 'none';
+        }
+      }
+      updateNotificationBadge();
+
+      // Toggle dropdown on profile click
+      profileToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = profileDropdown.style.display === "block";
+        if (isOpen) {
+          profileDropdown.style.display = "none";
+          profileDiv.classList.remove("open");
+        } else {
+          profileDropdown.style.display = "block";
+          profileDiv.classList.add("open");
+          sidebar.classList.remove("open"); // close sidebar if open
+        }
+      });
+
+      // Open notification.html on bell click or keyboard activation
+      function openNotifications() {
+        window.open("notification.html", "_blank");
+        // Clear new notifications flag and hide badge
+        localStorage.setItem('hasNewNotifications', 'false');
+        updateNotificationBadge();
+      }
+      bellIcon.addEventListener("click", openNotifications);
+      bellIcon.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+          e.preventDefault();
+          openNotifications();
+        }
+      });
+
+      // Logout
+      logoutBtn.addEventListener("click", () => {
+        sessionStorage.clear();
+        window.location.href = "index.html";
+      });
+
+      // Sidebar toggle button handler
+      function bindToggleSidebar() {
+        const toggleBtn = document.getElementById("toggleSidebar");
+        if (toggleBtn) {
+          toggleBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle("open");
+            profileDropdown.style.display = "none";
+            profileDiv.classList.remove("open");
+          });
+        }
+      }
+      bindToggleSidebar();
+
+      // Close sidebar and dropdown on outside click
+      document.addEventListener("click", (e) => {
+        if (!sidebar.contains(e.target)) {
+          sidebar.classList.remove("open");
+        }
+        if (!profileDiv.contains(e.target)) {
+          profileDropdown.style.display = "none";
+          profileDiv.classList.remove("open");
+        }
+      });
+
+      // Home link closes sidebar and dropdown
+      homeLink.addEventListener("click", (e) => {
+        sidebar.classList.remove("open");
+        profileDropdown.style.display = "none";
+        profileDiv.classList.remove("open");
+      });
+
+      // Accessibility: close dropdown on Escape key
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          sidebar.classList.remove("open");
+          profileDropdown.style.display = "none";
+          profileDiv.classList.remove("open");
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+<div class="topbar">
+  <button id="toggleSidebar" aria-label="Toggle Sidebar" class="menu-btn">&#9776;</button>
+  <div id="dateTime">Loading date/time...</div>
+  <div class="profile"></div>
+</div>
+
+<div class="container">
+  <aside class="sidebar" id="sidebar" aria-label="Sidebar Navigation">
+    <h2>Menu</h2>
+    <ul class="menu">
+      <li class="menu-item"><a href="Home.html">Dashboard</a></li>
+      <li class="menu-item"><a href="Users.html">Users</a></li>
+      <li class="menu-item"><a href="tasks.html">All Task</a></li>
+      <li class="menu-item"><a href="Chart.html">Chart View</a></li>
+      <li class="menu-item"><a href="AssignTask.html">Assign Task</a></li>
+      <li class="menu-item"><a href="Genrate Report.html">Report</a></li>
+    </ul>
+  </aside>
+
+  <main class="main-content" id="main" tabindex="0">
+    <h1>Welcome to the Task Manager</h1>
+    <p>Your productivity dashboard.</p>
+    <a href="Home.html" id="homeLink">Home</a>
+  </main>
+</div>
+</body>
+</html>

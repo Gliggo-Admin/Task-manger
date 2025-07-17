@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>User Task Manager</title>
+  <style>
+    /* Basic styling */
+    body { 
+      font-family: Arial, sans-serif; 
+      margin: 20px; 
+      background: #f0f4f8;
+      color: #333;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    /* Profile badge */
+    #profileBadge {
+      background-color: #2a9d8f;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    #profileBadge .avatar {
+      background: #264653;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+      color: #fff;
+      user-select: none;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0;
+      color: #264653;
+    }
+
+    /* Button styles */
+    #createTaskBtn {
+      background-color: #e76f51;
+      border: none;
+      color: white;
+      padding: 10px 18px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 2px 6px rgba(231, 111, 81, 0.5);
+    }
+    #createTaskBtn:hover {
+      background-color: #d35438;
+    }
+
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      margin-top: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      background: white;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    th, td { 
+      border: 1px solid #ccc; 
+      padding: 10px 12px; 
+      text-align: left; 
+    }
+
+    /* Header colors */
+    th {
+      background-color: #264653;
+      color: white;
+      font-weight: 600;
+      user-select: none;
+    }
+
+    /* Status colors */
+    td:nth-child(4) {
+      font-weight: bold;
+    }
+    td:nth-child(4):contains('Not Started') {
+      color: #e76f51;
+    }
+    td:nth-child(4):contains('In Progress') {
+      color: #f4a261;
+    }
+    td:nth-child(4):contains('Completed') {
+      color: #2a9d8f;
+    }
+
+    /* Color status using JS instead (safer) */
+
+    .edit-btn, .delete-btn {
+      padding: 5px 10px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+    .edit-btn {
+      background-color: #2a9d8f;
+      color: white;
+    }
+    .edit-btn:hover {
+      background-color: #1f5f66;
+    }
+    .delete-btn {
+      background-color: #e63946;
+      color: white;
+    }
+    .delete-btn:hover {
+      background-color: #a62b32;
+    }
+
+    /* Modal styles */
+    #taskModal { 
+      display: none; 
+      position: fixed; 
+      top: 0; left: 0; 
+      width: 100%; height: 100%; 
+      background: rgba(0,0,0,0.5); 
+      justify-content: center; 
+      align-items: center; 
+      z-index: 100;
+    }
+    #taskModal form { 
+      background: white; 
+      padding: 20px; 
+      border-radius: 8px; 
+      width: 320px; 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    #paginationControls {
+      margin-top: 15px;
+      text-align: center;
+    }
+    #paginationControls button {
+      margin: 0 3px;
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: 1px solid #264653;
+      background: white;
+      color: #264653;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    #paginationControls button:hover:not(:disabled) {
+      background-color: #264653;
+      color: white;
+    }
+    #paginationControls button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+.detail-row td {
+  border-top: none;
+  font-style: italic;
+  background-color: #f9f9f9;
+}
+.task-row:hover {
+  cursor: pointer;
+  background-color: #e0f2f1;
+}
+
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <h2>User Task Manager</h2>
+    <div id="profileBadge" title="Logged in user">
+      <div class="avatar" id="userAvatar">U</div>
+      <div id="welcomeMsg">Welcome, User</div>
+    </div>
+  </header>
+
+  <button id="createTaskBtn">+ Create Task</button>
+
+  <table id="tasksTable" aria-label="Tasks table">
+    <thead>
+      <tr>
+        <th>SINO</th>
+        <th>Company</th>
+        <th>Type of Work</th>
+        <th>Status</th>
+        <th>Owner</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div id="paginationControls" aria-label="Pagination controls"></div>
+
+  <!-- Task creation modal -->
+  <div id="taskModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <form id="taskForm">
+      <h3 id="modalTitle">Create Task</h3>
+      <label>Company Name:<br/><input type="text" name="company" required></label><br/><br/>
+      <label>Type of Work:<br/><input type="text" name="typeOfWork" required></label><br/><br/>
+      <label>Due Date:<br/><input type="date" name="dueDate" required></label><br/><br/>
+      <label>Owner:<br/><input type="text" name="owner" required></label><br/><br/>
+      <label>Notes:<br/><textarea name="notes"></textarea></label><br/><br/>
+      <button type="submit">Save Task</button>
+      <button type="button" id="cancelBtn">Cancel</button>
+    </form>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+  <script>
+    // Firebase config - replace with yours
+    const firebaseConfig = {
+      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+      authDomain: "task-manager-602da.firebaseapp.com",
+      projectId: "task-manager-602da",
+      storageBucket: "task-manager-602da.appspot.com",
+      messagingSenderId: "438978699329",
+      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // User session
+    const username = sessionStorage.getItem('username');
+    if (!username) {
+      alert("No active session found. Redirecting to login.");
+      window.location.href = 'index.html';
+    }
+
+    // Update profile badge with username and avatar (initial)
+    const welcomeMsgEl = document.getElementById('welcomeMsg');
+    const userAvatarEl = document.getElementById('userAvatar');
+    welcomeMsgEl.textContent = `Welcome, ${username}`;
+    userAvatarEl.textContent = username.charAt(0).toUpperCase();
+
+    // DOM elements
+    const taskTableBody = document.querySelector('#tasksTable tbody');
+    const paginationDiv = document.getElementById('paginationControls');
+    const createTaskBtn = document.getElementById('createTaskBtn');
+    const taskModal = document.getElementById('taskModal');
+    const taskForm = document.getElementById('taskForm');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    const rowsPerPage = 5;
+    let currentPage = 1;
+    let allTasks = [];
+    let filteredTasks = [];
+
+// Load tasks for current user (Owner)
+async function loadTasks() {
+  try {
+    const snapshot = await db.collection('tasks').where('Owner', '==', username).get();
+    allTasks = [];
+    snapshot.forEach(doc => allTasks.push({ id: doc.id, ...doc.data() }));
+
+    // Sort tasks by SINO number ascending
+    allTasks.sort((a, b) => {
+      const getNumber = sino => {
+        if (!sino) return 0;
+        const match = sino.match(/(\d+)$/);
+        return match ? parseInt(match[1], 10) : 0;
+      };
+      return getNumber(a.SINO) - getNumber(b.SINO);
+    });
+
+    filteredTasks = allTasks;
+    currentPage = 1;
+    renderTablePage(currentPage, filteredTasks);
+    renderPagination(filteredTasks);
+  } catch (err) {
+    console.error(err);
+    alert('Failed to load tasks');
+  }
+}
+
+
+    function generateSINO() {
+      let maxNum = 0;
+      allTasks.forEach(t => {
+        if (t.SINO) {
+          const match = t.SINO.match(/(\d+)$/);
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > maxNum) maxNum = num;
+          }
+        }
+      });
+      return String(maxNum + 1).padStart(3, '0');
+    }
+
+function pickField(task, ...fields) {
+  for (const field of fields) {
+    if (task[field] !== undefined && task[field] !== null && task[field].toString().trim() !== '') {
+      return task[field];
+    }
+  }
+  return ''; // fallback if none found
+}
+
+
+
+function renderTablePage(page, tasks) {
+  taskTableBody.innerHTML = '';
+  const start = (page - 1) * rowsPerPage;
+  const pageTasks = tasks.slice(start, start + rowsPerPage);
+
+  pageTasks.forEach((task, index) => {
+    const tr = document.createElement('tr');
+    tr.classList.add('task-row');
+    tr.setAttribute('tabindex', '0'); // for keyboard focus
+    tr.dataset.taskId = task.id;
+
+    const statusColorMap = {
+      'Not Started': '#e76f51',
+      'In Progress': '#f4a261',
+      'Completed': '#2a9d8f'
+    };
+    const statusColor = statusColorMap[task.Status] || '#333';
+
+    tr.innerHTML = `
+      <td>${task.SINO || ''}</td>
+      <td>${task['Existing Company Name'] || ''}</td>
+      <td>${task['TYPE OF WORK'] || ''}</td>
+      <td style="color: ${statusColor}; font-weight: 700;">${task.Status || ''}</td>
+      <td>${task.Owner || ''}</td>
+      <td>
+        <button class="edit-btn" data-id="${task.id}" aria-label="Edit task ${task.SINO || ''}">Edit</button>
+        <button class="delete-btn" data-id="${task.id}" aria-label="Delete task ${task.SINO || ''}">Delete</button>
+      </td>
+    `;
+    taskTableBody.appendChild(tr);
+
+    // Create hidden detail row for this task
+    const detailRow = document.createElement('tr');
+    detailRow.classList.add('detail-row');
+    detailRow.style.display = 'none'; // hidden by default
+detailRow.innerHTML = `
+  <td colspan="6" style="background: #f9f9f9; padding: 12px; font-size: 14px; color: #555;">
+    <strong>SINO:</strong> ${task.SINO || 'N/A'}<br/>
+    <strong>Company Name:</strong> ${task["Existing Company Name"] || 'N/A'}<br/>
+    <strong>Type of Work:</strong> ${task["TYPE OF WORK"] || 'N/A'}<br/>
+    <strong>Account Type:</strong> ${task["ACCOUNT TYPE"] || 'N/A'}<br/>
+    <strong>Accounts / Cards:</strong> ${task["Accounts / Cards"] || 'N/A'}<br/>
+    <strong>Task:</strong> ${task["Task"] || 'N/A'}<br/>
+    <strong>Status:</strong> ${task["Status"] || 'N/A'}<br/>
+    <strong>Owner:</strong> ${task["Owner"] || 'N/A'}<br/>
+    <strong>Due Date:</strong> ${task["Due date"] || 'N/A'}<br/>
+    <strong>Assigned By:</strong> ${task["Assigned By"] || 'N/A'}<br/>
+    <strong>Time Started:</strong> ${pickField(task, "TimeStarted", "Time Start") || 'N/A'}<br/>
+    <strong>Time End:</strong> ${pickField(task, "TimeEnd", "Time End") || 'N/A'}<br/>
+    <strong>Total Pause Hours:</strong> ${pickField(task, "TotalPauseHours", "TOTAL OUT OF HOURS") || 'N/A'}<br/>
+    <strong>Total Work Hours:</strong> ${pickField(task, "TotalWorkHours", "Total Work Hours") || 'N/A'}<br/>
+    <strong>Remarks:</strong> ${pickField(task, "Remarks", "Remarks (New)") ? pickField(task, "Remarks", "Remarks (New)").replace(/\n/g, '<br/>') : 'None'}<br/>
+    <strong>Created By:</strong> ${task.CreatedBy || 'N/A'}
+  </td>
+`;
+
+
+    taskTableBody.appendChild(detailRow);
+
+    // Toggle detail row on click of main row
+    tr.addEventListener('click', () => {
+      const isVisible = detailRow.style.display === 'table-row';
+      // Hide all other detail rows first (optional)
+      document.querySelectorAll('.detail-row').forEach(r => r.style.display = 'none');
+      if (!isVisible) {
+        detailRow.style.display = 'table-row';
+      } else {
+        detailRow.style.display = 'none';
+      }
+    });
+  });
+
+  attachRowEventListeners();
+}
+
+
+    function renderPagination(tasks) {
+      paginationDiv.innerHTML = '';
+      const totalPages = Math.ceil(tasks.length / rowsPerPage);
+      if (totalPages <= 1) return;
+
+      // Prev
+      const prevBtn = document.createElement('button');
+      prevBtn.textContent = 'Prev';
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.onclick = () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderTablePage(currentPage, filteredTasks);
+          renderPagination(filteredTasks);
+        }
+      };
+      paginationDiv.appendChild(prevBtn);
+
+      // Page numbers
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.disabled = (i === currentPage);
+        btn.onclick = () => {
+          currentPage = i;
+          renderTablePage(currentPage, filteredTasks);
+          renderPagination(filteredTasks);
+        };
+        paginationDiv.appendChild(btn);
+      }
+
+      // Next
+      const nextBtn = document.createElement('button');
+      nextBtn.textContent = 'Next';
+      nextBtn.disabled = currentPage === totalPages;
+      nextBtn.onclick = () => {
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderTablePage(currentPage, filteredTasks);
+          renderPagination(filteredTasks);
+        }
+      };
+      paginationDiv.appendChild(nextBtn);
+    }
+
+    // Attach edit/delete handlers
+    function attachRowEventListeners() {
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.onclick = async (e) => {
+          const id = e.target.dataset.id;
+          const task = allTasks.find(t => t.id === id);
+          if (!task) return alert('Task not found.');
+
+          // Prompt user for new values
+          const newCompany = prompt('Company Name:', task['Existing Company Name'] || '');
+          if (newCompany === null) return;
+          const newTypeOfWork = prompt('Type of Work:', task['TYPE OF WORK'] || '');
+          if (newTypeOfWork === null) return;
+          const newStatus = prompt('Status (Not Started, In Progress, Completed):', task.Status || '');
+          if (newStatus === null) return;
+          const newOwner = prompt('Owner:', task.Owner || '');
+          if (newOwner === null) return;
+          const newNotes = prompt('Notes:', task.Notes || '');
+
+          try {
+            await db.collection('tasks').doc(id).update({
+              'Existing Company Name': newCompany,
+              'TYPE OF WORK': newTypeOfWork,
+              Status: newStatus,
+              Owner: newOwner,
+              Notes: newNotes,
+            });
+            alert('Task updated');
+            loadTasks();
+          } catch (err) {
+            console.error(err);
+            alert('Failed to update task');
+          }
+        };
+      });
+
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.onclick = async (e) => {
+          const id = e.target.dataset.id;
+          if (!confirm('Delete this task?')) return;
+          try {
+            await db.collection('tasks').doc(id).delete();
+            alert('Task deleted');
+            loadTasks();
+          } catch (err) {
+            console.error(err);
+            alert('Failed to delete task');
+          }
+        };
+      });
+    }
+
+    // Open/close modal
+    createTaskBtn.onclick = () => {
+      taskForm.reset();
+      taskModal.style.display = 'flex';
+      taskForm.querySelector('input[name="company"]').focus();
+    };
+    cancelBtn.onclick = () => {
+      taskModal.style.display = 'none';
+    };
+    taskModal.onclick = (e) => {
+      if (e.target === taskModal) taskModal.style.display = 'none';
+    };
+
+    // Submit new task
+    taskForm.onsubmit = async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(taskForm);
+      const data = {};
+
+      formData.forEach((v, k) => {
+        data[k] = v.trim();
+      });
+
+      if (!data.company || !data.typeOfWork || !data.dueDate || !data.owner) {
+        return alert('Please fill all required fields');
+      }
+
+      data.SINO = generateSINO();
+      data.Status = 'Not Started';
+      data['Existing Company Name'] = data.company;
+      data['TYPE OF WORK'] = data.typeOfWork;
+      data.Owner = data.owner;
+      data['Due date'] = data.dueDate;
+      data.Notes = data.notes || '';
+      data.CreatedBy = username; // Link task to logged-in user
+
+      // Clean up extra keys
+      delete data.company;
+      delete data.typeOfWork;
+      delete data.dueDate;
+      delete data.owner;
+      delete data.notes;
+
+      try {
+        await db.collection('tasks').add(data);
+        alert('Task created!');
+        taskModal.style.display = 'none';
+        loadTasks();
+      } catch (err) {
+        console.error(err);
+        alert('Failed to create task');
+      }
+    };
+
+    // Load user tasks on page load
+    window.onload = loadTasks;
+  </script>
+
+</body>
+</html>
