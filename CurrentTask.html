@@ -10,17 +10,18 @@
     h2 { margin-top:0; }
     .user-info { font-weight:bold; margin-bottom:10px; }
     .task-table { width:100%; border-collapse:collapse; margin-top:20px; box-shadow:0 2px 10px rgba(0,0,0,0.1); border-radius:10px; overflow:hidden; }
-    .task-table th, .task-table td { padding:12px; text-align:left; }
+    .task-table th, .task-table td { padding:12px; text-align:left; user-select:none; }
     .task-table th { background:#34495e; color:#fff; }
     .task-table tr { background:#fff; cursor:pointer; transition:background-color 0.3s; }
     .task-table tr:hover { background:#f1f1f1; }
-    td.status { font-weight:bold; color:#fff; border-radius:4px; padding:6px 10px; }
+    td.status { font-weight:bold; color:#fff; border-radius:4px; padding:6px 10px; white-space: nowrap; }
     .status.not-started { background:#95a5a6; }
     .status.in-progress { background:#3498db; }
     .status.pending { background:#f1c40f; color:#000; }
     .status.complete { background:#2ecc71; }
     .combo-box { display:none; animation:fadeIn 0.4s ease-in-out; }
-    .combo-box button { margin:5px; padding:8px 16px; border:none; border-radius:6px; cursor:pointer; transition:transform 0.3s ease; font-weight:bold; color:#fff}
+    .combo-box td { padding: 12px 20px; }
+    .combo-box button { margin:5px 8px 5px 0; padding:8px 16px; border:none; border-radius:6px; cursor:pointer; transition:transform 0.3s ease; font-weight:bold; color:#fff; user-select:none; }
     .btn-start { background:#2980b9; }
     .btn-pending { background:#e67e22; }
     .btn-continue { background:#8e44ad; }
@@ -35,7 +36,7 @@
   <h2>User Task Details</h2>
   <p class="user-info" id="userInfo">Loading user...</p>
 
-  <table class="task-table">
+  <table class="task-table" aria-label="User tasks">
     <thead>
       <tr><th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Work Hours</th></tr>
     </thead>
@@ -61,7 +62,7 @@
     const taskBody = document.getElementById("task-body");
     const userInfo = document.getElementById("userInfo");
 
-    // Status labels and their CSS classes for styling
+    // Mapping of task statuses to labels and styles
     const statusLabels = {
       "not-started": {label:"Not Started", class:"not-started"},
       "in-progress": {label:"In Progress", class:"in-progress"},
@@ -69,7 +70,7 @@
       "complete": {label:"Completed", class:"complete"}
     };
 
-    // Helper function to format milliseconds to hh:mm:ss
+    // Format milliseconds as hh:mm:ss string
     function formatMs(ms) {
       const s = Math.floor(ms/1000),
             h = Math.floor(s/3600),
@@ -78,7 +79,7 @@
       return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
     }
 
-    // Calculate total work and pause durations from workSessions array
+    // Calculate total work and pause durations from work sessions
     function calcTimeDetails(sessions=[]) {
       let totalWork=0, totalPause=0, pauseCount=0, lastEnd=null;
       sessions.forEach(sess => {
@@ -102,23 +103,23 @@
       };
     }
 
-    // Returns action buttons HTML based on current task status key
+    // Return buttons HTML based on task status key
     function getButtonsHTML(sk) {
       return {
-        "not-started": `<button class="btn-start highlight">Start</button>`,
-        "in-progress": `<button class="btn-pending">Pause</button><button class="btn-complete highlight">Complete</button>`,
-        "pending": `<button class="btn-continue highlight">Resume</button>`
+        "not-started": `<button class="btn-start highlight" type="button">Start</button>`,
+        "in-progress": `<button class="btn-pending" type="button">Pause</button><button class="btn-complete highlight" type="button">Complete</button>`,
+        "pending": `<button class="btn-continue highlight" type="button">Resume</button>`
       }[sk] || `<em>No actions</em>`;
     }
 
-    // Show/hide combo box with action buttons for a selected row
+    // Toggle visibility of combo box action row
     function toggleComboBox(idx) {
-      document.querySelectorAll(".combo-box").forEach((r,i) => {
-        r.style.display = (i === idx && r.style.display !== "table-row") ? "table-row" : "none";
+      document.querySelectorAll(".combo-box").forEach((row, i) => {
+        row.style.display = (i === idx && row.style.display !== "table-row") ? "table-row" : "none";
       });
     }
 
-    // Render task rows and combo boxes for the user's tasks
+    // Render task rows and action combos
     function renderTasks(tasks) {
       taskBody.innerHTML = "";
       if (tasks.length === 0) {
@@ -130,7 +131,7 @@
         const sk = (t.Status || "").toLowerCase().replace(/\s+/g,"-");
         const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(t.workSessions);
 
-        // Main row showing task summary
+        // Main row with task summary
         const tr = document.createElement("tr");
         tr.onclick = () => toggleComboBox(idx);
         tr.innerHTML = `
@@ -143,7 +144,7 @@
         `;
         taskBody.appendChild(tr);
 
-        // Hidden combo-box row with details and action buttons
+        // Combo box row with detailed info and action buttons
         const cr = document.createElement("tr");
         cr.className = "combo-box";
         cr.style.display = "none";
@@ -157,13 +158,14 @@
         </td>`;
         taskBody.appendChild(cr);
       });
+
       attachActions(tasks);
     }
 
-    // Attach click handlers to action buttons inside combo boxes
+    // Attach click handlers for buttons in combo boxes
     function attachActions(tasks) {
-      document.querySelectorAll(".combo-box").forEach((cr, idx) => {
-        cr.querySelectorAll("button").forEach(btn => {
+      document.querySelectorAll(".combo-box").forEach((comboRow, idx) => {
+        comboRow.querySelectorAll("button").forEach(btn => {
           btn.onclick = async e => {
             e.stopPropagation();
             const t = tasks[idx];
@@ -173,26 +175,19 @@
 
             try {
               if (btn.classList.contains("btn-start")) {
-                // Start a new session if none running
                 if (sess.some(s => !s.end)) return alert("Task is already running");
                 sess.push({start: ts, end: null});
                 await ref.update({Status: "In Progress", workSessions: sess});
-              }
-              if (btn.classList.contains("btn-pending")) {
-                // Pause running session
+              } else if (btn.classList.contains("btn-pending")) {
                 const i = sess.findIndex(s => !s.end);
                 if (i < 0) return alert("Task is not running");
                 sess[i].end = ts;
                 await ref.update({Status: "Pending", workSessions: sess});
-              }
-              if (btn.classList.contains("btn-continue")) {
-                // Resume from pending
+              } else if (btn.classList.contains("btn-continue")) {
                 if (sess.some(s => !s.end)) return alert("Task is already running");
                 sess.push({start: ts, end: null});
                 await ref.update({Status: "In Progress", workSessions: sess});
-              }
-              if (btn.classList.contains("btn-complete")) {
-                // Complete task and finalize session times
+              } else if (btn.classList.contains("btn-complete")) {
                 const i = sess.findIndex(s => !s.end);
                 if (i > -1) sess[i].end = ts;
 
@@ -225,7 +220,7 @@
                 });
               }
 
-              // Reload updated tasks
+              // Reload updated tasks list after update
               await loadUserTasks();
 
             } catch (err) {
@@ -237,7 +232,7 @@
       });
     }
 
-    // Load current user's tasks that are active (not completed)
+    // Load current user's active tasks (Not Started, In Progress, Pending)
     async function loadUserTasks() {
       const user = auth.currentUser;
       if (!user) return;
@@ -245,7 +240,6 @@
       userInfo.textContent = `Logged in as: ${nameOrEmail}`;
 
       try {
-        // Query tasks where 'Task' matches user and status in allowed states
         const allowedStatuses = ["Not Started", "In Progress", "Pending"];
         const tasksRef = db.collection("tasks");
         const querySnapshot = await tasksRef
@@ -267,12 +261,11 @@
       }
     }
 
-    // Listen for auth state changes and load tasks if logged in
+    // Listen for auth state changes, redirect if not logged in
     auth.onAuthStateChanged(async user => {
       if (user) {
         await loadUserTasks();
       } else {
-        // Delay redirect to allow Firebase to confirm auth state on page reload
         setTimeout(() => {
           if (!firebase.auth().currentUser) {
             window.location.href = "index.html";
