@@ -566,15 +566,17 @@ detailRow.innerHTML = `
 
       data.SINO = generateSINO();
       data.Status = 'Not Started';
-      data['Existing Company Name'] = data.company;
-      data['TYPE OF WORK'] = data.typeOfWork;
+data['Existing Company Name'] = data.companyName;
+data['WORK FOR'] = data.workFor;
+
       data.Owner = data.owner;
       data['Due date'] = data.dueDate;
       data.Notes = data.notes || '';
       data.CreatedBy = username; // Link task to logged-in user
 
       // Clean up extra keys
-      delete data.company;
+     delete data.companyName;
+delete data.workFor;
       delete data.typeOfWork;
       delete data.dueDate;
       delete data.owner;
