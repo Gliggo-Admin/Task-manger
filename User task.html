@@ -864,13 +864,14 @@ function addUniqueOptions(datalist, valuesArray) {
 
 // When opening modal:
 createTaskBtn.onclick = async () => {
+  // Reset form
   taskForm.reset();
-  SINOinput.value = '';
   ownerInput.value = username;
   ownerInput.setAttribute("readonly", true);
   TaskInput.value = `Daily task for ${username}`;
   periodInput.style.display = 'none';
 
+  // Pre-fill dropdowns
   const companies = allTasks.map(t => t['Existing Company Name']);
   const workTypes = allTasks.map(t => t['TYPE OF WORK']);
   const assignedByListArr = allTasks.map(t => t['Assigned By']);
@@ -879,7 +880,8 @@ createTaskBtn.onclick = async () => {
   addUniqueOptions(workTypeList, workTypes);
   addUniqueOptions(assignedByList, assignedByListArr);
 
-  const nextSino = await generateSINOFromDB(); // ← Async wait
+  // Get next SINO from DB
+  const nextSino = await generateSINOFromDB();
   SINOinput.value = nextSino;
 
   taskModal.style.display = 'flex';
