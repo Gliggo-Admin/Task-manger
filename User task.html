@@ -4,6 +4,30 @@
 <meta charset="UTF-8" />
 <title>User Task Manager</title>
   <style>
+
+    #topNav {
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+#topNav button {
+  background-color: #264653;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#topNav button:hover {
+  background-color: #1b2e34;
+}
+
     /* Basic styling */
     body { 
       font-family: Arial, sans-serif; 
@@ -280,6 +304,10 @@
   </style>
 </head>
 <body>
+  <nav id="topNav">
+    <button onclick="location.href='Home.html'">🏠 Home</button>
+    <button onclick="location.href='CurrentTask.html'">🛠️ Current Working</button>
+  </nav>
 
   <header>
     <h2>User Task Manager</h2>
