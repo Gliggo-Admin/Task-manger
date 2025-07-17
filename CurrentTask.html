@@ -236,13 +236,19 @@
       }
     }
 
-    auth.onAuthStateChanged(user => {
-      if (!user) {
+auth.onAuthStateChanged(user => {
+  if (user) {
+    loadUserTasks();
+  } else {
+    // Delay redirect to avoid false-negative on page reload
+    setTimeout(() => {
+      if (!firebase.auth().currentUser) {
         window.location.href = "index.html";
-      } else {
-        loadUserTasks();
       }
-    });
+    }, 1500); // 1.5s delay gives Firebase time to confirm user
+  }
+});
+
   </script>
 </body>
 </html>
