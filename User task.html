@@ -218,47 +218,84 @@
   <!-- Task creation modal -->
   <div id="taskModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
 <form id="taskForm">
-  <h3 id="modalTitle">Create Task</h3>
+  <h3 id="modalTitle">Create / Edit Task</h3>
 
-  <!-- WORK FOR -->
-  <label>WORK FOR:<br/>
-    <select name="workFor" id="workFor" required>
-      <option value="">-- Select --</option>
-      <option value="Existing">Existing</option>
-      <option value="New">New</option>
-    </select>
+  <!-- SINO (auto-generated) -->
+  <label>SINO:<br/>
+    <input type="text" name="SINO" id="SINO" readonly>
   </label><br/><br/>
 
-  <!-- COMPANY NAME -->
+  <!-- Company Name with autocomplete -->
   <label>Company Name:<br/>
-    <input type="text" name="companyName" id="companyName" required>
+    <input list="companyList" name="companyName" id="companyName" required>
+    <datalist id="companyList"></datalist>
   </label><br/><br/>
 
-  <!-- TYPE OF WORK -->
+  <!-- TYPE OF WORK (dynamic dropdown) -->
   <label>TYPE OF WORK:<br/>
-    <select name="typeOfWork" id="typeOfWork" required>
-      <option value="">-- Select Work Type --</option>
-      <option value="Data Entry">Data Entry</option>
-      <option value="Research">Research</option>
-      <option value="Reporting">Reporting</option>
-      <option value="Email Follow-Up">Email Follow-Up</option>
-      <option value="Other">Other</option>
+    <input list="workTypeList" name="typeOfWork" id="typeOfWork" required>
+    <datalist id="workTypeList"></datalist>
+  </label><br/><br/>
+
+  <!-- ACCOUNT TYPE -->
+  <label>Account Type:<br/>
+    <select name="accountType" id="accountType">
+      <option value="">--Select--</option>
+      <option>Credit Card</option>
+      <option>Chequing Acc</option>
+      <option>Savings Acc</option>
+      <option>Loan Acc</option>
+      <option>Other</option>
     </select>
   </label><br/><br/>
 
-  <!-- DUE DATE -->
-  <label>Due Date:<br/>
-    <input type="date" name="dueDate" required>
+  <!-- Account # autofill from existing -->
+  <label>Account # / Cards:<br/>
+    <input list="accountsCardsList" name="accountsCards" id="accountsCards">
+    <datalist id="accountsCardsList"></datalist>
   </label><br/><br/>
 
-  <!-- OWNER (readonly - current user) -->
+  <!-- Task (auto default to ‘Daily Task’ but editable) -->
+  <label>Task:<br/>
+    <input type="text" name="Task" id="Task">
+  </label><br/><br/>
+
+  <!-- Owner (preset to username but editable) -->
   <label>Owner:<br/>
-    <input type="text" name="owner" id="ownerInput" readonly>
+    <input type="text" name="Owner" id="Owner" required>
   </label><br/><br/>
 
-  <!-- NOTES -->
+  <!-- WORK FOR with period logic -->
+  <label>WORK FOR:<br/>
+    <select name="workFor" id="workFor">
+      <option value="">--Choose--</option>
+      <option value="Yearly">Yearly</option>
+      <option value="Monthly">Monthly</option>
+      <option value="Quarterly">Quarterly</option>
+      <option value="Bi-weekly">Bi-weekly</option>
+      <option value="Weekly">Weekly</option>
+      <option value="Custom">Custom</option>
+    </select>
+  </label><br/><br/>
+
+  <label>Period:<br/>
+    <input type="text" name="period" id="period" style="display:none;" placeholder="Enter period">
+  </label><br/><br/>
+
+  <!-- Due Date -->
+  <label>Due Date:<br/>
+    <input type="date" name="dueDate" id="dueDate" required>
+  </label><br/><br/>
+
+  <!-- Assigned By -->
+  <label>Assigned By:<br/>
+    <input list="assignedByList" name="AssignedBy" id="AssignedBy">
+    <datalist id="assignedByList"></datalist>
+  </label><br/><br/>
+
+  <!-- Notes -->
   <label>Notes:<br/>
-    <textarea name="notes"></textarea>
+    <textarea name="Notes" id="Notes"></textarea>
   </label><br/><br/>
 
   <button type="submit">Save Task</button>
@@ -595,24 +632,95 @@ delete data.workFor;
 
     // Load user tasks on page load
     window.onload = loadTasks;
-    // Fill OWNER with current username automatically
-document.getElementById('ownerInput').value = username;
+    // Refs
+const companyList = document.getElementById('companyList');
+const workTypeList = document.getElementById('workTypeList');
+const accountsCardsList = document.getElementById('accountsCardsList');
+const assignedByList = document.getElementById('assignedByList');
 
-// WORK FOR logic: toggle behavior for Company Name
-document.getElementById('workFor').addEventListener('change', function () {
-  const companyInput = document.getElementById('companyName');
-  const value = this.value;
-  if (value === 'Existing') {
-    companyInput.placeholder = "Select from known companies";
-    companyInput.disabled = false;
-  } else if (value === 'New') {
-    companyInput.placeholder = "Enter new company name";
-    companyInput.disabled = false;
+const SINOinput = document.getElementById('SINO');
+const workFor = document.getElementById('workFor');
+const periodInput = document.getElementById('period');
+const accountType = document.getElementById('accountType');
+const companyInput = document.getElementById('companyName');
+const typeOfWorkInput = document.getElementById('typeOfWork');
+const accountsInput = document.getElementById('accountsCards');
+const assignedByInput = document.getElementById('AssignedBy');
+const ownerInput = document.getElementById('Owner');
+const TaskInput = document.getElementById('Task');
+
+// Preload user & SINO when modal opens
+createTaskBtn.onclick = () => {
+  taskForm.reset();
+  companyList.innerHTML = workTypeList.innerHTML = assignedByList.innerHTML = '';
+  allTasks.forEach(task => {
+    companyList.append(new Option(task['Existing Company Name'], task['Existing Company Name']));
+    workTypeList.append(new Option(task['TYPE OF WORK'], task['TYPE OF WORK']));
+    assignedByList.append(new Option(task['Assigned By'], task['Assigned By']));
+  });
+  ownerInput.value = username;
+  TaskInput.value = `Daily task for ${username}`;
+  SINOinput.value = generateSINO();
+  taskModal.style.display = 'flex';
+};
+
+// WORK FOR show Period
+workFor.addEventListener('change', () => {
+  if (workFor.value) {
+    periodInput.style.display = 'block';
+    periodInput.placeholder = `${workFor.value} period`;
   } else {
-    companyInput.placeholder = "";
-    companyInput.disabled = true;
+    periodInput.style.display = 'none';
   }
 });
+
+// Fill accounts/cards when company + accountType match
+function updateAccounts() {
+  const c = companyInput.value.toLowerCase();
+  const type = accountType.value.toLowerCase();
+  accountsCardsList.innerHTML = '';
+  new Set(allTasks
+    .filter(t =>
+      t['Existing Company Name']?.toLowerCase() === c &&
+      t['ACCOUNT TYPE']?.toLowerCase() === type &&
+      t['Accounts / Cards']
+    )
+    .map(t => t['Accounts / Cards'])
+  ).forEach(val => accountsCardsList.append(new Option(val, val)));
+}
+companyInput.addEventListener('input', updateAccounts);
+accountType.addEventListener('change', updateAccounts);
+
+// On form submit: map your fields and cleanup
+taskForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const data = {
+    SINO: SINOinput.value,
+    'Existing Company Name': companyInput.value.trim(),
+    'TYPE OF WORK': typeOfWorkInput.value.trim(),
+    'ACCOUNT TYPE': accountType.value,
+    'Accounts / Cards': accountsInput.value.trim(),
+    Task: TaskInput.value.trim(),
+    Owner: ownerInput.value.trim(),
+    'WORK FOR': workFor.value,
+    Period: periodInput.value.trim(),
+    'Due date': dueDate.value,
+    'Assigned By': assignedByInput.value.trim(),
+    Notes: Notes.value.trim(),
+    Status: 'Not Started',
+    CreatedBy: username
+  };
+  try {
+    await db.collection('tasks').add(data);
+    alert('Task added!');
+    taskModal.style.display = 'none';
+    loadTasks();
+  } catch (e) {
+    console.error(e);
+    alert('Error creating task');
+  }
+};
+
 
   </script>
 
