@@ -184,6 +184,89 @@
   background-color: #e0f2f1;
 }
 
+#taskForm {
+  background: #ffffff;
+  border: 2px solid #2a9d8f;
+  border-radius: 10px;
+  padding: 25px;
+  width: 350px;
+  margin: auto;
+  color: #264653;
+}
+
+#taskForm h3 {
+  color: #2a9d8f;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+#taskForm label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+#taskForm input[type="text"],
+#taskForm input[type="date"],
+#taskForm select,
+#taskForm textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-top: 5px;
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+
+#taskForm input:focus,
+#taskForm select:focus,
+#taskForm textarea:focus {
+  border-color: #2a9d8f;
+  outline: none;
+}
+
+#taskForm select {
+  background-color: #f1f1f1;
+  font-weight: 500;
+}
+
+#taskForm textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+#taskForm button[type="submit"],
+#taskForm button[type="button"] {
+  width: 48%;
+  margin: 10px 1%;
+  padding: 10px;
+  font-size: 15px;
+  font-weight: bold;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#taskForm button[type="submit"] {
+  background-color: #2a9d8f;
+  color: white;
+}
+#taskForm button[type="submit"]:hover {
+  background-color: #1e7166;
+}
+
+#taskForm button[type="button"] {
+  background-color: #e76f51;
+  color: white;
+}
+#taskForm button[type="button"]:hover {
+  background-color: #c94f38;
+}
+
+
 
   </style>
 </head>
@@ -719,6 +802,38 @@ taskForm.onsubmit = async (e) => {
     console.error(e);
     alert('Error creating task');
   }
+};
+
+// Unique helper
+function addUniqueOptions(datalist, valuesArray) {
+  const seen = new Set();
+  datalist.innerHTML = '';
+  valuesArray.forEach(val => {
+    if (val && !seen.has(val.trim().toLowerCase())) {
+      seen.add(val.trim().toLowerCase());
+      datalist.append(new Option(val.trim()));
+    }
+  });
+}
+
+// When opening modal:
+createTaskBtn.onclick = () => {
+  taskForm.reset();
+  SINOinput.value = generateSINO();
+  ownerInput.value = username;
+  ownerInput.setAttribute("readonly", true); // ❌ can't change
+  TaskInput.value = `Daily task for ${username}`;
+  periodInput.style.display = 'none';
+
+  const companies = allTasks.map(t => t['Existing Company Name']);
+  const workTypes = allTasks.map(t => t['TYPE OF WORK']);
+  const assignedByListArr = allTasks.map(t => t['Assigned By']);
+
+  addUniqueOptions(companyList, companies);
+  addUniqueOptions(workTypeList, workTypes);
+  addUniqueOptions(assignedByList, assignedByListArr);
+
+  taskModal.style.display = 'flex';
 };
 
 
