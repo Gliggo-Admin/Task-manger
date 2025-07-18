@@ -110,41 +110,45 @@
     });
   }
 
-  function renderTasks(tasks) {
-    taskBody.innerHTML = "";
-    tasks.forEach((task, idx) => {
-      const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
-      const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
+function renderTasks(tasks) {
+  taskBody.innerHTML = "";
+  tasks.forEach((task, idx) => {
+    const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
+    const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
+    
+    // Use "No Owner" if OwnerName is undefined or empty
+    const ownerName = task.OwnerName || "No Owner";
 
-      const tr = document.createElement("tr");
-      tr.onclick = () => toggleComboBox(idx);
-      tr.innerHTML = `
-        <td>${task.SINO}</td>
-        <td>${task["Existing Company Name"]}</td>
-        <td>${task["TYPE OF WORK"]}</td>
-        <td>${task["Due date"]}</td>
-        <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
-        <td>${task.OwnerName}</td>
-        <td>${formatMs(totalWorkMs)}</td>
-      `;
-      taskBody.appendChild(tr);
+    const tr = document.createElement("tr");
+    tr.onclick = () => toggleComboBox(idx);
+    tr.innerHTML = `
+      <td>${task.SINO}</td>
+      <td>${task["Existing Company Name"]}</td>
+      <td>${task["TYPE OF WORK"]}</td>
+      <td>${task["Due date"]}</td>
+      <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
+      <td>${ownerName}</td>  <!-- Display Owner Name or "No Owner" -->
+      <td>${formatMs(totalWorkMs)}</td>
+    `;
+    taskBody.appendChild(tr);
 
-      const cr = document.createElement("tr");
-      cr.className = "combo-box";
-      cr.style.display = "none";
-      cr.innerHTML = `<td colspan="7">
-        <div><strong>Started:</strong> ${startTime}</div>
-        <div><strong>Ended:</strong> ${endTime}</div>
-        <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
-        <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
-        <div><strong>Remarks:</strong> ${pauseCount > 1 ? '-' : (task.Remarks || '')}</div>
-        <hr style="margin:8px 0;">
-        ${getButtonsHTML(sk)}
-      </td>`;
-      taskBody.appendChild(cr);
-    });
-    attachActions(tasks);
-  }
+    const cr = document.createElement("tr");
+    cr.className = "combo-box";
+    cr.style.display = "none";
+    cr.innerHTML = `<td colspan="7">
+      <div><strong>Started:</strong> ${startTime}</div>
+      <div><strong>Ended:</strong> ${endTime}</div>
+      <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
+      <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
+      <div><strong>Remarks:</strong> ${pauseCount > 1 ? '-' : (task.Remarks || '')}</div>
+      <hr style="margin:8px 0;">
+      ${getButtonsHTML(sk)}
+    </td>`;
+    taskBody.appendChild(cr);
+  });
+  attachActions(tasks);
+}
+
 
   function attachActions(tasks) {
     document.querySelectorAll(".combo-box").forEach((cr, idx) => {
