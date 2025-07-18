@@ -115,9 +115,9 @@ function renderTasks(tasks) {
   tasks.forEach((task, idx) => {
     const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
     const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
-    
-    // Use "No Owner" if OwnerName is undefined or empty
-    const ownerName = task.OwnerName || "No Owner";
+
+    // Get the Owner Name from the task object, ensuring that it defaults to "No Owner" if missing
+    const ownerName = task.Owner || "No Owner"; // Assuming `Owner` field in Firestore
 
     const tr = document.createElement("tr");
     tr.onclick = () => toggleComboBox(idx);
@@ -127,7 +127,7 @@ function renderTasks(tasks) {
       <td>${task["TYPE OF WORK"]}</td>
       <td>${task["Due date"]}</td>
       <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
-      <td>${ownerName["Owner"]}</td>  <!-- Display Owner Name or "No Owner" -->
+      <td>${ownerName}</td> <!-- Display Owner Name -->
       <td>${formatMs(totalWorkMs)}</td>
     `;
     taskBody.appendChild(tr);
