@@ -10,28 +10,24 @@
     body { font-family:'Segoe UI',sans-serif; margin:0; padding:20px; background:#f8f9fa; }
     h2 { margin-bottom:10px; }
     .filters { margin:20px 0; }
-    .filters button, .filters input {
-      margin:4px 6px; padding:6px 12px;
-      border:none; border-radius:4px; font-weight:bold; cursor:pointer;
-    }
+    .filters button, .filters input { margin:4px 6px; padding:6px 12px; border:none; border-radius:4px; font-weight:bold; cursor:pointer; }
     .btn-primary { background:#007bff; color:#fff; }
     .btn-success { background:#28a745; color:#fff; }
     .btn-warning { background:#ffc107; color:#000; }
     .btn-danger { background:#dc3545; color:#fff; }
-    .btn-home {
-      background:#343a40; color:#fff;
-      float:right; margin-top:-40px;
-    }
+    .btn-home { background:#343a40; color:#fff; float:right; margin-top:-40px; }
     .chart-container { display:flex; flex-wrap:wrap; justify-content:space-between; }
     .chart-box { width:48%; margin-bottom:30px; }
     canvas { background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+    table { width:100%; border-collapse:collapse; margin-top:40px; }
+    th, td { border:1px solid #ddd; padding:8px; text-align:left; }
+    th { background:#007bff; color:#fff; }
   </style>
 </head>
 <body>
   <h2>User Task Dashboard</h2>
   <button class="btn-home" onclick="window.location.href='userdashboard.html'">🏠 Home</button>
 
-  <!-- Filters -->
   <div class="filters">
     <button class="btn-primary" onclick="applyThisMonth()">This Month</button>
     <button class="btn-warning" onclick="applyPrevMonth()">Previous Month</button>
@@ -41,137 +37,141 @@
     <button class="btn-danger" onclick="resetFilter()">Show All</button>
   </div>
 
-  <!-- Charts -->
   <div class="chart-container">
     <div class="chart-box"><canvas id="statusChart"></canvas></div>
     <div class="chart-box"><canvas id="workHoursChart"></canvas></div>
-    <div class="chart-box"><canvas id="completionChart"></canvas></div>
+    <div class="chart-box"><canvas id="completeChart"></canvas></div>
     <div class="chart-box"><canvas id="timeSpentChart"></canvas></div>
     <div class="chart-box"><canvas id="monthlyWorkChart"></canvas></div>
     <div class="chart-box"><canvas id="timelineChart"></canvas></div>
     <div class="chart-box"><canvas id="avgWorkPauseChart"></canvas></div>
-    <div class="chart-box"><canvas id="ownerHoursChart"></canvas></div> <!-- New chart -->
+    <div class="chart-box"><canvas id="ownerHoursChart"></canvas></div>
+    <div class="chart-box"><canvas id="companyHoursChart"></canvas></div>
+    <div class="chart-box"><canvas id="assignedByChart"></canvas></div>
   </div>
 
+  <!-- Task table -->
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Company</th><th>Type</th><th>Status</th><th>Owner</th><th>Assigned By</th><th>Due Date</th><th>Total Work Hours</th>
+      </tr>
+    </thead>
+    <tbody id="taskTable"></tbody>
+  </table>
+
   <script>
-    // Firebase config
     firebase.initializeApp({
-      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-      authDomain: "task-manager-602da.firebaseapp.com",
-      projectId: "task-manager-602da",
-      storageBucket: "task-manager-602da.appspot.com",
-      messagingSenderId: "438978699329",
-      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+      apiKey:"AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+      authDomain:"task-manager-602da.firebaseapp.com",
+      projectId:"task-manager-602da",
+      storageBucket:"task-manager-602da.appspot.com",
+      messagingSenderId:"438978699329",
+      appId:"1:438978699329:web:9f475d04352bbdaa5ce6c0"
     });
     const db = firebase.firestore();
-
     let allTasks = [], filteredTasks = [];
     const ctxs = {
-      status: document.getElementById("statusChart").getContext("2d"),
-      work: document.getElementById("workHoursChart").getContext("2d"),
-      complete: document.getElementById("completionChart").getContext("2d"),
-      timeSpent: document.getElementById("timeSpentChart").getContext("2d"),
-      monthly: document.getElementById("monthlyWorkChart").getContext("2d"),
-      timeline: document.getElementById("timelineChart").getContext("2d"),
-      avg: document.getElementById("avgWorkPauseChart").getContext("2d"),
-      ownerHours: document.getElementById("ownerHoursChart").getContext("2d")
+      status:document.getElementById("statusChart").getContext("2d"),
+      work:document.getElementById("workHoursChart").getContext("2d"),
+      complete:document.getElementById("completeChart").getContext("2d"),
+      timeSpent:document.getElementById("timeSpentChart").getContext("2d"),
+      monthly:document.getElementById("monthlyWorkChart").getContext("2d"),
+      timeline:document.getElementById("timelineChart").getContext("2d"),
+      avg:document.getElementById("avgWorkPauseChart").getContext("2d"),
+      ownerHours:document.getElementById("ownerHoursChart").getContext("2d"),
+      companyHours:document.getElementById("companyHoursChart").getContext("2d"),
+      assignedBy:document.getElementById("assignedByChart").getContext("2d")
     };
     const charts = {};
 
-    // Filters
-    function applyThisMonth() { const now=new Date(), s=new Date(now.getFullYear(),now.getMonth(),1), e=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59); applyFilter(s,e); }
-    function applyPrevMonth() { const now=new Date(), s=new Date(now.getFullYear(),now.getMonth()-1,1), e=new Date(now.getFullYear(),now.getMonth(),0,23,59,59); applyFilter(s,e); }
-    function applyCustomRange() {
-      const start=new Date(startDate.value),end=new Date(endDate.value);
-      if(start<=end){end.setHours(23,59,59);applyFilter(start,end);}else alert("Invalid range");
+    function applyThisMonth(){ const now=new Date(), s=new Date(now.getFullYear(),now.getMonth(),1), e=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59); applyFilter(s,e); }
+    function applyPrevMonth(){ const now=new Date(), s=new Date(now.getFullYear(),now.getMonth()-1,1), e=new Date(now.getFullYear(),now.getMonth(),0,23,59,59); applyFilter(s,e); }
+    function applyCustomRange(){
+      const s=new Date(startDate.value), e=new Date(endDate.value);
+      if(s<=e){ e.setHours(23,59,59); applyFilter(s,e); } else alert("Invalid range");
     }
-    function resetFilter(){filteredTasks=allTasks;renderCharts(filteredTasks);}
-    function applyFilter(start,end){
-      filteredTasks=allTasks.filter(t=>{
-        const d=t['Time Started']?.toDate?.()||t.workSessions?.[0]?.start?.toDate?.();
-        return d&&d>=start&&d<=end;
+    function resetFilter(){ filteredTasks=allTasks; renderAll(filteredTasks); }
+    function applyFilter(s,e){
+      filteredTasks = allTasks.filter(t=>{
+        const d = (t["Due date"] instanceof Date ? t["Due date"] : null);
+        return d && d>=s && d<=e;
       });
-      renderCharts(filteredTasks);
+      renderAll(filteredTasks);
     }
 
-    // Load tasks
-    async function loadUserTasks(){
-      const user=sessionStorage.getItem("username");
-      if(!user) return alert("No user session");
-      try {
-        const snap=await db.collection("tasks").where("Owner","==",user).get();
-        allTasks=snap.docs.map(d=>({id:d.id,...d.data()}));
-        filteredTasks=allTasks;
-        renderCharts(filteredTasks);
-      } catch(e){console.error(e);alert("Failed to load");}
+    async function loadTasks(){
+      const user = sessionStorage.getItem("username");
+      if(!user) return alert("No session");
+      const snap = await db.collection("tasks").where("Owner","==",user).get();
+      allTasks = snap.docs.map(d=>({ id:d.id, ...d.data(), "Due date":(d.data()["Due date"]?.seconds?new Date(d.data()["Due date"].seconds*1000):new Date(d.data()["Due date"])) }));
+      filteredTasks = allTasks;
+      renderAll(filteredTasks);
     }
 
-    // Helper to compute hours
-    function getWorkHours(task){
-      if(task.workSessions?.length){
-        return task.workSessions.reduce((s,ss)=>s+((ss.end?.toDate()-ss.start?.toDate())/3600000||0),0);
-      }
-      if(typeof task["Total Work Hours"]==="string"){
-        const m=task["Total Work Hours"].match(/(\d+(\.\d+)?)/);
-        return m?parseFloat(m[1]):0;
-      }
-      return 0;
+    function getWorkHours(t){ 
+      const v = t["Total Work Hours"] || t["TotalWorkHours"];
+      return parseFloat(v)||0;
     }
 
-    // Main render
-    function renderCharts(tasks){
-      const labels = tasks.map(t=>t["TYPE OF WORK"]||"Other");
-      // Status
-      const sc = {"Not Started":0,"In Progress":0,"Pending":0,"Complete":0};
-      tasks.forEach(t=>sc[t.Status]=(sc[t.Status]||0)+1);
-      updateChart('status','pie',{labels:Object.keys(sc),datasets:[{data:Object.values(sc),backgroundColor:['#7f8c8d','#3498db','#f39c12','#2ecc71']}]});
-      // Work hours per task
-      const wh=tasks.map(getWorkHours);
-      updateChart('work','bar',{labels, datasets:[{label:"Work Hours",data:wh,backgroundColor:'#2980b9'}]});
-      // Completion
-      const done=sc["Complete"]||0;
-      updateChart('complete','doughnut',{labels:['Completed','Remaining'],datasets:[{data:[done,tasks.length-done],backgroundColor:['#27ae60','#e74c3c']}]});
-      // Time spent line
-      updateChart('timeSpent','line',{labels, datasets:[{label:"Time Spent (hrs)",data:wh,borderColor:'#9b59b6',fill:false}]});
-      // Monthly
-      const mdata=Array(12).fill(0);
-      tasks.forEach(t=>{
-        if(!t.workSessions) return;
-        const d=t.workSessions[0].start?.toDate(); if(!d) return;
-        mdata[d.getMonth()] += getWorkHours(t);
+    function renderAll(t){
+      renderChartStatus(t);
+      renderChartWorkPerTask(t);
+      renderChartCompanyHours(t);
+      renderChartAssignedBy(t);
+      renderTable(t);
+    }
+
+    function renderChartStatus(t){
+      const c={"Not Started":0,"In Progress":0,"Pending":0,"Complete":0};
+      t.forEach(x=>c[x.Status]=(c[x.Status]||0)+1);
+      update('status','pie',Object.keys(c),Object.values(c),['#7f8c8d','#3498db','#f39c12','#2ecc71']);
+    }
+
+    function renderChartWorkPerTask(t){
+      const labs=t.map(x=>x["TYPE OF WORK"]||"Other"), data=t.map(getWorkHours);
+      update('work','bar',labs,data,['#2980b9']);
+    }
+
+    function renderChartCompanyHours(t){
+      const o={};
+      t.forEach(x=>{const c=x["Existing Company Name"]||"Unknown"; o[c]=(o[c]||0)+getWorkHours(x);});
+      update('companyHours','bar',Object.keys(o),Object.values(o),['#17a2b8']);
+    }
+
+    function renderChartAssignedBy(t){
+      const o={};
+      t.forEach(x=>{const a=x["Assigned By"]||"Unknown"; o[a]=(o[a]||0)+1;});
+      update('assignedBy','bar',Object.keys(o),Object.values(o),['#ffc107']);
+    }
+
+    function renderTable(t){
+      const tbody = document.getElementById("taskTable");
+      tbody.innerHTML = "";
+      t.forEach(x=>{
+        const tr = `<tr>
+          <td>${x.id}</td>
+          <td>${x["Existing Company Name"]||""}</td>
+          <td>${x["TYPE OF WORK"]||""}</td>
+          <td>${x.Status||""}</td>
+          <td>${x.Owner||""}</td>
+          <td>${x["Assigned By"]||""}</td>
+          <td>${x["Due date"]?.toISOString().split('T')[0]||""}</td>
+          <td>${getWorkHours(x).toFixed(2)}</td>
+        </tr>`;
+        tbody.insertAdjacentHTML('beforeend',tr);
       });
-      updateChart('monthly','radar',{labels:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],datasets:[{label:"Monthly Work (hrs)",data:mdata,backgroundColor:'rgba(52,152,219,0.2)',borderColor:'#3498db'}]});
-      // Timeline - last 14 days
-      const tl={}; for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);tl[d.toISOString().split('T')[0]]=0}
-      tasks.forEach(t=>{t.workSessions?.forEach(ss=>{const d=ss.start?.toDate();const key=d?.toISOString().split('T')[0]; if(key in tl){tl[key]+=((ss.end?.toDate()-d)/3600000)}})});
-      updateChart('timeline','line',{labels:Object.keys(tl),datasets:[{label:"Daily Work Hours",data:Object.values(tl),borderColor:'#1abc9c'}]});
-      // Avg work/pause
-      const WT=[], PT=[];
-      tasks.forEach(t=>{
-        const ws=t.workSessions; if(!ws||ws.length<2)return;
-        ws.forEach((ss,i)=>{
-          const dur=(ss.end?.toDate()-ss.start?.toDate())/3600000;
-          WT.push(dur);
-          if(i<ws.length-1){
-            const gap=(ws[i+1].start?.toDate()-ss.end?.toDate())/3600000;
-            PT.push(gap>0?gap:0);
-          }
-        });
-      });
-      updateChart('avg','bar',{labels:['Avg Work Time','Avg Pause Time'],datasets:[{label:"Average (hrs)",data:[WT.reduce((a,b)=>a+b,0)/WT.length||0,PT.reduce((a,b)=>a+b,0)/PT.length||0],backgroundColor:['#2ecc71','#e67e22']}]});
-      // ***** NEW: Work Hours per Owner
-      const oh={}, users = new Set(tasks.map(t=>t.Owner||'Unknown'));
-      users.forEach(u=>oh[u]=0);
-      tasks.forEach(t=>{ oh[t.Owner || 'Unknown'] += getWorkHours(t) });
-      updateChart('ownerHours','bar',{labels:Object.keys(oh),datasets:[{label:'Total Work Hours',data:Object.values(oh),backgroundColor:'#6f42c1'}]});
     }
 
-    function updateChart(key,type,data){
+    function update(key,type,labels,data,colors){
       if(charts[key]) charts[key].destroy();
-      charts[key] = new Chart(ctxs[key], {type, data, options:{responsive:true,plugins:{legend:{position:'top'}}, scales: ['pie','doughnut','radar'].includes(type)?{}:{ y:{beginAtZero:true} } }});
+      charts[key] = new Chart(ctxs[key],{
+        type, data: { labels, datasets:[{ data, backgroundColor:colors, label:key }] },
+        options:{ responsive:true, plugins:{ legend:{ position:'top' } }, scales:type==='bar'?{y:{beginAtZero:true}}:{} }
+      });
     }
 
-    window.onload = loadUserTasks;
+    window.onload = loadTasks;
   </script>
 </body>
 </html>
