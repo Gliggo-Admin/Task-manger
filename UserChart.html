@@ -13,7 +13,35 @@
       font-family: 'Segoe UI', sans-serif;
       margin: 0;
       padding: 20px;
-      background: #ecf0f1;
+      background: #f8f9fa;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    .filters {
+      margin-bottom: 20px;
+    }
+
+    .filters button, .filters input {
+      margin: 4px 6px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn-primary { background-color: #007bff; color: white; }
+    .btn-success { background-color: #28a745; color: white; }
+    .btn-warning { background-color: #ffc107; color: black; }
+    .btn-danger { background-color: #dc3545; color: white; }
+    .btn-home {
+      background-color: #343a40;
+      color: white;
+      float: right;
+      margin-top: -40px;
     }
 
     .chart-container {
@@ -32,28 +60,20 @@
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
-
-    .filters {
-      margin-bottom: 20px;
-    }
-
-    .filters input, .filters button {
-      margin-right: 10px;
-      padding: 5px 10px;
-    }
   </style>
 </head>
 <body>
   <h2>User Task Dashboard</h2>
+  <button class="btn-home" onclick="window.location.href='userdashboard.html'">🏠 Home</button>
 
-  <!-- Filter Controls -->
+  <!-- Filters -->
   <div class="filters">
-    <button onclick="applyThisMonth()">This Month</button>
-    <button onclick="applyPrevMonth()">Previous Month</button>
+    <button class="btn-primary" onclick="applyThisMonth()">This Month</button>
+    <button class="btn-warning" onclick="applyPrevMonth()">Previous Month</button>
     <input type="date" id="startDate" />
     <input type="date" id="endDate" />
-    <button onclick="applyCustomRange()">Apply</button>
-    <button onclick="resetFilter()">Show All</button>
+    <button class="btn-success" onclick="applyCustomRange()">Apply</button>
+    <button class="btn-danger" onclick="resetFilter()">Show All</button>
   </div>
 
   <!-- Charts -->
@@ -93,6 +113,7 @@
 
     const charts = {};
 
+    // Filter Functions
     function applyThisMonth() {
       const now = new Date();
       const start = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -131,6 +152,7 @@
       renderCharts(filteredTasks);
     }
 
+    // Load tasks
     function loadUserTasks() {
       const username = sessionStorage.getItem("username");
       if (!username) return alert("No user session found.");
@@ -147,32 +169,43 @@
         });
     }
 
+    // Render all charts
     function renderCharts(tasks) {
-      const labels = tasks.map(t => t["TYPE OF WORK"] || "Unknown");
+      const labels = tasks.map(t => t["TYPE OF WORK"] || "Other");
 
-      // Task Status
+      // Count statuses
       const statusCount = { "Not Started": 0, "In Progress": 0, "Pending": 0, "Complete": 0 };
       tasks.forEach(t => statusCount[t.Status] = (statusCount[t.Status] || 0) + 1);
       updateChart('status', 'pie', {
         labels: Object.keys(statusCount),
-        datasets: [{ data: Object.values(statusCount), backgroundColor: ['#7f8c8d', '#2980b9', '#f39c12', '#27ae60'] }]
+        datasets: [{
+          data: Object.values(statusCount),
+          backgroundColor: ['#7f8c8d', '#3498db', '#f39c12', '#2ecc71']
+        }]
       });
 
-      // Work Hours
+      // Work hours
       const workHours = tasks.map(t => {
         if (!t.workSessions) return 0;
         return t.workSessions.reduce((s, ses) => s + (ses.end?.toDate() - ses.start?.toDate()), 0) / 3600000;
       });
       updateChart('work', 'bar', {
         labels,
-        datasets: [{ label: "Work Hours", data: workHours, backgroundColor: '#3498db' }]
+        datasets: [{
+          label: "Work Hours",
+          data: workHours,
+          backgroundColor: '#2980b9'
+        }]
       });
 
       // Completion
       const completed = statusCount['Complete'] || 0;
       updateChart('complete', 'doughnut', {
         labels: ['Completed', 'Remaining'],
-        datasets: [{ data: [completed, tasks.length - completed], backgroundColor: ['#2ecc71', '#e74c3c'] }]
+        datasets: [{
+          data: [completed, tasks.length - completed],
+          backgroundColor: ['#27ae60', '#e74c3c']
+        }]
       });
 
       // Time Spent
@@ -186,65 +219,75 @@
         }]
       });
 
-      // Monthly Work Time
+      // Monthly Work
       const monthlyData = Array(12).fill(0);
       tasks.forEach(task => {
         if (!task.workSessions) return;
         const first = task.workSessions[0].start?.toDate();
         if (!first) return;
         const month = first.getMonth();
-        const total = task.workSessions.reduce((sum, s) => sum + (s.end?.toDate() - s.start?.toDate()), 0);
-        monthlyData[month] += total / 3600000;
+        const hours = task.workSessions.reduce((sum, s) => sum + (s.end?.toDate() - s.start?.toDate()), 0) / 3600000;
+        monthlyData[month] += hours;
       });
       updateChart('monthly', 'radar', {
         labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-        datasets: [{ label: "Monthly Work (hrs)", data: monthlyData, backgroundColor: 'rgba(52, 152, 219, 0.2)', borderColor: '#2980b9' }]
+        datasets: [{
+          label: "Monthly Work",
+          data: monthlyData,
+          backgroundColor: 'rgba(52, 152, 219, 0.2)',
+          borderColor: '#3498db'
+        }]
       });
 
-      // Timeline (Last 30 Days)
+      // Timeline (last 14 days)
       const timeline = {};
-      const today = new Date();
-      for (let i = 29; i >= 0; i--) {
-        const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+      for (let i = 13; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
         const key = d.toISOString().split('T')[0];
         timeline[key] = 0;
       }
       tasks.forEach(task => {
         if (!task.workSessions) return;
-        task.workSessions.forEach(sess => {
-          const d = sess.start?.toDate?.();
-          if (d) {
-            const key = d.toISOString().split('T')[0];
+        task.workSessions.forEach(s => {
+          const date = s.start?.toDate();
+          if (date) {
+            const key = date.toISOString().split('T')[0];
             if (timeline[key] !== undefined) {
-              timeline[key] += (sess.end?.toDate() - d) / 3600000;
+              timeline[key] += (s.end?.toDate() - s.start?.toDate()) / 3600000;
             }
           }
         });
       });
       updateChart('timeline', 'line', {
         labels: Object.keys(timeline),
-        datasets: [{ label: "Daily Hours", data: Object.values(timeline), borderColor: '#1abc9c' }]
+        datasets: [{
+          label: "Daily Work Hours",
+          data: Object.values(timeline),
+          borderColor: '#1abc9c'
+        }]
       });
 
-      // Avg Work vs Pause Time
+      // Avg work/pause
       const workTimes = [], pauseTimes = [];
       tasks.forEach(t => {
-        if (!t.workSessions || t.workSessions.length < 2) return;
-        for (let i = 0; i < t.workSessions.length; i++) {
-          const w = t.workSessions[i];
-          const work = (w.end?.toDate() - w.start?.toDate()) / 3600000;
-          workTimes.push(work);
-          if (i < t.workSessions.length - 1) {
-            const nextStart = t.workSessions[i + 1].start?.toDate();
-            const gap = (nextStart - w.end?.toDate()) / 3600000;
+        const ws = t.workSessions;
+        if (!ws || ws.length < 2) return;
+        for (let i = 0; i < ws.length; i++) {
+          const w = ws[i];
+          const wt = (w.end?.toDate() - w.start?.toDate()) / 3600000;
+          workTimes.push(wt);
+          if (i < ws.length - 1) {
+            const next = ws[i+1].start?.toDate();
+            const gap = (next - w.end?.toDate()) / 3600000;
             pauseTimes.push(gap > 0 ? gap : 0);
           }
         }
       });
       updateChart('avg', 'bar', {
-        labels: ['Average Work Time', 'Average Pause Time'],
+        labels: ['Avg Work Time', 'Avg Pause Time'],
         datasets: [{
-          label: "Average Time (hrs)",
+          label: "Average (hrs)",
           data: [
             workTimes.reduce((a, b) => a + b, 0) / workTimes.length || 0,
             pauseTimes.reduce((a, b) => a + b, 0) / pauseTimes.length || 0
@@ -256,7 +299,19 @@
 
     function updateChart(key, type, data) {
       if (charts[key]) charts[key].destroy();
-      charts[key] = new Chart(ctxs[key], { type, data, options: { responsive: true, plugins: { legend: { position: 'top' } } } });
+      charts[key] = new Chart(ctxs[key], {
+        type,
+        data,
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' }
+          },
+          scales: type !== 'pie' && type !== 'doughnut' && type !== 'radar' ? {
+            y: { beginAtZero: true }
+          } : {}
+        }
+      });
     }
 
     window.onload = loadUserTasks;
