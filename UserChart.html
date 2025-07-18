@@ -75,10 +75,10 @@
             }
 
             try {
-                const snap = await db.collection("tasks")
-                    .where("Owner", "==", username)  // Get tasks based on username
-                    .where("Status", "in", ["Not Started", "In Progress", "Pending"]) // Only non-completed tasks
-                    .get();
+const snap = await db.collection("tasks")
+    .where("Owner", "==", username)
+    .get();
+
 
                 const tasks = [];
                 snap.forEach(doc => {
