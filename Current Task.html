@@ -73,8 +73,11 @@
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   }
 
-  function calcTimeDetails(sessions = []) {
-    let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
+function calcTimeDetails(sessions = []) {
+  let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
+  
+  // Ensure sessions is an array before calling forEach
+  if (Array.isArray(sessions)) {
     sessions.forEach(sess => {
       const startMs = sess.start?.toDate().getTime(),
             endMs = sess.end?.toDate().getTime();
@@ -87,10 +90,13 @@
         lastEnd = endMs;
       }
     });
-    const startTime = sessions[0]?.start?.toDate().toLocaleString() || '—';
-    const endTime = sessions.at(-1)?.end?.toDate().toLocaleString() || '—';
-    return { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime };
   }
+  
+  const startTime = sessions[0]?.start?.toDate().toLocaleString() || '—';
+  const endTime = sessions.at(-1)?.end?.toDate().toLocaleString() || '—';
+  return { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime };
+}
+
 
   function getButtonsHTML(statusKey) {
     return {
