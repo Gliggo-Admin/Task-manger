@@ -110,13 +110,13 @@
   const now = () => firebase.firestore.Timestamp.now();
 
   function formatMs(ms) {
-    const s = Math.floor(ms/1000);
-    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-    return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+    const s = Math.floor(ms / 1000);
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   }
 
   function calcTimeDetails(sessions = []) {
-    let totalWorkMs=0, totalPauseMs=0, pauseCount=0, lastEnd=null;
+    let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
     sessions.forEach(sess => {
       const startMs = sess.start?.toDate().getTime(),
             endMs = sess.end?.toDate().getTime();
@@ -143,15 +143,15 @@
   }
 
   function toggleComboBox(idx) {
-    document.querySelectorAll(".combo-box").forEach((r,i) => {
-      r.style.display = (idx === i && r.style.display!=="table-row") ? "table-row" : "none";
+    document.querySelectorAll(".combo-box").forEach((r, i) => {
+      r.style.display = (idx === i && r.style.display !== "table-row") ? "table-row" : "none";
     });
   }
 
   function renderTasks(tasks) {
     taskBody.innerHTML = "";
     tasks.forEach((task, idx) => {
-      const sk = (task.Status||"").toLowerCase().replace(/\s+/g,"-");
+      const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
       const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
 
       const tr = document.createElement("tr");
@@ -174,7 +174,7 @@
         <div><strong>Ended:</strong> ${endTime}</div>
         <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
         <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
-<div><strong>Remarks:</strong> ${pauseCount > 1 ? '-' : (task.Remarks || '')}</div>
+        <div><strong>Remarks:</strong> ${pauseCount > 1 ? '-' : (task.Remarks || '')}</div>
         <hr style="margin:8px 0;">
         ${getButtonsHTML(sk)}
       </td>`;
@@ -193,63 +193,62 @@
 
           try {
             if (btn.classList.contains("btn-start")) {
-              if (sess.some(s=>!s.end)) return alert("Already running");
-              sess.push({start: ts, end:null});
-              await ref.update({Status:"In Progress", taskStart:ts, workSessions:sess});
+              if (sess.some(s => !s.end)) return alert("Already running");
+              sess.push({ start: ts, end: null });
+              await ref.update({ Status: "In Progress", taskStart: ts, workSessions: sess });
               alert("Started");
             }
             if (btn.classList.contains("btn-pending")) {
-              const i = sess.findIndex(s=>!s.end);
-              if (i<0) return alert("Not running");
+              const i = sess.findIndex(s => !s.end);
+              if (i < 0) return alert("Not running");
               sess[i].end = ts;
-              await ref.update({Status:"Pending", workSessions:sess});
+              await ref.update({ Status: "Pending", workSessions: sess });
               alert("Paused");
             }
             if (btn.classList.contains("btn-continue")) {
-              if (sess.some(s=>!s.end)) return alert("Already running");
-              sess.push({start: ts, end:null});
-              await ref.update({Status:"In Progress", workSessions:sess});
+              if (sess.some(s => !s.end)) return alert("Already running");
+              sess.push({ start: ts, end: null });
+              await ref.update({ Status: "In Progress", workSessions: sess });
               alert("Resumed");
             }
-if (btn.classList.contains("btn-complete")) {
-  const i = sess.findIndex(s => !s.end);
-  if (i > -1) sess[i].end = ts;
+            if (btn.classList.contains("btn-complete")) {
+              const i = sess.findIndex(s => !s.end);
+              if (i > -1) sess[i].end = ts;
 
-  let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
-  sess.forEach(s => {
-    const startMs = s.start?.toDate?.().getTime();
-    const endMs = s.end?.toDate?.().getTime();
-    if (startMs && endMs) {
-      totalWorkMs += endMs - startMs;
-      if (lastEnd !== null) {
-        const pause = startMs - lastEnd;
-        if (pause > 0) {
-          totalPauseMs += pause;
-          pauseCount++;
-        }
-      }
-      lastEnd = endMs;
-    }
-  });
+              let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
+              sess.forEach(s => {
+                const startMs = s.start?.toDate?.().getTime();
+                const endMs = s.end?.toDate?.().getTime();
+                if (startMs && endMs) {
+                  totalWorkMs += endMs - startMs;
+                  if (lastEnd !== null) {
+                    const pause = startMs - lastEnd;
+                    if (pause > 0) {
+                      totalPauseMs += pause;
+                      pauseCount++;
+                    }
+                  }
+                  lastEnd = endMs;
+                }
+              });
 
-  const startTime = sess[0]?.start || ts;
-  const endTime = sess.at(-1)?.end || ts;
+              const startTime = sess[0]?.start || ts;
+              const endTime = sess.at(-1)?.end || ts;
 
-  await ref.update({
-    Status: "Complete",
-    taskStart: startTime,
-    taskEnd: endTime,
-    workSessions: sess,
-    TimeStarted: startTime.toDate().toLocaleString(),
-    TimeEnd: endTime.toDate().toLocaleString(),
-    TotalWorkHours: formatMs(totalWorkMs),
-    TotalPauseHours: formatMs(totalPauseMs),
-    Remarks: pauseCount > 1 ? "-" : (t.Remarks || "")
-  });
+              await ref.update({
+                Status: "Complete",
+                taskStart: startTime,
+                taskEnd: endTime,
+                workSessions: sess,
+                TimeStarted: startTime.toDate().toLocaleString(),
+                TimeEnd: endTime.toDate().toLocaleString(),
+                TotalWorkHours: formatMs(totalWorkMs),
+                TotalPauseHours: formatMs(totalPauseMs),
+                Remarks: pauseCount > 1 ? "-" : (t.Remarks || "")
+              });
 
-  alert("Completed with time calculations");
-}
-  
+              alert("Completed with time calculations");
+            }
 
             loadTasks();
           } catch {
@@ -260,49 +259,34 @@ if (btn.classList.contains("btn-complete")) {
     });
   }
 
- const loadBtn = document.getElementById("load-btn");
-const usernameInput = document.getElementById("username");
-const loginError = document.getElementById("login-error");
-const userDisplay = document.getElementById("user-display");
+  const loadBtn = document.getElementById("load-btn");
 
-loadBtn.onclick = async () => {
-  const username = usernameInput.value.trim();
-  if (!username) {
-    loginError.textContent = "Please enter a username.";
-    loginError.style.display = "block";
-    return;
-  }
+  loadBtn.onclick = async () => {
+    taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Loading tasks...</td></tr>`;
 
-  loginError.style.display = "none";
-  userDisplay.textContent = `Showing tasks for: ${username}`;
-  taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Loading tasks...</td></tr>`;
+    try {
+      const snap = await db.collection("tasks")
+        .where("Status", "in", ["Not Started", "In Progress", "Pending"])
+        .get();
 
-  try {
-    const snap = await db.collection("tasks")
-      .where("OwnerName", "==", username)
-      .where("Status", "in", ["Not Started", "In Progress", "Pending"])
-      .get();
+      const arr = [];
+      snap.forEach(doc => {
+        const d = doc.data();
+        arr.push({ id: doc.id, ...d });
+      });
 
-    const arr = [];
-    snap.forEach(doc => {
-      const d = doc.data();
-      arr.push({ id: doc.id, ...d });
-    });
+      if (arr.length === 0) {
+        taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tasks found.</td></tr>`;
+      } else {
+        renderTasks(arr);
+      }
 
-    if (arr.length === 0) {
-      taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tasks found for "${username}".</td></tr>`;
-    } else {
-      renderTasks(arr);
+    } catch (err) {
+      console.error(err);
+      taskBody.innerHTML = `<tr><td colspan="6" style="color:red;">Error loading tasks</td></tr>`;
     }
+  };
+</script>
 
-  } catch (err) {
-    console.error(err);
-    loginError.textContent = "Failed to load tasks.";
-    loginError.style.display = "block";
-    taskBody.innerHTML = `<tr><td colspan="6" style="color:red;">Error loading tasks</td></tr>`;
-  }
-};
-
-  </script>
 </body>
 </html>
