@@ -17,7 +17,6 @@
     .status.not-started { background: #95a5a6; }
     .status.in-progress { background: #3498db; }
     .status.pending { background: #f1c40f; color: black; }
-    .status.complete { background: #2ecc71; }
     .combo-box { display: none; animation: fadeIn 0.4s ease-in-out; }
     .combo-box button { margin: 5px; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; transition: transform 0.3s ease; color: white; font-weight: bold; }
     .combo-box button:hover { transform: scale(1.05); }
@@ -37,7 +36,7 @@
   <table class="task-table">
     <thead>
       <tr>
-        <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Work Hours</th>
+        <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
       </tr>
     </thead>
     <tbody id="task-body"></tbody>
@@ -62,9 +61,9 @@
   const statusLabels = {
     "not-started": {label:"Not Started", class:"not-started"},
     "in-progress": {label:"In Progress", class:"in-progress"},
-    "pending": {label:"Pending", class:"pending"},
-    "complete": {label:"Complete", class:"complete"}
+    "pending": {label:"Pending", class:"pending"}
   };
+
   const now = () => firebase.firestore.Timestamp.now();
 
   function formatMs(ms) {
@@ -73,30 +72,29 @@
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   }
 
-function calcTimeDetails(sessions = []) {
-  let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
-  
-  // Ensure sessions is an array before calling forEach
-  if (Array.isArray(sessions)) {
-    sessions.forEach(sess => {
-      const startMs = sess.start?.toDate().getTime(),
-            endMs = sess.end?.toDate().getTime();
-      if (startMs && endMs) {
-        totalWorkMs += endMs - startMs;
-        if (lastEnd !== null) {
-          const pause = startMs - lastEnd;
-          if (pause > 0) { totalPauseMs += pause; pauseCount++; }
+  function calcTimeDetails(sessions = []) {
+    let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
+    
+    // Ensure sessions is an array before calling forEach
+    if (Array.isArray(sessions)) {
+      sessions.forEach(sess => {
+        const startMs = sess.start?.toDate().getTime(),
+              endMs = sess.end?.toDate().getTime();
+        if (startMs && endMs) {
+          totalWorkMs += endMs - startMs;
+          if (lastEnd !== null) {
+            const pause = startMs - lastEnd;
+            if (pause > 0) { totalPauseMs += pause; pauseCount++; }
+          }
+          lastEnd = endMs;
         }
-        lastEnd = endMs;
-      }
-    });
+      });
+    }
+    
+    const startTime = sessions[0]?.start?.toDate().toLocaleString() || '—';
+    const endTime = sessions.at(-1)?.end?.toDate().toLocaleString() || '—';
+    return { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime };
   }
-  
-  const startTime = sessions[0]?.start?.toDate().toLocaleString() || '—';
-  const endTime = sessions.at(-1)?.end?.toDate().toLocaleString() || '—';
-  return { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime };
-}
-
 
   function getButtonsHTML(statusKey) {
     return {
@@ -126,6 +124,7 @@ function calcTimeDetails(sessions = []) {
         <td>${task["TYPE OF WORK"]}</td>
         <td>${task["Due date"]}</td>
         <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
+        <td>${task.OwnerName}</td>
         <td>${formatMs(totalWorkMs)}</td>
       `;
       taskBody.appendChild(tr);
@@ -133,7 +132,7 @@ function calcTimeDetails(sessions = []) {
       const cr = document.createElement("tr");
       cr.className = "combo-box";
       cr.style.display = "none";
-      cr.innerHTML = `<td colspan="6">
+      cr.innerHTML = `<td colspan="7">
         <div><strong>Started:</strong> ${startTime}</div>
         <div><strong>Ended:</strong> ${endTime}</div>
         <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
@@ -223,36 +222,35 @@ function calcTimeDetails(sessions = []) {
     });
   }
 
-  // Loading all tasks without the username
+  // Loading tasks with specific status: Not Started, In Progress, or Pending
   window.onload = async () => {
-    taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Loading tasks...</td></tr>`;
+    taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Loading tasks...</td></tr>`;
     loadTasks();
   };
 
-  // Function to load all tasks from Firestore
-async function loadTasks() {
-  try {
-    const snap = await db.collection("tasks")
-      .where("Status", "in", ["Not Started", "In Progress", "Pending", "Complete"])
-      .get();
+  // Function to load tasks from Firestore
+  async function loadTasks() {
+    try {
+      const snap = await db.collection("tasks")
+        .where("Status", "in", ["Not Started", "In Progress", "Pending"]) // Exclude 'Complete'
+        .get();
 
-    const arr = [];
-    snap.forEach(doc => {
-      const d = doc.data();
-      arr.push({ id: doc.id, ...d });
-    });
+      const arr = [];
+      snap.forEach(doc => {
+        const d = doc.data();
+        arr.push({ id: doc.id, ...d });
+      });
 
-    if (arr.length === 0) {
-      taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tasks found.</td></tr>`;
-    } else {
-      renderTasks(arr);
+      if (arr.length === 0) {
+        taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No tasks found.</td></tr>`;
+      } else {
+        renderTasks(arr);
+      }
+    } catch (err) {
+      console.error("Error loading tasks:", err);  // Log the full error to the console
+      taskBody.innerHTML = `<tr><td colspan="7" style="color:red;">Error loading tasks: ${err.message}</td></tr>`;
     }
-  } catch (err) {
-    console.error("Error loading tasks:", err);  // Log the full error to the console
-    taskBody.innerHTML = `<tr><td colspan="6" style="color:red;">Error loading tasks: ${err.message}</td></tr>`;
   }
-}
-
   </script>
 
 </body>
