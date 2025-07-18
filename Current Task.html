@@ -224,29 +224,28 @@
   };
 
   // Function to load all tasks from Firestore
-  async function loadTasks() {
-    try {
-      const snap = await db.collection("tasks")
-        .where("Status", "in", ["Not Started", "In Progress", "Pending", "Complete"]) // All statuses
-        .get();
+async function loadTasks() {
+  try {
+    const snap = await db.collection("tasks")
+      .where("Status", "in", ["Not Started", "In Progress", "Pending", "Complete"])
+      .get();
 
-      const arr = [];
-      snap.forEach(doc => {
-        const d = doc.data();
-        arr.push({ id: doc.id, ...d });
-      });
+    const arr = [];
+    snap.forEach(doc => {
+      const d = doc.data();
+      arr.push({ id: doc.id, ...d });
+    });
 
-      if (arr.length === 0) {
-        taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tasks found.</td></tr>`;
-      } else {
-        renderTasks(arr);
-      }
-
-    } catch (err) {
-      console.error(err);
-      taskBody.innerHTML = `<tr><td colspan="6" style="color:red;">Error loading tasks</td></tr>`;
+    if (arr.length === 0) {
+      taskBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No tasks found.</td></tr>`;
+    } else {
+      renderTasks(arr);
     }
+  } catch (err) {
+    console.error("Error loading tasks:", err);  // Log the full error to the console
+    taskBody.innerHTML = `<tr><td colspan="6" style="color:red;">Error loading tasks: ${err.message}</td></tr>`;
   }
+}
 
   </script>
 
