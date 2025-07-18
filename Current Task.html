@@ -127,7 +127,7 @@ function renderTasks(tasks) {
       <td>${task["TYPE OF WORK"]}</td>
       <td>${task["Due date"]}</td>
       <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
-      <td>${ownerName}</td>  <!-- Display Owner Name or "No Owner" -->
+      <td>${ownerName["Owner"]}</td>  <!-- Display Owner Name or "No Owner" -->
       <td>${formatMs(totalWorkMs)}</td>
     `;
     taskBody.appendChild(tr);
