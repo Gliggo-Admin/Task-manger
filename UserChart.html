@@ -1,33 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>User Task Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <style>
-    body { font-family:'Segoe UI',sans-serif; margin:0; padding:20px; background:#f8f9fa; }
-    h2 { margin-bottom:10px; }
-    .filters { margin:20px 0; }
-    .filters button, .filters input {
-      margin:4px 6px; padding:6px 12px;
-      border:none; border-radius:4px; font-weight:bold; cursor:pointer;
-    }
-    .btn-primary { background:#007bff; color:#fff; }
-    .btn-success { background:#28a745; color:#fff; }
-    .btn-warning { background:#ffc107; color:#000; }
-    .btn-danger { background:#dc3545; color:#fff; }
-    .btn-home {
-      background:#343a40; color:#fff;
-      float:right; margin-top:-40px;
-    }
-    .chart-container { display:flex; flex-wrap:wrap; justify-content:space-between; }
-    .chart-box { width:48%; margin-bottom:30px; }
-    canvas { background:#fff; border-radius:8px;
-      box-shadow:0 2px 10px rgba(0,0,0,0.1);
-    }
-  </style>
+<meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>User Task Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<style>
+  body { font-family:'Segoe UI',sans-serif; margin:0; padding:20px; background:#f8f9fa; }
+  h2 { margin-bottom:10px; }
+  .filters { margin:20px 0; }
+  .filters button, .filters input { margin:4px 6px; padding:6px 12px; border:none; border-radius:4px; font-weight:bold; cursor:pointer; }
+  .btn-primary { background:#007bff; color:#fff; }
+  .btn-success { background:#28a745; color:#fff; }
+  .btn-warning { background:#ffc107; color:#000; }
+  .btn-danger { background:#dc3545; color:#fff; }
+  .btn-home { background:#343a40; color:#fff; float:right; margin-top:-40px; }
+  .chart-container { display:flex; flex-wrap:wrap; justify-content:space-between; }
+  .chart-box { width:48%; margin-bottom:30px; }
+  canvas { background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.1); }
+  .chart-box h4 { text-align:center; margin:0 0 10px; color:#333; }
+</style>
 </head>
 <body>
   <h2>User Task Dashboard</h2>
@@ -43,22 +36,21 @@
   </div>
 
   <div class="chart-container">
-    <div class="chart-box"><canvas id="statusChart"></canvas></div>
-    <div class="chart-box"><canvas id="workHoursChart"></canvas></div>
-    <div class="chart-box"><canvas id="completeChart"></canvas></div>
-    <div class="chart-box"><canvas id="timeSpentChart"></canvas></div>
-    <div class="chart-box"><canvas id="monthlyWorkChart"></canvas></div>
-    <div class="chart-box"><canvas id="timelineChart"></canvas></div>
-    <div class="chart-box"><canvas id="avgWorkPauseChart"></canvas></div>
-    <div class="chart-box"><canvas id="companyHoursChart"></canvas></div>
-    <div class="chart-box"><canvas id="assignedByChart"></canvas></div>
-    <div class="chart-box"><canvas id="topTasksChart"></canvas></div>
-    <div class="chart-box"><canvas id="typeDistributionChart"></canvas></div>
-    <div class="chart-box"><canvas id="weekdayWorkChart"></canvas></div>
+    <div class="chart-box"><h4>Status Breakdown</h4><canvas id="statusChart"></canvas></div>
+    <div class="chart-box"><h4>Work Hours by Task Type</h4><canvas id="workHoursChart"></canvas></div>
+    <div class="chart-box"><h4>Task Completion Status</h4><canvas id="completeChart"></canvas></div>
+    <div class="chart-box"><h4>Time Spent Per Task</h4><canvas id="timeSpentChart"></canvas></div>
+    <div class="chart-box"><h4>Monthly Work Distribution</h4><canvas id="monthlyWorkChart"></canvas></div>
+    <div class="chart-box"><h4>Last 14 Days Timeline</h4><canvas id="timelineChart"></canvas></div>
+    <div class="chart-box"><h4>Avg Work vs Pause Hours</h4><canvas id="avgWorkPauseChart"></canvas></div>
+    <div class="chart-box"><h4>Work Hours by Company</h4><canvas id="companyHoursChart"></canvas></div>
+    <div class="chart-box"><h4>Tasks Assigned By</h4><canvas id="assignedByChart"></canvas></div>
+    <div class="chart-box"><h4>Top 5 Longest Tasks</h4><canvas id="topTasksChart"></canvas></div>
+    <div class="chart-box"><h4>Work Type Distribution</h4><canvas id="typeDistributionChart"></canvas></div>
+    <div class="chart-box"><h4>Work by Weekday</h4><canvas id="weekdayWorkChart"></canvas></div>
   </div>
 
   <script>
-    // Initialize Firebase
     firebase.initializeApp({
       apiKey:"AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
       authDomain:"task-manager-602da.firebaseapp.com",
@@ -86,28 +78,25 @@
     };
     const charts = {};
 
-    // Filter functions
     function applyThisMonth() {
       const now = new Date(),
             s = new Date(now.getFullYear(), now.getMonth(), 1),
-            e = new Date(now.getFullYear(), now.getMonth()+1, 0, 23,59,59);
+            e = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
       applyFilter(s, e);
     }
 
     function applyPrevMonth() {
       const now = new Date(),
-            s = new Date(now.getFullYear(), now.getMonth()-1, 1),
-            e = new Date(now.getFullYear(), now.getMonth(), 0, 23,59,59);
+            s = new Date(now.getFullYear(), now.getMonth() - 1, 1),
+            e = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
       applyFilter(s, e);
     }
 
     function applyCustomRange() {
       const s = new Date(startDate.value),
             e = new Date(endDate.value);
-      if (s <= e) {
-        e.setHours(23,59,59);
-        applyFilter(s, e);
-      } else alert("Invalid date range.");
+      if (s <= e) { e.setHours(23, 59, 59); applyFilter(s, e); }
+      else alert("Invalid date range.");
     }
 
     function resetFilter() {
@@ -126,25 +115,25 @@
     async function loadTasks() {
       const user = sessionStorage.getItem("username");
       if (!user) return alert("No user session found");
+      
       const snap = await db.collection("tasks").where("Owner","==",user).get();
       allTasks = snap.docs.map(d => {
-        const data = d.data();
-        let due = data["Due date"];
-        if (due?.seconds) due = new Date(due.seconds * 1000);
-        else if (typeof due == "string") due = new Date(due);
-        return { id: d.id, ...data, "Due date": due instanceof Date ? due : null };
+        const data = d.data(), due = data["Due date"];
+        let dt = null;
+        if (due?.seconds) dt = new Date(due.seconds * 1000);
+        else if (typeof due === "string") dt = new Date(due);
+        return { id: d.id, ...data, "Due date": dt };
       });
+
       filteredTasks = allTasks;
       renderAll(filteredTasks);
     }
 
-    // Convert string to float work hours
     function getWorkHours(t) {
       const v = t["Total Work Hours"] || t["TotalWorkHours"];
       return parseFloat(v) || 0;
     }
 
-    // Main render
     function renderAll(tasks) {
       renderStatus(tasks);
       renderWorkHours(tasks);
@@ -160,117 +149,117 @@
       renderWeekdayWork(tasks);
     }
 
-    function renderStatus(t) {
+    // Chart renderers
+    const renderStatus = t => {
       const counts = {"Not Started":0,"In Progress":0,"Pending":0,"Complete":0};
-      t.forEach(x => counts[x.Status] = (counts[x.Status] || 0) + 1);
-      update('status','pie', Object.keys(counts), Object.values(counts), ['#7f8c8d','#3498db','#f39c12','#2ecc71']);
-    }
+      t.forEach(x => { counts[x.Status] = (counts[x.Status]||0) + 1; });
+      update('status', 'pie', Object.keys(counts), Object.values(counts), ['#7f8c8d','#3498db','#f39c12','#2ecc71']);
+    };
 
-    function renderWorkHours(t) {
+    const renderWorkHours = t => {
       const labels = t.map(x => x["TYPE OF WORK"] || "Other"),
             data = t.map(getWorkHours);
-      update('work','bar', labels, data, ['#2980b9']);
-    }
+      update('work', 'bar', labels, data, ['#2980b9']);
+    };
 
-    function renderCompletion(t) {
+    const renderCompletion = t => {
       const done = t.filter(x => x.Status === 'Complete').length,
             rem = t.length - done;
-      update('complete','doughnut', ['Completed','Remaining'], [done,rem], ['#27ae60','#e74c3c']);
-    }
+      update('complete', 'doughnut', ['Completed','Remaining'], [done, rem], ['#27ae60','#e74c3c']);
+    };
 
-    function renderTimeSpent(t) {
+    const renderTimeSpent = t => {
       const labels = t.map(x => x["TYPE OF WORK"] || "Other"),
             data = t.map(getWorkHours);
-      update('timeSpent','line', labels, data, ['#9b59b6']);
-    }
+      update('timeSpent', 'line', labels, data, ['#9b59b6']);
+    };
 
-    function renderMonthly(t) {
+    const renderMonthly = t => {
       const m = Array(12).fill(0);
       t.forEach(x => {
         const d = x["Due date"];
         if (d) m[d.getMonth()] += getWorkHours(x);
       });
-      update('monthly','radar', ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], m, ['rgba(52,152,219,0.2)']);
-    }
+      update('monthly', 'radar', ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], m, ['rgba(52,152,219,0.2)']);
+    };
 
-    function renderTimeline(t) {
+    const renderTimeline = t => {
       const map = {};
-      for(let i=13;i>=0;i--){
+      for(let i=13; i>=0; i--){
         const d=new Date(); d.setDate(d.getDate()-i);
         map[d.toISOString().slice(0,10)] = 0;
       }
       t.forEach(x => {
-        const h = getWorkHours(x);
-        const d = x["Due date"]?.toISOString().slice(0,10);
-        if (map[d] !== undefined) map[d] += h;
+        const h = getWorkHours(x),
+              d = x["Due date"]?.toISOString().slice(0,10);
+        if (d in map) map[d] += h;
       });
-      update('timeline','line', Object.keys(map), Object.values(map), ['#1abc9c']);
-    }
+      update('timeline', 'line', Object.keys(map), Object.values(map), ['#1abc9c']);
+    };
 
-    function renderAvgWorkPause(t) {
+    const renderAvgWorkPause = t => {
       const work = [], pause = [];
       t.forEach(x => {
-        const sessions = x.workSessions;
-        if (sessions?.length) {
-          sessions.forEach((s,i) => {
-            const h = (s.end?.toDate() - s.start?.toDate()) / 3600000;
-            work.push(h);
-            if (i < sessions.length - 1) {
-              const gap = (sessions[i+1].start?.toDate() - s.end?.toDate())/3600000;
-              pause.push(Math.max(gap,0));
+        (x.workSessions || []).forEach((s, i, arr) => {
+          const start = s.start?.toDate?.() || new Date(s.start),
+                end = s.end?.toDate?.() || new Date(s.end);
+          if (start && end) {
+            work.push((end - start)/3600000);
+            if (i < arr.length - 1) {
+              const nextStart = arr[i+1].start?.toDate?.() || new Date(arr[i+1].start);
+              pause.push(Math.max((nextStart - end)/3600000, 0));
             }
-          });
-        }
+          }
+        });
       });
       const avg = arr => arr.length ? arr.reduce((a,b)=>a+b)/arr.length : 0;
-      update('avg','bar', ['Avg Work','Avg Pause'], [avg(work),avg(pause)], ['#2ecc71','#e67e22']);
-    }
+      update('avg', 'bar', ['Avg Work','Avg Pause'], [avg(work), avg(pause)], ['#2ecc71','#e67e22']);
+    };
 
-    function renderCompanyHours(t) {
+    const renderCompanyHours = t => {
       const map = {};
       t.forEach(x => {
         const c = x["Existing Company Name"] || "Unknown";
         map[c] = (map[c]||0) + getWorkHours(x);
       });
-      update('companyHours','bar', Object.keys(map), Object.values(map), ['#17a2b8']);
-    }
+      update('companyHours', 'bar', Object.keys(map), Object.values(map), ['#17a2b8']);
+    };
 
-    function renderAssignedBy(t) {
+    const renderAssignedBy = t => {
       const map = {};
       t.forEach(x => {
         const a = x["Assigned By"] || "Unknown";
         map[a] = (map[a]||0) + 1;
       });
-      update('assignedBy','bar', Object.keys(map), Object.values(map), ['#ffc107']);
-    }
+      update('assignedBy', 'bar', Object.keys(map), Object.values(map), ['#ffc107']);
+    };
 
-    function renderTopTasks(t) {
-      const arr = t.map(x => ({label: x["TYPE OF WORK"]||x.id, hours: getWorkHours(x)}))
-        .sort((a,b)=>b.hours - a.hours).slice(0,5);
-      update('topTasks','bar', arr.map(x=>x.label), arr.map(x=>x.hours), ['#d35400']);
-    }
+    const renderTopTasks = t => {
+      const arr = t.map(x => ({ label: x["TYPE OF WORK"] || x.id, hours: getWorkHours(x) }))
+                 .sort((a,b)=>b.hours-a.hours).slice(0,5);
+      update('topTasks', 'bar', arr.map(x=>x.label), arr.map(x=>x.hours), ['#d35400']);
+    };
 
-    function renderTypeDistribution(t) {
+    const renderTypeDistribution = t => {
       const map = {};
       t.forEach(x => {
         const ty = x["TYPE OF WORK"] || "Unknown";
         map[ty] = (map[ty]||0) + 1;
       });
-      update('typeDistribution','pie', Object.keys(map), Object.values(map), ['#1abc9c','#2ecc71','#3498db','#9b59b6','#f39c12']);
-    }
+      update('typeDistribution', 'pie', Object.keys(map), Object.values(map), ['#1abc9c','#2ecc71','#3498db','#9b59b6','#f39c12']);
+    };
 
-    function renderWeekdayWork(t) {
-      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      const map = Array(7).fill(0);
+    const renderWeekdayWork = t => {
+      const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], map=Array(7).fill(0);
       t.forEach(x => {
         (x.workSessions||[]).forEach(s => {
-          const d = s.start?.toDate();
-          const h = (s.end?.toDate() - d) / 3600000;
-          map[d.getDay()] += h;
+          const start=s.start?.toDate?.() || new Date(s.start),
+                end=s.end?.toDate?.() || new Date(s.end);
+          if (start && end) map[start.getDay()] += (end-start)/3600000;
         });
       });
-      update('weekdayWork','line', days, map, ['#8e44ad']);
-    }
+      update('weekdayWork', 'line', days, map, ['#8e44ad']);
+    };
 
     function update(key, type, labels, data, colors) {
       if (charts[key]) charts[key].destroy();
@@ -280,7 +269,7 @@
         options: {
           responsive: true,
           plugins: { legend: { position:'top' } },
-          scales: type==='bar'||type==='line' ? { y:{beginAtZero:true} } : {}
+          scales: (type === 'bar' || type === 'line') ? { y:{beginAtZero:true} } : {}
         }
       });
     }
