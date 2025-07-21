@@ -218,40 +218,24 @@
 }
 
 #taskForm {
-  background: #fefefe;
-  border: 3px solid #2a9d8f;
+  background: linear-gradient(135deg, #a0d8d8, #d1e8e8);
+  border: 2px solid #2a9d8f;
   border-radius: 12px;
-  padding: 30px 35px;
+  padding: 30px 25px;
   width: 380px;
-  margin: 30px auto;
+  margin: 20px auto;
   color: #264653;
-  box-shadow: 0 6px 15px rgba(42, 157, 143, 0.25);
+  box-shadow: 0 8px 15px rgba(42, 157, 143, 0.25);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  transition: box-shadow 0.3s ease;
-}
-
-#taskForm:hover {
-  box-shadow: 0 10px 25px rgba(42, 157, 143, 0.4);
 }
 
 #taskForm h3 {
   color: #2a9d8f;
   text-align: center;
-  margin-bottom: 25px;
+  margin-bottom: 22px;
   font-weight: 700;
-  font-size: 1.8rem;
-  letter-spacing: 1.1px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  text-shadow: 1px 1px 2px rgba(42, 157, 143, 0.4);
-}
-
-#taskForm label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: #264653;
-  letter-spacing: 0.02em;
 }
 
 #taskForm input[type="text"],
@@ -259,89 +243,82 @@
 #taskForm select,
 #taskForm textarea {
   width: 100%;
-  padding: 10px 12px;
-  border: 1.8px solid #ccc;
-  border-radius: 8px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
   margin-top: 6px;
+  margin-bottom: 18px;
   font-size: 15px;
   box-sizing: border-box;
-  transition: border-color 0.35s ease, box-shadow 0.35s ease, background-color 0.35s ease;
-  font-family: inherit;
-  background-color: #9ff1f1; /* light teal pastel */
-  color: #2f3e46;
+  background-color: #e6f2f2; /* subtle pastel cyan */
+  color: #264653;
+  box-shadow: inset 2px 2px 6px #b4cfcf, inset -2px -2px 6px #ffffff;
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+  font-weight: 500;
 }
 
 #taskForm input[type="text"]:hover,
 #taskForm input[type="date"]:hover,
 #taskForm select:hover,
 #taskForm textarea:hover {
-  background-color: #c0e4e4; /* slightly darker pastel on hover */
+  background-color: #cce6e6;
 }
 
 #taskForm input:focus,
 #taskForm select:focus,
 #taskForm textarea:focus {
-  border-color: #2a9d8f;
-  box-shadow: 0 0 10px rgba(42, 157, 143, 0.8);
   outline: none;
-  background-color: #e0f7f7; /* even lighter teal on focus */
-  color: #1b2a2a;
+  background-color: #b3d9d9;
+  box-shadow: 0 0 8px 2px #2a9d8f;
+  color: #1f3a3a;
 }
 
-
 #taskForm select {
-  background-color: #e7f0f3;
   font-weight: 600;
+  background-color: #e6f2f2;
   cursor: pointer;
 }
 
-#taskForm textarea {
-  resize: vertical;
-  min-height: 80px;
-  line-height: 1.4;
-  font-family: inherit;
-  color: #3a3a3a;
+#taskForm label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #1f3a3a;
   letter-spacing: 0.02em;
 }
 
+/* Buttons - optional polish */
 #taskForm button[type="submit"],
 #taskForm button[type="button"] {
   width: 48%;
-  margin: 12px 1%;
-  padding: 12px 0;
+  margin: 10px 1%;
+  padding: 11px;
   font-size: 16px;
   font-weight: 700;
-  border-radius: 10px;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(42, 157, 143, 0.3);
-  transition: background-color 0.35s ease, box-shadow 0.3s ease, transform 0.15s ease;
-  font-family: inherit;
-  letter-spacing: 0.05em;
-  user-select: none;
+  transition: background-color 0.3s ease;
 }
 
 #taskForm button[type="submit"] {
   background-color: #2a9d8f;
-  color: #e0f2f1;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  color: white;
 }
 
-#taskForm button[type="submit"]:hover,
-#taskForm button[type="submit"]:focus {
+#taskForm button[type="submit"]:hover {
   background-color: #1e7166;
-  box-shadow: 0 6px 18px rgba(30, 113, 102, 0.6);
-  transform: translateY(-2px);
-  outline: none;
 }
 
 #taskForm button[type="button"] {
   background-color: #e76f51;
-  color: #fff8f4;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  color: white;
 }
 
-#taskForm button[type="button"]:hover,
+#taskForm button[type="button"]:hover {
+  background-color: #c94f38;
+}
+
 #taskForm button[type="button"]:focus {
   background-color: #c94f38;
   box-shadow: 0 6px 18px rgba(201, 79, 56, 0.6);
