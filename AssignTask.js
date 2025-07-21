@@ -22,42 +22,36 @@ const cancelBtn = document.getElementById('cancelBtn');
 const assignedTasksTableBody = document.querySelector('#assignedTasksTable tbody');
 
 let assignedTasks = [];
-let usersMap = {}; // Map userId => displayName (or fallback)
-let usersData = {}; // Map userId => full user object
+let usersMap = {};    // userId => displayName/email
+let usersData = {};   // userId => full user object
 
-// Navigation to home
-homeBtn.addEventListener('click', () => {
-  window.location.href = 'Home.html';
-});
+// Navigation
+homeBtn.addEventListener('click', () => window.location.href = 'Home.html');
 
-// Open modal & prepare form for new task
+// Open modal to create task
 createTaskBtn.addEventListener('click', async () => {
   taskForm.reset();
-  await loadUsersIntoSelects();
   const nextSINO = await generateSINO();
   sinoInput.value = nextSINO;
   taskModal.style.display = 'flex';
 });
 
-// Close modal handlers
-cancelBtn.addEventListener('click', () => {
-  taskModal.style.display = 'none';
-});
+// Close modal
+cancelBtn.addEventListener('click', () => taskModal.style.display = 'none');
 taskModal.addEventListener('click', e => {
   if (e.target === taskModal) taskModal.style.display = 'none';
 });
 
-// Generate next SINO
+// Generate SINO
 async function generateSINO() {
   try {
     const snapshot = await db.collection('assignedTasks').get();
     let maxNum = 0;
     snapshot.forEach(doc => {
-      const data = doc.data();
-      const match = data.SINO?.match(/(\d+)$/);
+      const match = doc.data().SINO?.match(/(\d+)$/);
       if (match) {
         const num = parseInt(match[1], 10);
-        if (num > maxNum) maxNum = num;
+        if (!isNaN(num) && num > maxNum) maxNum = num;
       }
     });
     return String(maxNum + 1).padStart(3, '0');
@@ -67,7 +61,7 @@ async function generateSINO() {
   }
 }
 
-// Load users into select inputs
+// Load users into dropdowns
 async function loadUsersIntoSelects() {
   try {
     const snapshot = await db.collection('users').get();
@@ -78,18 +72,20 @@ async function loadUsersIntoSelects() {
 
     snapshot.forEach(doc => {
       const user = doc.data();
-      const username = user.name || user.displayName || (user.email ? user.email.split('@')[0] : doc.id);
+      const username = user.name?.trim() || user.displayName?.trim() || (user.email ? user.email.split('@')[0] : doc.id);
+      const displayText = `${username}${user.email ? ` (${user.email})` : ''}`;
+
       usersMap[doc.id] = username;
       usersData[doc.id] = user;
 
       const opt1 = document.createElement('option');
       opt1.value = doc.id;
-      opt1.textContent = username;
+      opt1.textContent = displayText;
       assignToSelect.appendChild(opt1);
 
       const opt2 = document.createElement('option');
       opt2.value = doc.id;
-      opt2.textContent = username;
+      opt2.textContent = displayText;
       reportToSelect.appendChild(opt2);
     });
   } catch (error) {
@@ -97,7 +93,7 @@ async function loadUsersIntoSelects() {
   }
 }
 
-// Load assigned tasks and render
+// Load all tasks
 async function loadAssignedTasks() {
   await loadUsersIntoSelects();
   try {
@@ -117,7 +113,7 @@ async function loadAssignedTasks() {
   }
 }
 
-// Render tasks
+// Render task table
 function renderTable() {
   assignedTasksTableBody.innerHTML = '';
   assignedTasks.forEach(task => {
@@ -140,7 +136,7 @@ function renderTable() {
   attachRowEventListeners();
 }
 
-// Edit/delete button logic
+// Edit/Delete buttons
 function attachRowEventListeners() {
   document.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', async e => {
@@ -177,7 +173,7 @@ function attachRowEventListeners() {
         loadAssignedTasks();
       } catch (error) {
         console.error("Update error:", error);
-        alert('Update failed.');
+        alert('Update failed. Please try again.');
       }
     });
   });
@@ -199,7 +195,7 @@ function attachRowEventListeners() {
   });
 }
 
-// Handle new task submission
+// Handle task submission
 taskForm.addEventListener('submit', async e => {
   e.preventDefault();
 
@@ -212,13 +208,14 @@ taskForm.addEventListener('submit', async e => {
     return;
   }
 
-  data.SINO = data.sino;
-  delete data.sino;
-  data.assignedAt = firebase.firestore.FieldValue.serverTimestamp();
-
   try {
+    data.SINO = data.sino;
+    delete data.sino;
+    data.assignedAt = firebase.firestore.FieldValue.serverTimestamp();
+
     const taskRef = await db.collection('assignedTasks').add(data);
 
+    // Create notification
     await db.collection('notifications').add({
       userId: data.assignTo,
       message: `New task assigned: ${data.description || 'No description'}`,
@@ -227,30 +224,34 @@ taskForm.addEventListener('submit', async e => {
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    // Send Email using EmailJS
+    // EmailJS
     const user = usersData[data.assignTo];
     if (user && user.email) {
-      await emailjs.send("service_52ohcsf", "template_ogel2yd", {
-        to_name: user.name || user.displayName || 'User',
-        to_email: user.email,
-        company: data.companyName,
-        description: data.description || '',
-        priority: data.priority || 'Normal',
-        due_date: data.dueDate
-      });
-      console.log("Email sent to", user.email);
+      try {
+        await emailjs.send("service_52ohcsf", "template_ogel2yd", {
+          to_name: user.name || user.displayName || 'User',
+          to_email: user.email,
+          company: data.companyName,
+          description: data.description || '',
+          priority: data.priority || 'Normal',
+          due_date: data.dueDate
+        });
+        console.log("Email sent to", user.email);
+      } catch (emailErr) {
+        console.warn("Email sending failed:", emailErr);
+      }
     }
 
     alert('Task assigned successfully.');
     taskModal.style.display = 'none';
-    loadAssignedTasks();
+    await loadAssignedTasks();
   } catch (error) {
     console.error("Error assigning task:", error);
-    alert("Error assigning task.");
+    alert("Failed to assign task. Please check console for more details.");
   }
 });
 
-// Sync notifications on auth
+// Sync notifications on login
 firebase.auth().onAuthStateChanged(async user => {
   if (!user) return;
   const currentUserId = user.uid;
@@ -279,5 +280,5 @@ firebase.auth().onAuthStateChanged(async user => {
   }
 });
 
-// Initial load
-loadUsersIntoSelects().then(() => loadAssignedTasks());
+// Initial Load
+loadUsersIntoSelects().then(loadAssignedTasks);
