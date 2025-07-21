@@ -205,7 +205,8 @@
     if (tasks.length === 0) return alert("No tasks to export.");
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: "landscape" });
-    const centerX = doc.internal.pageSize.getWidth() / 2;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const centerX = pageWidth / 2;
 
     // Page 1: Cover
     doc.setFontSize(30);
@@ -214,7 +215,7 @@
     doc.text(`User: ${username}`, centerX, 85, { align: "center" });
     doc.addPage();
 
-    // Page 2: Summary
+    // Page 2: Summary Table
     const total = tasks.length;
     const completed = tasks.filter(t => t.Status?.toLowerCase() === "complete").length;
     const pending = total - completed;
@@ -224,22 +225,74 @@
       return sum + (isNaN(hours) ? 0 : hours);
     }, 0);
 
+    const summaryTableBody = [
+      ["Total Tasks", total],
+      ["Completed Tasks", completed],
+      ["Pending Tasks", pending],
+      ["Total Work Hours", totalWorkHours.toFixed(2)]
+    ];
+
     doc.setFontSize(20);
     doc.text("Summary Report", centerX, 20, { align: "center" });
-    doc.setFontSize(14);
-    doc.text(`Total Tasks: ${total}`, 20, 40);
-    doc.text(`Completed Tasks: ${completed}`, 20, 50);
-    doc.text(`Pending Tasks: ${pending}`, 20, 60);
-    doc.text(`Total Work Hours: ${totalWorkHours.toFixed(2)}`, 20, 70);
+    doc.autoTable({
+      startY: 30,
+      head: [["Metric", "Value"]],
+      body: summaryTableBody,
+      styles: { fontSize: 14 },
+      headStyles: { fillColor: [22, 160, 133], fontStyle: 'bold' },
+      margin: { left: 60, right: 60 }
+    });
     doc.addPage();
 
-    // Page 3: Charts
-    const canvas = document.createElement("canvas");
-    canvas.width = 800;
-    canvas.height = 300;
-    document.body.appendChild(canvas);
+    // Page 3: Charts (4 charts side by side or 2x2 grid)
+    // Create a hidden container to hold canvases
+    const container = document.createElement("div");
+    container.style.position = "fixed";
+    container.style.left = "-10000px";
+    container.style.top = "-10000px";
+    document.body.appendChild(container);
 
-    new Chart(canvas.getContext("2d"), {
+    // Chart 1: Completed vs Pending tasks
+    const c1 = document.createElement("canvas");
+    c1.width = 400;
+    c1.height = 250;
+    container.appendChild(c1);
+
+    // Chart 2: Task Quantities by TYPE OF WORK
+    const typeWorkCounts = {};
+    tasks.forEach(t => {
+      const key = t["TYPE OF WORK"] || "Unknown";
+      typeWorkCounts[key] = (typeWorkCounts[key] || 0) + 1;
+    });
+    const c2 = document.createElement("canvas");
+    c2.width = 400;
+    c2.height = 250;
+    container.appendChild(c2);
+
+    // Chart 3: Total Work Hours over Due Dates (group by date)
+    const workHoursByDate = {};
+    tasks.forEach(t => {
+      const dateStr = formatDate(t["Due date"]);
+      const hours = parseFloat(t["TotalWorkHours"] || t["Total Work Hours"]) || 0;
+      workHoursByDate[dateStr] = (workHoursByDate[dateStr] || 0) + hours;
+    });
+    const c3 = document.createElement("canvas");
+    c3.width = 400;
+    c3.height = 250;
+    container.appendChild(c3);
+
+    // Chart 4: Tasks Assigned By different users
+    const assignedByCounts = {};
+    tasks.forEach(t => {
+      const ab = t["Assigned By"] || "Unknown";
+      assignedByCounts[ab] = (assignedByCounts[ab] || 0) + 1;
+    });
+    const c4 = document.createElement("canvas");
+    c4.width = 400;
+    c4.height = 250;
+    container.appendChild(c4);
+
+    const chart1 = new Chart(c1.getContext("2d"), {
       type: "bar",
       data: {
         labels: ["Completed", "Pending"],
@@ -248,13 +301,97 @@
           data: [completed, pending],
           backgroundColor: ["#2a9d8f", "#e76f51"]
         }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        responsive: false,
+        scales: {
+          y: { beginAtZero: true }
+        }
       }
     });
 
-    await new Promise(r => setTimeout(r, 1000)); // wait chart render
-    const imgData = canvas.toDataURL("image/png");
-    doc.addImage(imgData, "PNG", 30, 40, 240, 120);
-    document.body.removeChild(canvas);
+    const chart2 = new Chart(c2.getContext("2d"), {
+      type: "pie",
+      data: {
+        labels: Object.keys(typeWorkCounts),
+        datasets: [{
+          data: Object.values(typeWorkCounts),
+          backgroundColor: [
+            "#264653", "#2a9d8f", "#e9c46a", "#f4a261", "#e76f51", "#6a994e", "#bc6c25"
+          ]
+        }]
+      },
+      options: {
+        plugins: { legend: { position: "right" } },
+        responsive: false
+      }
+    });
+
+    const chart3 = new Chart(c3.getContext("2d"), {
+      type: "line",
+      data: {
+        labels: Object.keys(workHoursByDate).sort(),
+        datasets: [{
+          label: "Total Work Hours by Due Date",
+          data: Object.keys(workHoursByDate).sort().map(d => workHoursByDate[d]),
+          borderColor: "#2a9d8f",
+          backgroundColor: "#2a9d8f33",
+          fill: true,
+          tension: 0.3,
+        }]
+      },
+      options: {
+        plugins: { legend: { display: true } },
+        responsive: false,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+    const chart4 = new Chart(c4.getContext("2d"), {
+      type: "bar",
+      data: {
+        labels: Object.keys(assignedByCounts),
+        datasets: [{
+          label: "Tasks Assigned By",
+          data: Object.values(assignedByCounts),
+          backgroundColor: "#e76f51"
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        responsive: false,
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+    // Wait a moment to render charts (Chart.js is sync but canvas image needs paint)
+    await new Promise(r => setTimeout(r, 1000));
+
+    // Add each chart image on PDF page 3 in grid layout
+    const chartWidth = 90;
+    const chartHeight = 60;
+    const marginX = 20;
+    const marginY = 20;
+    const startX = 20;
+    const startY = 40;
+
+    const charts = [chart1, chart2, chart3, chart4];
+    const canvases = [c1, c2, c3, c4];
+
+    for (let i = 0; i < charts.length; i++) {
+      const imgData = canvases[i].toDataURL("image/png");
+      const x = startX + (i % 2) * (chartWidth + marginX);
+      const y = startY + Math.floor(i / 2) * (chartHeight + marginY);
+      doc.addImage(imgData, "PNG", x, y, chartWidth, chartHeight);
+    }
+
+    document.body.removeChild(container);
+
     doc.addPage();
 
     // Page 4: Table
@@ -283,6 +420,7 @@
       headStyles: { fillColor: [22, 160, 133], fontStyle: 'bold' },
       startY: 20,
       margin: { left: 10, right: 10 },
+      pageBreak: 'auto'
     });
 
     doc.save("user_tasks_report.pdf");
