@@ -467,14 +467,13 @@
     let allTasks = [];
     let filteredTasks = [];
 
-// Load tasks for current user (Owner)
 async function loadTasks() {
   try {
     const snapshot = await db.collection('tasks').where('Owner', '==', username).get();
     allTasks = [];
     snapshot.forEach(doc => allTasks.push({ id: doc.id, ...doc.data() }));
 
-    // Sort tasks by SINO number ascending
+    // Sort by SINO number
     allTasks.sort((a, b) => {
       const getNumber = sino => {
         if (!sino) return 0;
@@ -494,29 +493,6 @@ async function loadTasks() {
   }
 }
 
-
-    function generateSINO() {
-      let maxNum = 0;
-      allTasks.forEach(t => {
-        if (t.SINO) {
-          const match = t.SINO.match(/(\d+)$/);
-          if (match) {
-            const num = parseInt(match[1], 10);
-            if (num > maxNum) maxNum = num;
-          }
-        }
-      });
-      return String(maxNum + 1).padStart(3, '0');
-    }
-
-function pickField(task, ...fields) {
-  for (const field of fields) {
-    if (task[field] !== undefined && task[field] !== null && task[field].toString().trim() !== '') {
-      return task[field];
-    }
-  }
-  return ''; // fallback if none found
-}
 
 
 
