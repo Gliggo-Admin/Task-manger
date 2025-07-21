@@ -429,43 +429,43 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
   <script>
-// Firebase config - replace with yours
-const firebaseConfig = {
-  apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-  authDomain: "task-manager-602da.firebaseapp.com",
-  projectId: "task-manager-602da",
-  storageBucket: "task-manager-602da.appspot.com",
-  messagingSenderId: "438978699329",
-  appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+    // Firebase config - replace with yours
+    const firebaseConfig = {
+      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+      authDomain: "task-manager-602da.firebaseapp.com",
+      projectId: "task-manager-602da",
+      storageBucket: "task-manager-602da.appspot.com",
+      messagingSenderId: "438978699329",
+      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-// User session
-const username = sessionStorage.getItem('username');
-if (!username) {
-  alert("No active session found. Redirecting to login.");
-  window.location.href = 'index.html';
-}
+    // User session
+    const username = sessionStorage.getItem('username');
+    if (!username) {
+      alert("No active session found. Redirecting to login.");
+      window.location.href = 'index.html';
+    }
 
-// Update profile badge with username and avatar (initial)
-const welcomeMsgEl = document.getElementById('welcomeMsg');
-const userAvatarEl = document.getElementById('userAvatar');
-welcomeMsgEl.textContent = `Welcome, ${username}`;
-userAvatarEl.textContent = username.charAt(0).toUpperCase();
+    // Update profile badge with username and avatar (initial)
+    const welcomeMsgEl = document.getElementById('welcomeMsg');
+    const userAvatarEl = document.getElementById('userAvatar');
+    welcomeMsgEl.textContent = `Welcome, ${username}`;
+    userAvatarEl.textContent = username.charAt(0).toUpperCase();
 
-// DOM elements
-const taskTableBody = document.querySelector('#tasksTable tbody');
-const paginationDiv = document.getElementById('paginationControls');
-const createTaskBtn = document.getElementById('createTaskBtn');
-const taskModal = document.getElementById('taskModal');
-const taskForm = document.getElementById('taskForm');
-const cancelBtn = document.getElementById('cancelBtn');
+    // DOM elements
+    const taskTableBody = document.querySelector('#tasksTable tbody');
+    const paginationDiv = document.getElementById('paginationControls');
+    const createTaskBtn = document.getElementById('createTaskBtn');
+    const taskModal = document.getElementById('taskModal');
+    const taskForm = document.getElementById('taskForm');
+    const cancelBtn = document.getElementById('cancelBtn');
 
-const rowsPerPage = 5;
-let currentPage = 1;
-let allTasks = [];
-let filteredTasks = [];
+    const rowsPerPage = 5;
+    let currentPage = 1;
+    let allTasks = [];
+    let filteredTasks = [];
 
 // Load tasks for current user (Owner)
 async function loadTasks() {
@@ -494,7 +494,7 @@ async function loadTasks() {
   }
 }
 
-// Async global SINO generator using Firestore
+// ✅ Async global SINO generator using Firestore
 async function generateSINO() {
   const snapshot = await db.collection('tasks').get();
 
@@ -518,6 +518,7 @@ async function generateSINO() {
   return String(nextNumber).padStart(3, '0');
 }
 
+
 function pickField(task, ...fields) {
   for (const field of fields) {
     if (task[field] !== undefined && task[field] !== null && task[field].toString().trim() !== '') {
@@ -527,12 +528,14 @@ function pickField(task, ...fields) {
   return ''; // fallback if none found
 }
 
+
+
 function renderTablePage(page, tasks) {
   taskTableBody.innerHTML = '';
   const start = (page - 1) * rowsPerPage;
   const pageTasks = tasks.slice(start, start + rowsPerPage);
 
-  pageTasks.forEach((task) => {
+  pageTasks.forEach((task, index) => {
     const tr = document.createElement('tr');
     tr.classList.add('task-row');
     tr.setAttribute('tabindex', '0'); // for keyboard focus
@@ -562,26 +565,27 @@ function renderTablePage(page, tasks) {
     const detailRow = document.createElement('tr');
     detailRow.classList.add('detail-row');
     detailRow.style.display = 'none'; // hidden by default
-    detailRow.innerHTML = `
-      <td colspan="6" style="background: #f9f9f9; padding: 12px; font-size: 14px; color: #555;">
-        <strong>SINO:</strong> ${task.SINO || 'N/A'}<br/>
-        <strong>Company Name:</strong> ${task["Existing Company Name"] || 'N/A'}<br/>
-        <strong>Type of Work:</strong> ${task["TYPE OF WORK"] || 'N/A'}<br/>
-        <strong>Account Type:</strong> ${task["ACCOUNT TYPE"] || 'N/A'}<br/>
-        <strong>Accounts / Cards:</strong> ${task["Accounts / Cards"] || 'N/A'}<br/>
-        <strong>Task:</strong> ${task["Task"] || 'N/A'}<br/>
-        <strong>Status:</strong> ${task["Status"] || 'N/A'}<br/>
-        <strong>Owner:</strong> ${task["Owner"] || 'N/A'}<br/>
-        <strong>Due Date:</strong> ${task["Due date"] || 'N/A'}<br/>
-        <strong>Assigned By:</strong> ${task["Assigned By"] || 'N/A'}<br/>
-        <strong>Time Started:</strong> ${pickField(task, "TimeStarted", "Time Start") || 'N/A'}<br/>
-        <strong>Time End:</strong> ${pickField(task, "TimeEnd", "Time End") || 'N/A'}<br/>
-        <strong>Total Pause Hours:</strong> ${pickField(task, "TotalPauseHours", "TOTAL OUT OF HOURS") || 'N/A'}<br/>
-        <strong>Total Work Hours:</strong> ${pickField(task, "TotalWorkHours", "Total Work Hours") || 'N/A'}<br/>
-        <strong>Remarks:</strong> ${pickField(task, "Remarks", "Remarks (New)") ? pickField(task, "Remarks", "Remarks (New)").replace(/\n/g, '<br/>') : 'None'}<br/>
-        <strong>Created By:</strong> ${task.CreatedBy || 'N/A'}
-      </td>
-    `;
+detailRow.innerHTML = `
+  <td colspan="6" style="background: #f9f9f9; padding: 12px; font-size: 14px; color: #555;">
+    <strong>SINO:</strong> ${task.SINO || 'N/A'}<br/>
+    <strong>Company Name:</strong> ${task["Existing Company Name"] || 'N/A'}<br/>
+    <strong>Type of Work:</strong> ${task["TYPE OF WORK"] || 'N/A'}<br/>
+    <strong>Account Type:</strong> ${task["ACCOUNT TYPE"] || 'N/A'}<br/>
+    <strong>Accounts / Cards:</strong> ${task["Accounts / Cards"] || 'N/A'}<br/>
+    <strong>Task:</strong> ${task["Task"] || 'N/A'}<br/>
+    <strong>Status:</strong> ${task["Status"] || 'N/A'}<br/>
+    <strong>Owner:</strong> ${task["Owner"] || 'N/A'}<br/>
+    <strong>Due Date:</strong> ${task["Due date"] || 'N/A'}<br/>
+    <strong>Assigned By:</strong> ${task["Assigned By"] || 'N/A'}<br/>
+    <strong>Time Started:</strong> ${pickField(task, "TimeStarted", "Time Start") || 'N/A'}<br/>
+    <strong>Time End:</strong> ${pickField(task, "TimeEnd", "Time End") || 'N/A'}<br/>
+    <strong>Total Pause Hours:</strong> ${pickField(task, "TotalPauseHours", "TOTAL OUT OF HOURS") || 'N/A'}<br/>
+    <strong>Total Work Hours:</strong> ${pickField(task, "TotalWorkHours", "Total Work Hours") || 'N/A'}<br/>
+    <strong>Remarks:</strong> ${pickField(task, "Remarks", "Remarks (New)") ? pickField(task, "Remarks", "Remarks (New)").replace(/\n/g, '<br/>') : 'None'}<br/>
+    <strong>Created By:</strong> ${task.CreatedBy || 'N/A'}
+  </td>
+`;
+
 
     taskTableBody.appendChild(detailRow);
 
@@ -601,133 +605,114 @@ function renderTablePage(page, tasks) {
   attachRowEventListeners();
 }
 
-function renderPagination(tasks) {
-  paginationDiv.innerHTML = '';
-  const totalPages = Math.ceil(tasks.length / rowsPerPage);
-  if (totalPages <= 1) return;
 
-  // Prev
-  const prevBtn = document.createElement('button');
-  prevBtn.textContent = 'Prev';
-  prevBtn.disabled = currentPage === 1;
-  prevBtn.onclick = () => {
-    if (currentPage > 1) {
-      currentPage--;
-      renderTablePage(currentPage, filteredTasks);
-      renderPagination(filteredTasks);
-    }
-  };
-  paginationDiv.appendChild(prevBtn);
+    function renderPagination(tasks) {
+      paginationDiv.innerHTML = '';
+      const totalPages = Math.ceil(tasks.length / rowsPerPage);
+      if (totalPages <= 1) return;
 
-  // Page numbers
-  for (let i = 1; i <= totalPages; i++) {
-    const btn = document.createElement('button');
-    btn.textContent = i;
-    btn.disabled = (i === currentPage);
-    btn.onclick = () => {
-      currentPage = i;
-      renderTablePage(currentPage, filteredTasks);
-      renderPagination(filteredTasks);
-    };
-    paginationDiv.appendChild(btn);
-  }
+      // Prev
+      const prevBtn = document.createElement('button');
+      prevBtn.textContent = 'Prev';
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.onclick = () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderTablePage(currentPage, filteredTasks);
+          renderPagination(filteredTasks);
+        }
+      };
+      paginationDiv.appendChild(prevBtn);
 
-  // Next
-  const nextBtn = document.createElement('button');
-  nextBtn.textContent = 'Next';
-  nextBtn.disabled = currentPage === totalPages;
-  nextBtn.onclick = () => {
-    if (currentPage < totalPages) {
-      currentPage++;
-      renderTablePage(currentPage, filteredTasks);
-      renderPagination(filteredTasks);
-    }
-  };
-  paginationDiv.appendChild(nextBtn);
-}
-
-// Attach edit/delete handlers
-function attachRowEventListeners() {
-  document.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.onclick = async (e) => {
-      e.stopPropagation();
-      const id = e.target.dataset.id;
-      const task = allTasks.find(t => t.id === id);
-      if (!task) return alert('Task not found.');
-
-      // Prompt user for new values
-      const newCompany = prompt('Company Name:', task['Existing Company Name'] || '');
-      if (newCompany === null) return;
-      const newTypeOfWork = prompt('Type of Work:', task['TYPE OF WORK'] || '');
-      if (newTypeOfWork === null) return;
-      const newStatus = prompt('Status (Not Started, In Progress, Completed):', task.Status || '');
-      if (newStatus === null) return;
-      const newOwner = prompt('Owner:', task.Owner || '');
-      if (newOwner === null) return;
-      const newNotes = prompt('Notes:', task.Notes || '');
-
-      try {
-        await db.collection('tasks').doc(id).update({
-          'Existing Company Name': newCompany,
-          'TYPE OF WORK': newTypeOfWork,
-          Status: newStatus,
-          Owner: newOwner,
-          Notes: newNotes,
-        });
-        alert('Task updated');
-        loadTasks();
-      } catch (err) {
-        console.error(err);
-        alert('Failed to update task');
+      // Page numbers
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.disabled = (i === currentPage);
+        btn.onclick = () => {
+          currentPage = i;
+          renderTablePage(currentPage, filteredTasks);
+          renderPagination(filteredTasks);
+        };
+        paginationDiv.appendChild(btn);
       }
-    };
-  });
 
-  document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.onclick = async (e) => {
-      e.stopPropagation();
-      const id = e.target.dataset.id;
-      if (!confirm('Delete this task?')) return;
-      try {
-        await db.collection('tasks').doc(id).delete();
-        alert('Task deleted');
-        loadTasks();
-      } catch (err) {
-        console.error(err);
-        alert('Failed to delete task');
-      }
-    };
-  });
-}
+      // Next
+      const nextBtn = document.createElement('button');
+      nextBtn.textContent = 'Next';
+      nextBtn.disabled = currentPage === totalPages;
+      nextBtn.onclick = () => {
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderTablePage(currentPage, filteredTasks);
+          renderPagination(filteredTasks);
+        }
+      };
+      paginationDiv.appendChild(nextBtn);
+    }
 
-// Open/close modal
-createTaskBtn.onclick = async () => {
+    // Attach edit/delete handlers
+    function attachRowEventListeners() {
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.onclick = async (e) => {
+          const id = e.target.dataset.id;
+          const task = allTasks.find(t => t.id === id);
+          if (!task) return alert('Task not found.');
+
+          // Prompt user for new values
+          const newCompany = prompt('Company Name:', task['Existing Company Name'] || '');
+          if (newCompany === null) return;
+          const newTypeOfWork = prompt('Type of Work:', task['TYPE OF WORK'] || '');
+          if (newTypeOfWork === null) return;
+          const newStatus = prompt('Status (Not Started, In Progress, Completed):', task.Status || '');
+          if (newStatus === null) return;
+          const newOwner = prompt('Owner:', task.Owner || '');
+          if (newOwner === null) return;
+          const newNotes = prompt('Notes:', task.Notes || '');
+
+          try {
+            await db.collection('tasks').doc(id).update({
+              'Existing Company Name': newCompany,
+              'TYPE OF WORK': newTypeOfWork,
+              Status: newStatus,
+              Owner: newOwner,
+              Notes: newNotes,
+            });
+            alert('Task updated');
+            loadTasks();
+          } catch (err) {
+            console.error(err);
+            alert('Failed to update task');
+          }
+        };
+      });
+
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.onclick = async (e) => {
+          const id = e.target.dataset.id;
+          if (!confirm('Delete this task?')) return;
+          try {
+            await db.collection('tasks').doc(id).delete();
+            alert('Task deleted');
+            loadTasks();
+          } catch (err) {
+            console.error(err);
+            alert('Failed to delete task');
+          }
+        };
+      });
+    }
+
+    // Open/close modal
+createTaskBtn.onclick = () => {
   taskForm.reset();
-
-  // Preload datalists and fields with unique values from allTasks
-  const companies = allTasks.map(t => t['Existing Company Name']);
-  const workTypes = allTasks.map(t => t['TYPE OF WORK']);
-  const assignedByListArr = allTasks.map(t => t['Assigned By']);
-
-  addUniqueOptions(companyList, companies);
-  addUniqueOptions(workTypeList, workTypes);
-  addUniqueOptions(assignedByList, assignedByListArr);
-
-  // Set SINO with await
-  SINOinput.value = await generateSINO();
-
-  ownerInput.value = username;
-  ownerInput.setAttribute("readonly", true); // prevent edit
-  TaskInput.value = `Daily task for ${username}`;
-  periodInput.style.display = 'none';
-
   taskModal.style.display = 'flex';
-  document.body.style.overflow = 'hidden'; // lock scroll
+  document.body.style.overflow = 'hidden'; // 🔒 Lock background scroll
 };
 
 cancelBtn.onclick = () => {
   taskModal.style.display = 'none';
-  document.body.style.overflow = ''; // unlock scroll
+  document.body.style.overflow = ''; // 🔓 Restore scroll
 };
 
 taskModal.onclick = (e) => {
@@ -737,7 +722,88 @@ taskModal.onclick = (e) => {
   }
 };
 
-// WORK FOR show Period input
+
+    // Submit new task
+taskForm.onsubmit = async (e) => {
+  e.preventDefault();
+
+  const formData = new FormData(taskForm);
+  const data = {};
+
+  formData.forEach((v, k) => {
+    data[k] = v.trim();
+  });
+
+  if (!data.company || !data.typeOfWork || !data.dueDate || !data.owner) {
+    return alert('Please fill all required fields');
+  }
+
+  // ✅ Wait for SINO to be generated from DB
+data.SINO = await generateSINO();
+  data.Status = 'Not Started';
+
+  // Map form fields to Firestore field names
+  data['Existing Company Name'] = data.companyName;
+  data['WORK FOR'] = data.workFor;
+  data['Due date'] = data.dueDate;
+  data.Owner = data.owner;
+  data.Notes = data.notes || '';
+  data.CreatedBy = username;
+
+  // 🧹 Clean up unused keys
+  delete data.companyName;
+  delete data.typeOfWork;
+  delete data.dueDate;
+  delete data.owner;
+  delete data.notes;
+  delete data.workFor;
+
+  try {
+    await db.collection('tasks').add(data);
+    alert('Task created!');
+    taskModal.style.display = 'none';
+    loadTasks();
+  } catch (err) {
+    console.error(err);
+    alert('Failed to create task');
+  }
+};
+
+    // Load user tasks on page load
+    window.onload = loadTasks;
+    // Refs
+const companyList = document.getElementById('companyList');
+const workTypeList = document.getElementById('workTypeList');
+const accountsCardsList = document.getElementById('accountsCardsList');
+const assignedByList = document.getElementById('assignedByList');
+
+const SINOinput = document.getElementById('SINO');
+const workFor = document.getElementById('workFor');
+const periodInput = document.getElementById('period');
+const accountType = document.getElementById('accountType');
+const companyInput = document.getElementById('companyName');
+const typeOfWorkInput = document.getElementById('typeOfWork');
+const accountsInput = document.getElementById('accountsCards');
+const assignedByInput = document.getElementById('AssignedBy');
+const ownerInput = document.getElementById('Owner');
+const TaskInput = document.getElementById('Task');
+
+// Preload user & SINO when modal opens
+createTaskBtn.onclick = () => {
+  taskForm.reset();
+  companyList.innerHTML = workTypeList.innerHTML = assignedByList.innerHTML = '';
+  allTasks.forEach(task => {
+    companyList.append(new Option(task['Existing Company Name'], task['Existing Company Name']));
+    workTypeList.append(new Option(task['TYPE OF WORK'], task['TYPE OF WORK']));
+    assignedByList.append(new Option(task['Assigned By'], task['Assigned By']));
+  });
+  ownerInput.value = username;
+  TaskInput.value = `Daily task for ${username}`;
+  SINOinput.value = generateSINO();
+  taskModal.style.display = 'flex';
+};
+
+// WORK FOR show Period
 workFor.addEventListener('change', () => {
   if (workFor.value) {
     periodInput.style.display = 'block';
@@ -764,10 +830,9 @@ function updateAccounts() {
 companyInput.addEventListener('input', updateAccounts);
 accountType.addEventListener('change', updateAccounts);
 
-// Submit new task
+// On form submit: map your fields and cleanup
 taskForm.onsubmit = async (e) => {
   e.preventDefault();
-
   const data = {
     SINO: SINOinput.value,
     'Existing Company Name': companyInput.value.trim(),
@@ -784,16 +849,10 @@ taskForm.onsubmit = async (e) => {
     Status: 'Not Started',
     CreatedBy: username
   };
-
-  if (!data['Existing Company Name'] || !data['TYPE OF WORK'] || !data['Due date'] || !data.Owner) {
-    return alert('Please fill all required fields');
-  }
-
   try {
     await db.collection('tasks').add(data);
     alert('Task added!');
     taskModal.style.display = 'none';
-    document.body.style.overflow = ''; // unlock scroll
     loadTasks();
   } catch (e) {
     console.error(e);
@@ -801,7 +860,7 @@ taskForm.onsubmit = async (e) => {
   }
 };
 
-// Unique helper to add options to datalist
+// Unique helper
 function addUniqueOptions(datalist, valuesArray) {
   const seen = new Set();
   datalist.innerHTML = '';
@@ -813,8 +872,25 @@ function addUniqueOptions(datalist, valuesArray) {
   });
 }
 
-// Load user tasks on page load
-window.onload = loadTasks;
+// When opening modal:
+createTaskBtn.onclick = async () => {
+  taskForm.reset();
+  SINOinput.value = await generateSINO();
+  ownerInput.value = username;
+  ownerInput.setAttribute("readonly", true); // ❌ can't change
+  TaskInput.value = `Daily task for ${username}`;
+  periodInput.style.display = 'none';
+
+  const companies = allTasks.map(t => t['Existing Company Name']);
+  const workTypes = allTasks.map(t => t['TYPE OF WORK']);
+  const assignedByListArr = allTasks.map(t => t['Assigned By']);
+
+  addUniqueOptions(companyList, companies);
+  addUniqueOptions(workTypeList, workTypes);
+  addUniqueOptions(assignedByList, assignedByListArr);
+
+  taskModal.style.display = 'flex';
+};
 
 
   </script>
