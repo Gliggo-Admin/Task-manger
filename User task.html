@@ -430,7 +430,8 @@
 
   <!-- ACCOUNT TYPE -->
   <label>Account Type:<br/>
-    <select name="accountType" id="accountType">
+    <select name="accountType" id="accountType" required>...</select>
+<input list="accountsCardsList" name="accountsCards" id="accountsCards" required>
       <option value="">--Select--</option>
       <option>Credit Card</option>
       <option>Chequing Acc</option>
@@ -951,10 +952,11 @@ createTaskBtn.onclick = async () => {
   taskForm.reset();
   SINOinput.value = await generateSINO();
   ownerInput.value = username;
-  ownerInput.setAttribute("readonly", true); // ❌ can't change
+  ownerInput.setAttribute("readonly", true);
   TaskInput.value = `Daily task for ${username}`;
   periodInput.style.display = 'none';
 
+  // 🔁 These must run after allTasks is ready
   const companies = allTasks.map(t => t['Existing Company Name']);
   const workTypes = allTasks.map(t => t['TYPE OF WORK']);
   const assignedByListArr = allTasks.map(t => t['Assigned By']);
