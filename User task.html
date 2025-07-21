@@ -968,25 +968,6 @@ createTaskBtn.onclick = async () => {
   taskModal.style.display = 'flex';
 };
 
-function populateGlobalSuggestions() {
-  const companies = [];
-  const accounts = [];
-
-  allTasks.forEach(task => {
-    const company = task['Existing Company Name'];
-    const account = task['Accounts / Cards'];
-    if (company && company.trim()) companies.push(company.trim());
-    if (account && account.trim()) accounts.push(account.trim());
-  });
-
-  addUniqueOptions(companyList, companies);
-  addUniqueOptions(accountsCardsList, accounts);
-}
-
-window.onload = async () => {
-  await loadTasks();
-  populateGlobalSuggestions(); // ✅ after tasks are loaded
-};
 
 
   </script>
