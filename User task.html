@@ -496,20 +496,26 @@ async function loadTasks() {
 
 // ✅ Async global SINO generator using Firestore
 async function generateSINO() {
-  const snapshot = await db.collection('tasks')
-    .orderBy('SINO', 'desc')
-    .limit(1)
-    .get();
+  const snapshot = await db.collection('tasks').get();
 
-  if (!snapshot.empty) {
-    const lastSINO = snapshot.docs[0].data().SINO || '000';
-    const match = lastSINO.match(/(\d+)$/);
-    const num = match ? parseInt(match[1], 10) : 0;
-    const next = num + 1;
-    return String(next).padStart(3, '0');
-  }
+  let maxNumber = 0;
 
-  return '001'; // default for first task
+  snapshot.forEach(doc => {
+    const task = doc.data();
+    const sino = task.SINO;
+    if (sino) {
+      const match = sino.match(/(\d+)$/); // match numbers at the end
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (num > maxNumber) {
+          maxNumber = num;
+        }
+      }
+    }
+  });
+
+  const nextNumber = maxNumber + 1;
+  return String(nextNumber).padStart(3, '0');
 }
 
 
