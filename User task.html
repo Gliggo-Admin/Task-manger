@@ -218,14 +218,14 @@
 }
 
 #taskForm {
-  background: linear-gradient(135deg, #a0d8d8, #d1e8e8);
+  background: linear-gradient(to bottom right, #ffe5b4, #fff3e0); /* soft peach to beige */
   border: 2px solid #2a9d8f;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 30px 25px;
   width: 380px;
-  margin: 20px auto;
+  margin: 30px auto;
   color: #264653;
-  box-shadow: 0 8px 15px rgba(42, 157, 143, 0.25);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -233,50 +233,9 @@
   color: #2a9d8f;
   text-align: center;
   margin-bottom: 22px;
-  font-weight: 700;
+  font-weight: bold;
   letter-spacing: 1.2px;
   text-transform: uppercase;
-}
-
-#taskForm input[type="text"],
-#taskForm input[type="date"],
-#taskForm select,
-#taskForm textarea {
-  width: 100%;
-  padding: 10px 14px;
-  border: none;
-  border-radius: 10px;
-  margin-top: 6px;
-  margin-bottom: 18px;
-  font-size: 15px;
-  box-sizing: border-box;
-  background-color: #e6f2f2; /* subtle pastel cyan */
-  color: #264653;
-  box-shadow: inset 2px 2px 6px #b4cfcf, inset -2px -2px 6px #ffffff;
-  transition: box-shadow 0.3s ease, background-color 0.3s ease;
-  font-weight: 500;
-}
-
-#taskForm input[type="text"]:hover,
-#taskForm input[type="date"]:hover,
-#taskForm select:hover,
-#taskForm textarea:hover {
-  background-color: #cce6e6;
-}
-
-#taskForm input:focus,
-#taskForm select:focus,
-#taskForm textarea:focus {
-  outline: none;
-  background-color: #b3d9d9;
-  box-shadow: 0 0 8px 2px #2a9d8f;
-  color: #1f3a3a;
-}
-
-#taskForm select {
-  font-weight: 600;
-  background-color: #e6f2f2;
-  cursor: pointer;
 }
 
 #taskForm label {
@@ -287,7 +246,68 @@
   letter-spacing: 0.02em;
 }
 
-/* Buttons - optional polish */
+/* Shared input style */
+#taskForm input[type="text"],
+#taskForm input[type="date"],
+#taskForm select,
+#taskForm textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-top: 6px;
+  margin-bottom: 18px;
+  font-size: 15px;
+  box-sizing: border-box;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+/* Editable fields */
+#taskForm input:not([readonly]),
+#taskForm select,
+#taskForm textarea {
+  background-color: #ffffff;
+  color: #264653;
+  border: 1px solid #ccc;
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+#taskForm input:not([readonly]):hover,
+#taskForm select:hover,
+#taskForm textarea:hover {
+  background-color: #f9f9f9;
+  border-color: #2a9d8f;
+}
+
+#taskForm input:not([readonly]):focus,
+#taskForm select:focus,
+#taskForm textarea:focus {
+  outline: none;
+  border-color: #2a9d8f;
+  box-shadow: 0 0 5px rgba(42, 157, 143, 0.5);
+}
+
+/* Read-only fields (like SINO, Owner, Task) */
+#taskForm input[readonly] {
+  background-color: #e0edf0;
+  color: #7a8a8d;
+  border: 1px dashed #aacfd3;
+  cursor: not-allowed;
+  font-style: italic;
+}
+
+/* Dropdown */
+#taskForm select {
+  cursor: pointer;
+}
+
+/* Textarea */
+#taskForm textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+/* Buttons */
 #taskForm button[type="submit"],
 #taskForm button[type="button"] {
   width: 48%;
@@ -318,6 +338,7 @@
 #taskForm button[type="button"]:hover {
   background-color: #c94f38;
 }
+
 
 #taskForm button[type="button"]:focus {
   background-color: #c94f38;
