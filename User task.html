@@ -889,6 +889,8 @@ function updateAccounts() {
   const c = companyInput.value.toLowerCase();
   const type = accountType.value.toLowerCase();
   accountsCardsList.innerHTML = '';
+console.log("Company:", c, "Type:", type);
+
   new Set(allTasks
     .filter(t =>
       t['Existing Company Name']?.toLowerCase() === c &&
@@ -898,8 +900,10 @@ function updateAccounts() {
     .map(t => t['Accounts / Cards'])
   ).forEach(val => accountsCardsList.append(new Option(val, val)));
 }
+
 companyInput.addEventListener('input', updateAccounts);
 accountType.addEventListener('change', updateAccounts);
+
 
 // On form submit: map your fields and cleanup
 taskForm.onsubmit = async (e) => {
