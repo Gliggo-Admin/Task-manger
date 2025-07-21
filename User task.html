@@ -940,14 +940,12 @@ function addUniqueOptions(datalist, valuesArray) {
   const seen = new Set();
   datalist.innerHTML = '';
   valuesArray.forEach(val => {
-    const trimmed = val.trim();
-    if (trimmed && !seen.has(trimmed.toLowerCase())) {
-      seen.add(trimmed.toLowerCase());
-      datalist.append(new Option(trimmed));
+    if (val && !seen.has(val.trim().toLowerCase())) {
+      seen.add(val.trim().toLowerCase());
+      datalist.append(new Option(val.trim()));
     }
   });
 }
-
 
 // When opening modal:
 createTaskBtn.onclick = async () => {
