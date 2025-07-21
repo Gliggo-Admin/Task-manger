@@ -19,7 +19,7 @@
       font-family: Arial, sans-serif;
       background: linear-gradient(to right, #e0f7fa, #ffffff);
       padding: 20px;
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
     }
     h1 {
@@ -92,15 +92,12 @@
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
-
   const username = sessionStorage.getItem("username") || "";
-
   const headers = [
-    "SINO", "Company Name", "TYPE OF WORK", "ACCOUNT TYPE", "Accounts / Cards", 
-    "Task", "Status", "Owner", "Due date", "Assigned By", 
+    "SINO", "Company Name", "TYPE OF WORK", "ACCOUNT TYPE", "Accounts / Cards",
+    "Task", "Status", "Owner", "Due date", "Assigned By",
     "Time Started", "Time End", "Total Pause Hours", "Total Work Hours", "Remarks"
   ];
-
   let allTasks = [];
 
   async function loadTasks() {
@@ -115,9 +112,11 @@
 
       snapshot.forEach(doc => {
         const data = { id: doc.id, ...doc.data() };
-        data["Due date"] = data["Due date"]?.seconds 
-          ? new Date(data["Due date"].seconds * 1000)
-          : new Date(data["Due date"]);
+        if (data["Due date"]?.seconds) {
+          data["Due date"] = new Date(data["Due date"].seconds * 1000);
+        } else if (typeof data["Due date"] === 'string') {
+          data["Due date"] = new Date(data["Due date"]);
+        }
         allTasks.push(data);
       });
 
@@ -128,6 +127,10 @@
       console.error(err);
       document.getElementById('loading').textContent = 'Error loading tasks.';
     }
+  }
+
+  function formatDate(date) {
+    return date instanceof Date && !isNaN(date) ? date.toISOString().split("T")[0] : "";
   }
 
   function isWithinRange(date, start, end) {
@@ -161,14 +164,7 @@
   function escapeCSV(value) {
     if (!value) return "";
     const val = String(value);
-    if (val.includes(",") || val.includes('"') || val.includes("\n")) {
-      return `"${val.replace(/"/g, '""')}"`;
-    }
-    return val;
-  }
-
-  function formatDate(date) {
-    return date instanceof Date ? date.toISOString().split("T")[0] : date || "";
+    return /[",\n]/.test(val) ? `"${val.replace(/"/g, '""')}"` : val;
   }
 
   function downloadCSV(tasks) {
@@ -177,21 +173,21 @@
     tasks.forEach((task, i) => {
       const row = [
         i + 1,
-        escapeCSV(task["Existing Company Name"]),
-        escapeCSV(task["TYPE OF WORK"]),
-        escapeCSV(task["ACCOUNT TYPE"]),
-        escapeCSV(task["Accounts / Cards"]),
-        escapeCSV(task["Task"]),
-        escapeCSV(task["Status"]),
-        escapeCSV(task["Owner"]),
+        task["Existing Company Name"] || "",
+        task["TYPE OF WORK"] || "",
+        task["ACCOUNT TYPE"] || "",
+        task["Accounts / Cards"] || "",
+        task["Task"] || "",
+        task["Status"] || "",
+        task["Owner"] || "",
         formatDate(task["Due date"]),
-        escapeCSV(task["Assigned By"]),
-        escapeCSV(task["TimeStarted"] || task["Time Start"]),
-        escapeCSV(task["TimeEnd"] || task["Time End"]),
-        escapeCSV(task["TotalPauseHours"] || task["TOTAL OUT OF HOURS"]),
-        escapeCSV(task["TotalWorkHours"] || task["Total Work Hours"]),
-        escapeCSV(task["Remarks"] || task["Remarks (New)"])
-      ];
+        task["Assigned By"] || "",
+        task["TimeStarted"] || task["Time Start"] || "",
+        task["TimeEnd"] || task["Time End"] || "",
+        task["TotalPauseHours"] || task["TOTAL OUT OF HOURS"] || "",
+        task["TotalWorkHours"] || task["Total Work Hours"] || "",
+        task["Remarks"] || task["Remarks (New)"] || ""
+      ].map(escapeCSV);
       csvRows.push(row.join(","));
     });
     const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
@@ -210,22 +206,22 @@
 
     // Page 1: Cover
     doc.setFontSize(30);
-    doc.text("User Task Report", centerX, 60, { align: "center" });
+  doc.text("Task Report", centerX, 60, { align: "center" });
     doc.setFontSize(18);
-    doc.text(`User: ${username}`, centerX, 85, { align: "center" });
+doc.text(`Generated for: ${username}`, centerX, 85, { align: "center" });
+
     doc.addPage();
 
-    // Page 2: Summary Table
+    // Page 2: Summary
     const total = tasks.length;
     const completed = tasks.filter(t => t.Status?.toLowerCase() === "complete").length;
     const pending = total - completed;
-
     const totalWorkHours = tasks.reduce((sum, task) => {
-      const hours = parseFloat(task["TotalWorkHours"] || task["Total Work Hours"]);
-      return sum + (isNaN(hours) ? 0 : hours);
+      const h = parseFloat(task["TotalWorkHours"] || task["Total Work Hours"]);
+      return sum + (isNaN(h) ? 0 : h);
     }, 0);
 
-    const summaryTableBody = [
+    const summary = [
       ["Total Tasks", total],
       ["Completed Tasks", completed],
       ["Pending Tasks", pending],
@@ -237,164 +233,88 @@
     doc.autoTable({
       startY: 30,
       head: [["Metric", "Value"]],
-      body: summaryTableBody,
+      body: summary,
       styles: { fontSize: 14 },
-      headStyles: { fillColor: [22, 160, 133], fontStyle: 'bold' },
+      headStyles: { fillColor: [22, 160, 133] },
       margin: { left: 60, right: 60 }
     });
     doc.addPage();
 
-    // Page 3: Charts (4 charts side by side or 2x2 grid)
-    // Create a hidden container to hold canvases
+    // Page 3: Charts
     const container = document.createElement("div");
     container.style.position = "fixed";
     container.style.left = "-10000px";
-    container.style.top = "-10000px";
     document.body.appendChild(container);
 
-    // Chart 1: Completed vs Pending tasks
-    const c1 = document.createElement("canvas");
-    c1.width = 400;
-    c1.height = 250;
-    container.appendChild(c1);
+    const createChartCanvas = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 400;
+      canvas.height = 250;
+      canvas.style.cursor = "pointer";
+      canvas.addEventListener("click", () => window.location.href = "index.html");
+      container.appendChild(canvas);
+      return canvas;
+    };
 
-    // Chart 2: Task Quantities by TYPE OF WORK
-    const typeWorkCounts = {};
-    tasks.forEach(t => {
-      const key = t["TYPE OF WORK"] || "Unknown";
-      typeWorkCounts[key] = (typeWorkCounts[key] || 0) + 1;
-    });
-    const c2 = document.createElement("canvas");
-    c2.width = 400;
-    c2.height = 250;
-    container.appendChild(c2);
+    const c1 = createChartCanvas(), c2 = createChartCanvas(), c3 = createChartCanvas(), c4 = createChartCanvas();
 
-    // Chart 3: Total Work Hours over Due Dates (group by date)
-    const workHoursByDate = {};
-    tasks.forEach(t => {
-      const dateStr = formatDate(t["Due date"]);
-      const hours = parseFloat(t["TotalWorkHours"] || t["Total Work Hours"]) || 0;
-      workHoursByDate[dateStr] = (workHoursByDate[dateStr] || 0) + hours;
-    });
-    const c3 = document.createElement("canvas");
-    c3.width = 400;
-    c3.height = 250;
-    container.appendChild(c3);
-
-    // Chart 4: Tasks Assigned By different users
-    const assignedByCounts = {};
-    tasks.forEach(t => {
-      const ab = t["Assigned By"] || "Unknown";
-      assignedByCounts[ab] = (assignedByCounts[ab] || 0) + 1;
-    });
-    const c4 = document.createElement("canvas");
-    c4.width = 400;
-    c4.height = 250;
-    container.appendChild(c4);
-
-    const chart1 = new Chart(c1.getContext("2d"), {
+    const chart1 = new Chart(c1, {
       type: "bar",
       data: {
         labels: ["Completed", "Pending"],
-        datasets: [{
-          label: "Task Status",
-          data: [completed, pending],
-          backgroundColor: ["#2a9d8f", "#e76f51"]
-        }]
+        datasets: [{ data: [completed, pending], backgroundColor: ["#2a9d8f", "#e76f51"] }]
       },
-      options: {
-        plugins: { legend: { display: false } },
-        responsive: false,
-        scales: {
-          y: { beginAtZero: true }
-        }
-      }
+      options: { responsive: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     });
 
-    const chart2 = new Chart(c2.getContext("2d"), {
+    const workTypes = {}, assignedBys = {}, hoursByDate = {};
+    tasks.forEach(t => {
+      workTypes[t["TYPE OF WORK"] || "Unknown"] = (workTypes[t["TYPE OF WORK"] || "Unknown"] || 0) + 1;
+      assignedBys[t["Assigned By"] || "Unknown"] = (assignedBys[t["Assigned By"] || "Unknown"] || 0) + 1;
+      const date = formatDate(t["Due date"]);
+      const h = parseFloat(t["TotalWorkHours"] || t["Total Work Hours"]) || 0;
+      hoursByDate[date] = (hoursByDate[date] || 0) + h;
+    });
+
+    new Chart(c2, {
       type: "pie",
       data: {
-        labels: Object.keys(typeWorkCounts),
-        datasets: [{
-          data: Object.values(typeWorkCounts),
-          backgroundColor: [
-            "#264653", "#2a9d8f", "#e9c46a", "#f4a261", "#e76f51", "#6a994e", "#bc6c25"
-          ]
-        }]
+        labels: Object.keys(workTypes),
+        datasets: [{ data: Object.values(workTypes), backgroundColor: ["#264653", "#2a9d8f", "#e9c46a", "#f4a261", "#e76f51"] }]
       },
-      options: {
-        plugins: { legend: { position: "right" } },
-        responsive: false
-      }
+      options: { responsive: false, plugins: { legend: { position: "right" } } }
     });
 
-    const chart3 = new Chart(c3.getContext("2d"), {
+    new Chart(c3, {
       type: "line",
       data: {
-        labels: Object.keys(workHoursByDate).sort(),
-        datasets: [{
-          label: "Total Work Hours by Due Date",
-          data: Object.keys(workHoursByDate).sort().map(d => workHoursByDate[d]),
-          borderColor: "#2a9d8f",
-          backgroundColor: "#2a9d8f33",
-          fill: true,
-          tension: 0.3,
-        }]
+        labels: Object.keys(hoursByDate).sort(),
+        datasets: [{ data: Object.values(hoursByDate), label: "Work Hours", borderColor: "#2a9d8f", backgroundColor: "#2a9d8f33", fill: true }]
       },
-      options: {
-        plugins: { legend: { display: true } },
-        responsive: false,
-        scales: {
-          y: { beginAtZero: true }
-        }
-      }
+      options: { responsive: false, plugins: { legend: { display: true } }, scales: { y: { beginAtZero: true } } }
     });
 
-    const chart4 = new Chart(c4.getContext("2d"), {
+    new Chart(c4, {
       type: "bar",
       data: {
-        labels: Object.keys(assignedByCounts),
-        datasets: [{
-          label: "Tasks Assigned By",
-          data: Object.values(assignedByCounts),
-          backgroundColor: "#e76f51"
-        }]
+        labels: Object.keys(assignedBys),
+        datasets: [{ data: Object.values(assignedBys), label: "Assigned By", backgroundColor: "#e76f51" }]
       },
-      options: {
-        plugins: { legend: { display: false } },
-        responsive: false,
-        scales: {
-          y: { beginAtZero: true }
-        }
-      }
+      options: { responsive: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     });
 
-    // Wait a moment to render charts (Chart.js is sync but canvas image needs paint)
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 1000)); // Wait for rendering
 
-    // Add each chart image on PDF page 3 in grid layout
-    const chartWidth = 90;
-    const chartHeight = 60;
-    const marginX = 20;
-    const marginY = 20;
-    const startX = 20;
-    const startY = 40;
-
-    const charts = [chart1, chart2, chart3, chart4];
-    const canvases = [c1, c2, c3, c4];
-
-    for (let i = 0; i < charts.length; i++) {
-      const imgData = canvases[i].toDataURL("image/png");
-      const x = startX + (i % 2) * (chartWidth + marginX);
-      const y = startY + Math.floor(i / 2) * (chartHeight + marginY);
-      doc.addImage(imgData, "PNG", x, y, chartWidth, chartHeight);
-    }
+    [c1, c2, c3, c4].forEach((canvas, i) => {
+      const x = 20 + (i % 2) * 110;
+      const y = 40 + Math.floor(i / 2) * 80;
+      const img = canvas.toDataURL("image/png");
+      doc.addImage(img, "PNG", x, y, 90, 60);
+    });
 
     document.body.removeChild(container);
-
     doc.addPage();
 
-    // Page 4: Table
     const body = tasks.map((task, i) => [
       i + 1,
       task["Existing Company Name"] || "",
@@ -417,7 +337,7 @@
       head: [headers],
       body: body,
       styles: { fontSize: 7 },
-      headStyles: { fillColor: [22, 160, 133], fontStyle: 'bold' },
+      headStyles: { fillColor: [22, 160, 133] },
       startY: 20,
       margin: { left: 10, right: 10 },
       pageBreak: 'auto'
