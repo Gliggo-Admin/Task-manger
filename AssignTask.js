@@ -23,6 +23,7 @@ const assignedTasksTableBody = document.querySelector('#assignedTasksTable tbody
 
 let assignedTasks = [];
 let usersMap = {}; // Map userId => displayName (or fallback)
+let usersData = {}; // Map userId => full user object
 
 // Navigation to home
 homeBtn.addEventListener('click', () => {
@@ -46,7 +47,7 @@ taskModal.addEventListener('click', e => {
   if (e.target === taskModal) taskModal.style.display = 'none';
 });
 
-// Generate next SINO (e.g., 001, 002, 003 ...)
+// Generate next SINO
 async function generateSINO() {
   try {
     const snapshot = await db.collection('assignedTasks').get();
@@ -66,20 +67,20 @@ async function generateSINO() {
   }
 }
 
-// Load users into assignTo and reportTo selects
+// Load users into select inputs
 async function loadUsersIntoSelects() {
   try {
     const snapshot = await db.collection('users').get();
     assignToSelect.innerHTML = '<option value="">Select Assignee</option>';
     reportToSelect.innerHTML = '<option value="">Select Reporter</option>';
     usersMap = {};
+    usersData = {};
 
     snapshot.forEach(doc => {
       const user = doc.data();
-      // Use name or displayName if available; otherwise, fallback to email's username part
       const username = user.name || user.displayName || (user.email ? user.email.split('@')[0] : doc.id);
-
       usersMap[doc.id] = username;
+      usersData[doc.id] = user;
 
       const opt1 = document.createElement('option');
       opt1.value = doc.id;
@@ -95,7 +96,6 @@ async function loadUsersIntoSelects() {
     console.error("Error loading users:", error);
   }
 }
-
 
 // Load assigned tasks and render
 async function loadAssignedTasks() {
@@ -117,7 +117,7 @@ async function loadAssignedTasks() {
   }
 }
 
-// Render assigned tasks table
+// Render tasks
 function renderTable() {
   assignedTasksTableBody.innerHTML = '';
   assignedTasks.forEach(task => {
@@ -140,7 +140,7 @@ function renderTable() {
   attachRowEventListeners();
 }
 
-// Add listeners to edit and delete buttons
+// Edit/delete button logic
 function attachRowEventListeners() {
   document.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', async e => {
@@ -153,14 +153,12 @@ function attachRowEventListeners() {
 
       for (const field of fields) {
         let currentVal = updated[field];
-
         if ((field === 'assignTo' || field === 'reportTo') && usersMap[currentVal]) {
           currentVal = usersMap[currentVal];
         }
         const newVal = prompt(`Edit ${field}`, currentVal || '');
         if (newVal !== null) {
           if (field === 'assignTo' || field === 'reportTo') {
-            // Find userId by username case-insensitive
             const userId = Object.keys(usersMap).find(k => usersMap[k].toLowerCase() === newVal.toLowerCase());
             if (userId) {
               updated[field] = userId;
@@ -209,7 +207,6 @@ taskForm.addEventListener('submit', async e => {
   const data = {};
   formData.forEach((val, key) => data[key] = val.trim());
 
-  // Validate required fields
   if (!data.companyName || !data.assignTo || !data.reportTo || !data.dueDate) {
     alert("Please fill all required fields.");
     return;
@@ -220,10 +217,8 @@ taskForm.addEventListener('submit', async e => {
   data.assignedAt = firebase.firestore.FieldValue.serverTimestamp();
 
   try {
-    // Add task
     const taskRef = await db.collection('assignedTasks').add(data);
 
-    // Add notification for assigned user
     await db.collection('notifications').add({
       userId: data.assignTo,
       message: `New task assigned: ${data.description || 'No description'}`,
@@ -231,6 +226,20 @@ taskForm.addEventListener('submit', async e => {
       read: false,
       timestamp: firebase.firestore.FieldValue.serverTimestamp()
     });
+
+    // Send Email using EmailJS
+    const user = usersData[data.assignTo];
+    if (user && user.email) {
+      await emailjs.send("service_52ohcsf", "template_ogel2yd", {
+        to_name: user.name || user.displayName || 'User',
+        to_email: user.email,
+        company: data.companyName,
+        description: data.description || '',
+        priority: data.priority || 'Normal',
+        due_date: data.dueDate
+      });
+      console.log("Email sent to", user.email);
+    }
 
     alert('Task assigned successfully.');
     taskModal.style.display = 'none';
@@ -241,23 +250,19 @@ taskForm.addEventListener('submit', async e => {
   }
 });
 
-// On auth state change, sync notifications for assigned tasks
+// Sync notifications on auth
 firebase.auth().onAuthStateChanged(async user => {
   if (!user) return;
-
   const currentUserId = user.uid;
 
   try {
     const assignedTasksSnapshot = await db.collection('assignedTasks')
-      .where('assignTo', '==', currentUserId)
-      .get();
+      .where('assignTo', '==', currentUserId).get();
 
     for (const taskDoc of assignedTasksSnapshot.docs) {
-      // Check if notification already exists for this task and user
       const existingNotificationsSnapshot = await db.collection('notifications')
         .where('userId', '==', currentUserId)
-        .where('taskId', '==', taskDoc.id)
-        .get();
+        .where('taskId', '==', taskDoc.id).get();
 
       if (existingNotificationsSnapshot.empty) {
         await db.collection('notifications').add({
@@ -274,6 +279,5 @@ firebase.auth().onAuthStateChanged(async user => {
   }
 });
 
-// Initial load of users and tasks
+// Initial load
 loadUsersIntoSelects().then(() => loadAssignedTasks());
- 
