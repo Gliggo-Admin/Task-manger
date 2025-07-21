@@ -470,14 +470,11 @@
 // Load tasks for current user (Owner)
 async function loadTasks() {
   try {
-    const snapshot = await db.collection('tasks').get();
-    allTasks = []; // reset on reload
-    snapshot.forEach(doc => {
-      allTasks.push({ id: doc.id, ...doc.data() });
-    });
+    const snapshot = await db.collection('tasks').where('Owner', '==', username).get();
+    allTasks = [];
+    snapshot.forEach(doc => allTasks.push({ id: doc.id, ...doc.data() }));
 
-
-    // Sort ascending by numeric part of SINO
+    // Sort tasks by SINO number ascending
     allTasks.sort((a, b) => {
       const getNumber = sino => {
         if (!sino) return 0;
@@ -486,7 +483,7 @@ async function loadTasks() {
       };
       return getNumber(a.SINO) - getNumber(b.SINO);
     });
-    
+
     filteredTasks = allTasks;
     currentPage = 1;
     renderTablePage(currentPage, filteredTasks);
