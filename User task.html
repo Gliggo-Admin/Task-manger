@@ -494,29 +494,22 @@ async function loadTasks() {
   }
 }
 
-
+// ✅ Async global SINO generator using Firestore
 async function generateSINO() {
-  try {
-    const snapshot = await db.collection('tasks')
-      .where('SINO', '!=', null)
-      .orderBy('SINO', 'desc')
-      .limit(1)
-      .get();
+  const snapshot = await db.collection('tasks')
+    .orderBy('SINO', 'desc')
+    .limit(1)
+    .get();
 
-    let maxNum = 0;
-    if (!snapshot.empty) {
-      const doc = snapshot.docs[0];
-      const match = doc.data().SINO.match(/(\d+)$/);
-      if (match) {
-        maxNum = parseInt(match[1], 10);
-      }
-    }
-
-    return String(maxNum + 1).padStart(3, '0');
-  } catch (error) {
-    console.error('Error generating SINO:', error);
-    return '001';
+  if (!snapshot.empty) {
+    const lastSINO = snapshot.docs[0].data().SINO || '000';
+    const match = lastSINO.match(/(\d+)$/);
+    const num = match ? parseInt(match[1], 10) : 0;
+    const next = num + 1;
+    return String(next).padStart(3, '0');
   }
+
+  return '001'; // default for first task
 }
 
 
@@ -740,7 +733,7 @@ taskForm.onsubmit = async (e) => {
   }
 
   // ✅ Wait for SINO to be generated from DB
-  data.SINO = await generateSINO();
+data.SINO = await generateSINO();
   data.Status = 'Not Started';
 
   // Map form fields to Firestore field names
