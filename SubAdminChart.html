@@ -75,24 +75,27 @@
       width: 100%;
     }
 
-    .chart-card {
-      background: white;
-      padding: 25px 20px 30px 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-      width: 48%;
-      min-height: 550px; /* Increased height */
-    }
+  .chart-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  width: 48%;
+  height: 550px; /* Give fixed height */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 
-    canvas {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 3px 12px rgb(0 0 0 / 0.12);
-      padding: 10px;
-      width: 100% !important;
-      height: 420px !important; /* Increased canvas height */
-      display: block;
-    }
+canvas {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 3px 12px rgb(0 0 0 / 0.12);
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
 
     @media (max-width: 768px) {
       .chart-card {
