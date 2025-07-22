@@ -216,22 +216,25 @@
   }
 
   // Load all tasks from Firestore and sort by numeric part of SINO
-  async function loadAllTasks() {
-    try {
-      const snap = await db.collection('tasks').get();
-      allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      allTasks.sort((a, b) => {
-        const na = parseInt(a.SINO?.match(/\d+$/)?.[0] || 0);
-        const nb = parseInt(b.SINO?.match(/\d+$/)?.[0] || 0);
-        return na - nb;
-      });
-      currentPage = 1;
-      renderPage();
-    } catch (err) {
-      console.error('Error loading tasks:', err);
-      document.getElementById('tasksBody').innerHTML = '<tr><td colspan="5">Failed to load tasks.</td></tr>';
-    }
+async function loadAllTasks() {
+  try {
+    const snap = await db.collection('tasks').get();
+    console.log('Tasks snapshot:', snap);
+    allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    console.log('Tasks loaded:', allTasks);
+    allTasks.sort((a, b) => {
+      const na = parseInt(a.SINO?.match(/\d+$/)?.[0] || 0);
+      const nb = parseInt(b.SINO?.match(/\d+$/)?.[0] || 0);
+      return na - nb;
+    });
+    currentPage = 1;
+    renderPage();
+  } catch (err) {
+    console.error('Error loading tasks:', err);
+    document.getElementById('tasksBody').innerHTML = '<tr><td colspan="5">Failed to load tasks.</td></tr>';
   }
+}
+
 
   // Render current page tasks and pagination buttons
   function renderPage() {
