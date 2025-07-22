@@ -542,49 +542,53 @@ document.getElementById('workForSelect').addEventListener('change', function () 
 
 document.getElementById('csvUpload').addEventListener('change', handleCSVUpload);
 
-function handleCSVUpload(event) {
+async function handleCSVUpload(event) {
   const file = event.target.files[0];
   if (!file) return alert('No file selected.');
 
   const reader = new FileReader();
   reader.onload = async function (e) {
     const text = e.target.result;
+
+    // Parse CSV (Basic parser — upgrade to PapaParse if needed)
     const rows = text.split('\n').map(row => row.trim()).filter(Boolean);
     const headers = rows[0].split(',').map(h => h.trim());
 
     const requiredHeaders = ['SINO', 'Company', 'Type of Work', 'Owner', 'DueDate', 'Assigned By', 'Status'];
-
-    const hasAllRequired = requiredHeaders.every(h =>
-      headers.includes(h) || headers.includes(h.replace(/\s+/g, ' '))
-    );
+    const hasAllRequired = requiredHeaders.every(h => headers.includes(h));
     if (!hasAllRequired) {
       return alert('Missing required headers in CSV.');
     }
 
     const tasksToUpload = [];
+    let maxSINO = allTasks.reduce((max, task) => {
+      const match = task.SINO?.match(/\d+$/);
+      const num = match ? parseInt(match[0], 10) : 0;
+      return Math.max(max, num);
+    }, 0);
 
     for (let i = 1; i < rows.length; i++) {
       const values = rows[i].split(',').map(v => v.trim());
-      const task = {};
-      headers.forEach((header, index) => {
-        task[header] = values[index] || '';
+      const rowData = {};
+      headers.forEach((header, idx) => {
+        rowData[header] = values[idx] || '';
       });
 
-      // Map CSV keys to Firestore keys
+      // Map and clean fields
       const finalTask = {
-        SINO: task['SINO'],
-        'Existing Company Name': task['Company'],
-        'TYPE OF WORK': task['Type of Work'],
-        'ACCOUNT TYPE': task['Account Type'] || '',
-        'Accounts / Cards': task['Accounts / Cards'] || '',
-        Task: task['Task'] || '',
-        Owner: task['Owner'],
-        'WORK FOR': task['Work For'] || '',
-        PERIOD: task['Period'] || '',
-        'Due date': task['DueDate'],
-        'Assigned By': task['Assigned By'],
-        Notes: task['Notes'] || '',
-        Status: task['Status'] || 'Not Started'
+        SINO: rowData['SINO'] || String(++maxSINO).padStart(3, '0'),
+        'Existing Company Name': rowData['Company'],
+        'TYPE OF WORK': rowData['Type of Work'],
+        'ACCOUNT TYPE': rowData['Account Type'] || '',
+        'Accounts / Cards': rowData['Accounts / Cards'] || '',
+        Task: rowData['Task'] || '',
+        Owner: rowData['Owner'],
+        'WORK FOR': rowData['Work For'] || '',
+        PERIOD: rowData['Period'] || '',
+        'Due date': rowData['DueDate'],
+        'Assigned By': rowData['Assigned By'],
+        Notes: rowData['Notes'] || '',
+        Status: rowData['Status'] || 'Not Started'
       };
 
       tasksToUpload.push(finalTask);
@@ -594,22 +598,19 @@ function handleCSVUpload(event) {
       const batch = db.batch();
       const tasksRef = db.collection('tasks');
 
-      for (const t of tasksToUpload) {
-        const newDoc = tasksRef.doc();
-        batch.set(newDoc, t);
-      }
+      tasksToUpload.forEach(task => {
+        const newDoc = tasksRef.doc(); // Auto-generate Firestore doc ID
+        batch.set(newDoc, task);
+      });
 
       await batch.commit();
       alert(`${tasksToUpload.length} tasks uploaded successfully.`);
-      loadTasks();
+      loadTasks(); // Refresh table
     } catch (err) {
-      console.error('Upload failed:', err);
-      alert('Upload failed.');
+      console.error('Error uploading tasks:', err);
+      alert('Failed to upload tasks. See console for details.');
     }
   };
 
   reader.readAsText(file);
 }
-
-
-
