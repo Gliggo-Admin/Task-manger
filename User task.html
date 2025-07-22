@@ -792,15 +792,11 @@ createTaskBtn.onclick = () => {
 
 cancelBtn.onclick = () => {
   taskModal.style.display = 'none';
-  document.body.style.overflow = ''; // 🔓 Restore scroll
+  document.body.style.overflow = '';
 };
 
-taskModal.onclick = (e) => {
-  if (e.target === taskModal) {
-    taskModal.style.display = 'none';
-    document.body.style.overflow = '';
-  }
-};
+
+
 
 
     // Submit new task
