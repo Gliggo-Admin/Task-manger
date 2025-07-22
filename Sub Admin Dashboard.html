@@ -7,12 +7,13 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f4f7f9;
+      background: #fff; /* Clean white background */
       margin: 0;
       padding: 0 20px 40px;
       max-width: 1100px;
       margin-left: auto;
       margin-right: auto;
+      color: #222;
     }
 
     header {
@@ -96,7 +97,7 @@
 
     .sidebar {
       width: 180px;
-      background-color: #ffffff;
+      background-color: #f9f9f9; /* lighter gray for cleaner look */
       border-radius: 15px;
       box-shadow: 0 8px 16px rgba(22, 160, 133, 0.15);
       padding: 20px;
@@ -116,12 +117,15 @@
       border-radius: 8px;
       cursor: pointer;
       transition: background 0.3s, color 0.3s;
+      text-decoration: none;
+      display: block;
+      color: #16a085;
     }
 
-    .sidebar .menu-item:hover,
-    .sidebar .menu-item.active {
+    .sidebar .menu-item:hover {
       background-color: #1abc9c;
       color: white;
+      text-decoration: none;
     }
 
     .main-content {
@@ -149,88 +153,6 @@
       display: flex;
       flex-direction: column;
     }
-
-    .todo-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .todo-header button {
-      background: #16a085;
-      border: none;
-      color: white;
-      padding: 6px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.3s;
-    }
-
-    .todo-header button:hover {
-      background: #1abc9c;
-    }
-
-    ul.todo-list {
-      list-style: none;
-      padding-left: 0;
-      margin: 0;
-      overflow-y: auto;
-      flex-grow: 1;
-      max-height: 340px;
-    }
-
-    ul.todo-list li {
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      font-size: 1rem;
-    }
-
-    ul.todo-list li label {
-      margin-left: 8px;
-      cursor: pointer;
-      flex-grow: 1;
-      user-select: none;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    ul.todo-list li.completed label {
-      text-decoration: line-through;
-      color: #999;
-    }
-
-    .add-task-container {
-      margin-bottom: 12px;
-      display: flex;
-      gap: 8px;
-    }
-
-    .add-task-container input {
-      flex-grow: 1;
-      padding: 8px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-
-    .add-task-container button {
-      background: #16a085;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 8px 16px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.3s;
-    }
-
-    .add-task-container button:hover {
-      background: #1abc9c;
-    }
   </style>
 </head>
 <body>
@@ -248,7 +170,8 @@
   <main>
     <nav class="sidebar">
       <ul>
-        <li class="menu-item active" SubAdminTasks.html="tasks">Tasks</li>
+        <!-- Changed to anchor for direct navigation -->
+        <li><a href="SubAdminTasks.html" class="menu-item">Tasks</a></li>
         <li class="menu-item" data-section="chart">View in Chart</li>
       </ul>
     </nav>
@@ -323,29 +246,23 @@
     updateDateTime();
     setInterval(updateDateTime, 60000);
 
-    // Sidebar menu actions
-    const leftPanel = document.getElementById("leftPanel");
-    const rightPanel = document.getElementById("rightPanel");
-
+    // Sidebar 'View in Chart' menu
     document.querySelectorAll(".menu-item").forEach(item => {
-      item.addEventListener("click", () => {
-        document.querySelectorAll(".menu-item").forEach(el => el.classList.remove("active"));
-        item.classList.add("active");
+      if(item.getAttribute('data-section') === 'chart'){
+        item.addEventListener("click", () => {
+          document.querySelectorAll(".menu-item").forEach(el => el.classList.remove("active"));
+          item.classList.add("active");
 
-        const section = item.getAttribute("data-section");
+          const section = item.getAttribute("data-section");
 
-        switch (section) {
-          case "tasks":
-            leftPanel.innerHTML = `<h2>Manage Tasks</h2><p>You can review or manage user tasks here.</p>`;
-            rightPanel.innerHTML = `<p>Task management UI will appear here.</p>`;
-            break;
-
-          case "chart":
-            leftPanel.innerHTML = `<h2>View in Chart</h2><p>Analyze tasks visually.</p>`;
-            rightPanel.innerHTML = `<p>Charts or graphs will be shown here.</p>`;
-            break;
-        }
-      });
+          switch (section) {
+            case "chart":
+              document.getElementById("leftPanel").innerHTML = `<h2>View in Chart</h2><p>Analyze tasks visually.</p>`;
+              document.getElementById("rightPanel").innerHTML = `<p>Charts or graphs will be shown here.</p>`;
+              break;
+          }
+        });
+      }
     });
   </script>
 </body>
