@@ -550,7 +550,7 @@ async function handleCSVUpload(event) {
   reader.onload = async function (e) {
     const text = e.target.result;
 
-    // Parse CSV (Basic parser — upgrade to PapaParse if needed)
+    // Parse CSV (basic parser)
     const rows = text.split('\n').map(row => row.trim()).filter(Boolean);
     const headers = rows[0].split(',').map(h => h.trim());
 
@@ -561,11 +561,6 @@ async function handleCSVUpload(event) {
     }
 
     const tasksToUpload = [];
-    let maxSINO = allTasks.reduce((max, task) => {
-      const match = task.SINO?.match(/\d+$/);
-      const num = match ? parseInt(match[0], 10) : 0;
-      return Math.max(max, num);
-    }, 0);
 
     for (let i = 1; i < rows.length; i++) {
       const values = rows[i].split(',').map(v => v.trim());
@@ -575,27 +570,26 @@ async function handleCSVUpload(event) {
       });
 
       // Map and clean fields
-const finalTask = {
-  SINO: rowData['SINO'],
-  'Existing Company Name': rowData['Company'],
-  'TYPE OF WORK': rowData['Type of Work'],
-  'ACCOUNT TYPE': rowData['Account Type'] || '',
-  'Accounts / Cards': rowData['Accounts / Cards'] || '',
-  Task: rowData['Task'] || '',
-  Owner: rowData['Owner'],
-  'WORK FOR': rowData['Work For'] || '',
-  PERIOD: rowData['Period'] || '',
-  'Due date': rowData['DueDate'],
-  'Assigned By': rowData['Assigned By'],
-  Notes: rowData['Notes'] || '',
-  Status: rowData['Status'] || 'Not Started',
-  TimeStarted: rowData['Time Started'] || '',
-  TimeEnd: rowData['Time End'] || '',
-  TotalWorkHours: rowData['Total Work Hours'] || '',
-  TotalPauseHours: rowData['Total Pause Hours'] || '',
-  Remarks: rowData['Remarks'] || ''
-};
-
+      const finalTask = {
+        SINO: rowData['SINO'],
+        'Existing Company Name': rowData['Company'],
+        'TYPE OF WORK': rowData['Type of Work'],
+        'ACCOUNT TYPE': rowData['Account Type'] || '',
+        'Accounts / Cards': rowData['Accountsds'] || '',
+        Task: rowData['Task'] || '',
+        Owner: rowData['Owner'],
+        'WORK FOR': rowData['Work For'] || '',
+        PERIOD: rowData['Period'] || '',
+        'Due date': rowData['DueDate'],
+        'Assigned By': rowData['Assigned By'],
+        Notes: rowData['Notes'] || '',
+        Status: rowData['Status'] || 'Not Started',
+        TimeStarted: rowData['Time Started'] || '',
+        TimeEnd: rowData['Time End'] || '',
+        TotalWorkHours: rowData['Total Work Hours'] || '',
+        TotalPauseHours: rowData['Total Pause Hours'] || '',
+        Remarks: rowData['Remarks'] || ''
+      };
 
       tasksToUpload.push(finalTask);
     }
@@ -621,7 +615,6 @@ const finalTask = {
   reader.readAsText(file);
 }
 
-// When uploadCSVBtn is clicked, trigger file input
 document.getElementById('uploadCSVBtn').addEventListener('click', () => {
   document.getElementById('csvUpload').click();
 });
