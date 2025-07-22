@@ -614,3 +614,8 @@ async function handleCSVUpload(event) {
 
   reader.readAsText(file);
 }
+
+// When uploadCSVBtn is clicked, trigger file input
+document.getElementById('uploadCSVBtn').addEventListener('click', () => {
+  document.getElementById('csvUpload').click();
+});
