@@ -540,6 +540,76 @@ document.getElementById('workForSelect').addEventListener('change', function () 
 });
 
 
+document.getElementById('csvUpload').addEventListener('change', handleCSVUpload);
+
+function handleCSVUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return alert('No file selected.');
+
+  const reader = new FileReader();
+  reader.onload = async function (e) {
+    const text = e.target.result;
+    const rows = text.split('\n').map(row => row.trim()).filter(Boolean);
+    const headers = rows[0].split(',').map(h => h.trim());
+
+    const requiredHeaders = ['SINO', 'Company', 'Type of Work', 'Owner', 'DueDate', 'Assigned By', 'Status'];
+
+    const hasAllRequired = requiredHeaders.every(h =>
+      headers.includes(h) || headers.includes(h.replace(/\s+/g, ' '))
+    );
+    if (!hasAllRequired) {
+      return alert('Missing required headers in CSV.');
+    }
+
+    const tasksToUpload = [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const values = rows[i].split(',').map(v => v.trim());
+      const task = {};
+      headers.forEach((header, index) => {
+        task[header] = values[index] || '';
+      });
+
+      // Map CSV keys to Firestore keys
+      const finalTask = {
+        SINO: task['SINO'],
+        'Existing Company Name': task['Company'],
+        'TYPE OF WORK': task['Type of Work'],
+        'ACCOUNT TYPE': task['Account Type'] || '',
+        'Accounts / Cards': task['Accounts / Cards'] || '',
+        Task: task['Task'] || '',
+        Owner: task['Owner'],
+        'WORK FOR': task['Work For'] || '',
+        PERIOD: task['Period'] || '',
+        'Due date': task['DueDate'],
+        'Assigned By': task['Assigned By'],
+        Notes: task['Notes'] || '',
+        Status: task['Status'] || 'Not Started'
+      };
+
+      tasksToUpload.push(finalTask);
+    }
+
+    try {
+      const batch = db.batch();
+      const tasksRef = db.collection('tasks');
+
+      for (const t of tasksToUpload) {
+        const newDoc = tasksRef.doc();
+        batch.set(newDoc, t);
+      }
+
+      await batch.commit();
+      alert(`${tasksToUpload.length} tasks uploaded successfully.`);
+      loadTasks();
+    } catch (err) {
+      console.error('Upload failed:', err);
+      alert('Upload failed.');
+    }
+  };
+
+  reader.readAsText(file);
+}
 
 
 
