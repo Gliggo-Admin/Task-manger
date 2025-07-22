@@ -5,49 +5,142 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Sub‑Admin Task View</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; margin: 0; padding: 20px; max-width: 1100px; margin: auto; }
-    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #16a085; padding-bottom: 10px; }
-    .center-datetime { font-weight: 600; color: #16a085; }
-    .profile-container { position: relative; cursor: pointer; }
-    .profile-name { padding:8px 12px; background:#d1f0eb; border-radius:12px; color:#16a085; }
-    .dropdown { display:none; position:absolute; top:110%; right:0; background:#fff; box-shadow:0 8px 16px rgba(22,160,133,0.25); }
-    .dropdown.show { display:block; }
-    .dropdown button { width:100%; padding:10px; background:none; border:none; font-weight:600; color:#16a085; cursor:pointer; }
-    .dropdown button:hover { background:#1abc9c; color:white; }
-    main { margin-top:20px; }
-    .task-table { width:100%; border-collapse: collapse; }
-    .task-table th { background:#34495e; color:white; padding:12px; text-align:left; }
-    .task-table td { padding:10px; border-bottom:1px solid #ddd;}
-    .task-row { cursor:pointer; transition:background 0.3s; }
-    .task-row:hover { background:#f1f1f1; }
-    .details-row td { background:#f9f9f9; padding:12px; font-size:14px; color:#555; }
-    #paginationControls { margin-top:10px; }
-    #paginationControls button { margin:0 2px; padding:6px 12px; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f7f9;
+      margin: 0;
+      padding: 20px;
+      max-width: 1100px;
+      margin: auto;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #16a085;
+      padding-bottom: 10px;
+    }
+    .center-datetime {
+      font-weight: 600;
+      color: #16a085;
+    }
+    .profile-container {
+      position: relative;
+      cursor: pointer;
+    }
+    .profile-name {
+      padding: 8px 12px;
+      background: #d1f0eb;
+      border-radius: 12px;
+      color: #16a085;
+    }
+    .dropdown {
+      display: none;
+      position: absolute;
+      top: 110%;
+      right: 0;
+      background: #fff;
+      box-shadow: 0 8px 16px rgba(22, 160, 133, 0.25);
+      border-radius: 6px;
+    }
+    .dropdown.show {
+      display: block;
+    }
+    .dropdown button {
+      width: 100%;
+      padding: 10px;
+      background: none;
+      border: none;
+      font-weight: 600;
+      color: #16a085;
+      cursor: pointer;
+      border-radius: 0 0 6px 6px;
+    }
+    .dropdown button:hover {
+      background: #1abc9c;
+      color: white;
+    }
+    main {
+      margin-top: 20px;
+    }
+    .task-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .task-table th {
+      background: #34495e;
+      color: white;
+      padding: 12px;
+      text-align: left;
+    }
+    .task-table td {
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    .task-row {
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .task-row:hover {
+      background: #f1f1f1;
+    }
+    .details-row td {
+      background: #f9f9f9;
+      padding: 12px;
+      font-size: 14px;
+      color: #555;
+    }
+    #paginationControls {
+      margin-top: 10px;
+    }
+    #paginationControls button {
+      margin: 0 2px;
+      padding: 6px 12px;
+      cursor: pointer;
+      border-radius: 4px;
+      border: 1px solid #16a085;
+      background: white;
+      color: #16a085;
+      font-weight: 600;
+      transition: background-color 0.2s, color 0.2s;
+    }
+    #paginationControls button:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+    #paginationControls button:hover:not(:disabled) {
+      background: #16a085;
+      color: white;
+    }
   </style>
 </head>
 <body>
 
 <header>
   <h1>Sub‑Admin Task View</h1>
-  <div class="profile-container" id="profileContainer">
+  <div class="profile-container" id="profileContainer" tabindex="0" aria-haspopup="true" aria-expanded="false" role="button">
     <div class="profile-name" id="profileName">Sub‑Admin</div>
     <div class="dropdown" id="profileDropdown">
-      <button id="logoutBtn">Logout</button>
+      <button id="logoutBtn" aria-label="Logout">Logout</button>
     </div>
   </div>
 </header>
 
 <main>
   <div id="currentTime" class="center-datetime">Loading…</div>
-  <table class="task-table">
+  <table class="task-table" aria-describedby="taskDescription">
     <thead>
       <tr>
-        <th>SINO</th><th>Company</th><th>Type</th><th>Status</th><th>Owner</th>
+        <th>SINO</th>
+        <th>Company</th>
+        <th>Type</th>
+        <th>Status</th>
+        <th>Owner</th>
       </tr>
     </thead>
     <tbody id="tasksBody"></tbody>
   </table>
-  <div id="paginationControls"></div>
+  <div id="paginationControls" aria-label="Pagination Controls"></div>
 </main>
 
 <!-- Firebase SDKs -->
@@ -55,108 +148,181 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-const firebaseConfig = {
-  apiKey: "...", authDomain: "...", projectId: "...", storageBucket: "...",
-  messagingSenderId: "...", appId: "..."
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+  // Firebase config - replace '...' with your actual config
+  const firebaseConfig = {
+    apiKey: "...",
+    authDomain: "...",
+    projectId: "...",
+    storageBucket: "...",
+    messagingSenderId: "...",
+    appId: "..."
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-const username = sessionStorage.getItem('username');
-if (!username) location.href = 'index.html';
-document.getElementById('profileName').textContent = sessionStorage.getItem('fullName') || username;
-
-document.getElementById('profileContainer').addEventListener('click', () => {
-  document.getElementById('profileDropdown').classList.toggle('show');
-});
-document.addEventListener('click', e => {
-  if (!document.getElementById('profileContainer').contains(e.target)) {
-    document.getElementById('profileDropdown').classList.remove('show');
+  // Check for logged in user
+  const username = sessionStorage.getItem('username');
+  if (!username) {
+    location.href = 'index.html';
   }
-});
-document.getElementById('logoutBtn').onclick = () => {
-  sessionStorage.clear();
-  location.href = 'index.html';
-};
+  document.getElementById('profileName').textContent = sessionStorage.getItem('fullName') || username;
 
-function updateTime(){
-  const now = new Date();
-  const fmt = now.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric', year:'numeric'}) + ' ' +
-              now.toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'});
-  document.getElementById('currentTime').textContent = fmt;
-}
-updateTime();
-setInterval(updateTime, 60000);
-
-const rowsPerPage = 10;
-let allTasks = [], currentPage = 1;
-
-function formatTs(ts){
-  if(!ts) return '';
-  try {
-    return ts.toDate().toLocaleString();
-  } catch {
-    return '';
-  }
-}
-
-async function loadAllTasks(){
-  const snap = await db.collection('tasks').get();
-  allTasks = snap.docs.map(d=>({id:d.id, ...d.data()}));
-  allTasks.sort((a,b)=>{
-    const na = parseInt(a.SINO?.match(/\d+$/)?.[0]||0),
-          nb = parseInt(b.SINO?.match(/\d+$/)?.[0]||0);
-    return na-nb;
+  // Profile dropdown toggle
+  const profileContainer = document.getElementById('profileContainer');
+  const profileDropdown = document.getElementById('profileDropdown');
+  profileContainer.addEventListener('click', () => {
+    profileDropdown.classList.toggle('show');
   });
-  currentPage = 1;
-  renderPage();
-}
 
-function renderPage(){
-  const tbody = document.getElementById('tasksBody');
-  const pag = document.getElementById('paginationControls');
-  tbody.innerHTML = '';
-  pag.innerHTML = '';
+  // Close dropdown if clicked outside
+  document.addEventListener('click', e => {
+    if (!profileContainer.contains(e.target)) {
+      profileDropdown.classList.remove('show');
+    }
+  });
 
-  const start = (currentPage-1)*rowsPerPage;
-  const pageItems = allTasks.slice(start, start+rowsPerPage);
-  pageItems.forEach(task=>{
-    const tr = document.createElement('tr');
-    tr.className = 'task-row';
-    tr.innerHTML = `<td>${task.SINO||''}</td>
-                    <td>${task['Existing Company Name']||''}</td>
-                    <td>${task['TYPE OF WORK']||''}</td>
-                    <td>${task.Status||''}</td>
-                    <td>${task.Owner||''}</td>`;
-    const det = document.createElement('tr');
-    det.className = 'details-row';
-    det.style.display='none';
-    det.innerHTML = `<td colspan="5">
-<strong>Assigned By:</strong> ${task['Assigned By']||''}<br/>
-<strong>Task:</strong> ${task.Task||''}<br/>
-<strong>Due Date:</strong> ${task['Due date']||''}<br/>
+  // Logout button handler
+  document.getElementById('logoutBtn').onclick = () => {
+    sessionStorage.clear();
+    location.href = 'index.html';
+  };
+
+  // Update current time display every minute
+  function updateTime() {
+    const now = new Date();
+    const fmt = now.toLocaleDateString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    }) + ' ' + now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('currentTime').textContent = fmt;
+  }
+  updateTime();
+  setInterval(updateTime, 60000);
+
+  const rowsPerPage = 10;
+  let allTasks = [];
+  let currentPage = 1;
+
+  // Helper to format Firestore timestamps safely
+  function formatTs(ts) {
+    if (!ts) return '';
+    try {
+      return ts.toDate().toLocaleString();
+    } catch {
+      return '';
+    }
+  }
+
+  // Load all tasks from Firestore and sort by numeric part of SINO
+  async function loadAllTasks() {
+    try {
+      const snap = await db.collection('tasks').get();
+      allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      allTasks.sort((a, b) => {
+        const na = parseInt(a.SINO?.match(/\d+$/)?.[0] || 0);
+        const nb = parseInt(b.SINO?.match(/\d+$/)?.[0] || 0);
+        return na - nb;
+      });
+      currentPage = 1;
+      renderPage();
+    } catch (err) {
+      console.error('Error loading tasks:', err);
+      document.getElementById('tasksBody').innerHTML = '<tr><td colspan="5">Failed to load tasks.</td></tr>';
+    }
+  }
+
+  // Render current page tasks and pagination buttons
+  function renderPage() {
+    const tbody = document.getElementById('tasksBody');
+    const pag = document.getElementById('paginationControls');
+    tbody.innerHTML = '';
+    pag.innerHTML = '';
+
+    const start = (currentPage - 1) * rowsPerPage;
+    const pageItems = allTasks.slice(start, start + rowsPerPage);
+
+    if (pageItems.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5">No tasks to display.</td></tr>';
+      return;
+    }
+
+    pageItems.forEach(task => {
+      const tr = document.createElement('tr');
+      tr.className = 'task-row';
+      tr.tabIndex = 0;  // Make row focusable for accessibility
+      tr.setAttribute('aria-expanded', 'false');
+      tr.innerHTML = `<td>${task.SINO || ''}</td>
+                      <td>${task['Existing Company Name'] || ''}</td>
+                      <td>${task['TYPE OF WORK'] || ''}</td>
+                      <td>${task.Status || ''}</td>
+                      <td>${task.Owner || ''}</td>`;
+
+      const det = document.createElement('tr');
+      det.className = 'details-row';
+      det.style.display = 'none';
+      det.innerHTML = `<td colspan="5">
+<strong>Assigned By:</strong> ${task['Assigned By'] || ''}<br/>
+<strong>Task:</strong> ${task.Task || ''}<br/>
+<strong>Due Date:</strong> ${task['Due date'] || ''}<br/>
 <strong>Started:</strong> ${formatTs(task.taskStart)}<br/>
 <strong>Ended:</strong> ${formatTs(task.taskEnd)}<br/>
-<strong>Work Hours:</strong> ${task.TotalWorkHours||''}<br/>
-<strong>Pause Hours:</strong> ${task.TotalPauseHours||''}<br/>
-<strong>Remarks:</strong> ${task.Remarks||''}<br/>
-    </td>`;
-    tr.onclick = ()=> det.style.display = (det.style.display==='none'?'table-row':'none');
-    tbody.append(tr, det);
-  });
+<strong>Work Hours:</strong> ${task.TotalWorkHours || ''}<br/>
+<strong>Pause Hours:</strong> ${task.TotalPauseHours || ''}<br/>
+<strong>Remarks:</strong> ${task.Remarks || ''}<br/>
+      </td>`;
 
-  const totalPages = Math.ceil(allTasks.length/rowsPerPage);
-  if(totalPages>1){
-    const btn = (txt,dis,fn)=>{
-      const b=document.createElement('button'); b.textContent=txt; b.disabled=dis; b.onclick=fn; return b;
-    };
-    pag.appendChild(btn('Prev', currentPage===1, ()=>{currentPage--; renderPage();}));
-    for(let i=1;i<=totalPages;i++) pag.appendChild(btn(i, currentPage===i, ()=>{currentPage=i; renderPage();}));
-    pag.appendChild(btn('Next', currentPage===totalPages, ()=>{currentPage++; renderPage();}));
+      // Toggle details display on row click or keyboard Enter/Space
+      function toggleDetails() {
+        const isHidden = det.style.display === 'none';
+        det.style.display = isHidden ? 'table-row' : 'none';
+        tr.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+      }
+      tr.onclick = toggleDetails;
+      tr.onkeydown = e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleDetails();
+        }
+      };
+
+      tbody.append(tr, det);
+    });
+
+    // Pagination controls
+    const totalPages = Math.ceil(allTasks.length / rowsPerPage);
+    if (totalPages > 1) {
+      const createBtn = (text, disabled, onClick) => {
+        const b = document.createElement('button');
+        b.textContent = text;
+        b.disabled = disabled;
+        b.onclick = onClick;
+        b.type = 'button';
+        return b;
+      };
+
+      pag.appendChild(createBtn('Prev', currentPage === 1, () => {
+        currentPage--;
+        renderPage();
+      }));
+
+      for (let i = 1; i <= totalPages; i++) {
+        pag.appendChild(createBtn(i, currentPage === i, () => {
+          currentPage = i;
+          renderPage();
+        }));
+      }
+
+      pag.appendChild(createBtn('Next', currentPage === totalPages, () => {
+        currentPage++;
+        renderPage();
+      }));
+    }
   }
-}
 
-loadAllTasks();
+  // Initial load
+  loadAllTasks();
 </script>
 
 </body>
