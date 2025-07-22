@@ -348,6 +348,14 @@ function renderPagination(tasks) {
 }
 
 
+  function createPageButton(label, disabled, onClick) {
+    const btn = document.createElement('button');
+    btn.textContent = label;
+    btn.disabled = disabled;
+    if (!disabled) btn.addEventListener('click', onClick);
+    return btn;
+  }
+
   function applyFilters() {
     const company = searchCompany.value.toLowerCase();
     const owner = searchOwner.value.toLowerCase();
