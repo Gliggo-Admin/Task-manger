@@ -575,21 +575,26 @@ async function handleCSVUpload(event) {
       });
 
       // Map and clean fields
-      const finalTask = {
-        SINO: rowData['SINO'] || String(++maxSINO).padStart(3, '0'),
-        'Existing Company Name': rowData['Company'],
-        'TYPE OF WORK': rowData['Type of Work'],
-        'ACCOUNT TYPE': rowData['Account Type'] || '',
-        'Accounts / Cards': rowData['Accounts / Cards'] || '',
-        Task: rowData['Task'] || '',
-        Owner: rowData['Owner'],
-        'WORK FOR': rowData['Work For'] || '',
-        PERIOD: rowData['Period'] || '',
-        'Due date': rowData['DueDate'],
-        'Assigned By': rowData['Assigned By'],
-        Notes: rowData['Notes'] || '',
-        Status: rowData['Status'] || 'Not Started'
-      };
+const finalTask = {
+  SINO: task['SINO'],
+  'Existing Company Name': task['Company'],
+  'TYPE OF WORK': task['Type of Work'],
+  'ACCOUNT TYPE': task['Account Type'] || '',
+  'Accounts / Cards': task['Accounts / Cards'] || '',
+  Task: task['Task'] || '',
+  Owner: task['Owner'],
+  'WORK FOR': task['Work For'] || '',
+  PERIOD: task['Period'] || '',
+  'Due date': task['DueDate'],
+  'Assigned By': task['Assigned By'],
+  Notes: task['Notes'] || '',
+  Status: task['Status'] || 'Not Started',
+  TimeStarted: task['Time Started'] || '',
+  TimeEnd: task['Time End'] || '',
+  TotalWorkHours: task['Total Work Hours'] || '',
+  TotalPauseHours: task['Total Pause Hours'] || '',
+  Remarks: task['Remarks'] || ''
+};
 
       tasksToUpload.push(finalTask);
     }
