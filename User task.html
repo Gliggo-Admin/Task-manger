@@ -429,15 +429,25 @@
   </label><br/><br/>
 
   <!-- ACCOUNT TYPE -->
+
   <label>Account Type:<br/>
+
     <select name="accountType" id="accountType">
+
       <option value="">--Select--</option>
+
       <option>Credit Card</option>
+
       <option>Chequing Acc</option>
+
       <option>Savings Acc</option>
+
       <option>Loan Acc</option>
+
       <option>Other</option>
+
     </select>
+
   </label><br/><br/>
 
   <!-- Account # autofill from existing -->
@@ -939,22 +949,25 @@ function addUniqueOptions(datalist, valuesArray) {
   const seen = new Set();
   datalist.innerHTML = '';
   valuesArray.forEach(val => {
-    if (val && !seen.has(val.trim().toLowerCase())) {
-      seen.add(val.trim().toLowerCase());
-      datalist.append(new Option(val.trim()));
+    const trimmed = val.trim();
+    if (trimmed && !seen.has(trimmed.toLowerCase())) {
+      seen.add(trimmed.toLowerCase());
+      datalist.append(new Option(trimmed));
     }
   });
 }
+
 
 // When opening modal:
 createTaskBtn.onclick = async () => {
   taskForm.reset();
   SINOinput.value = await generateSINO();
   ownerInput.value = username;
-  ownerInput.setAttribute("readonly", true); // ❌ can't change
+  ownerInput.setAttribute("readonly", true);
   TaskInput.value = `Daily task for ${username}`;
   periodInput.style.display = 'none';
 
+  // 🔁 These must run after allTasks is ready
   const companies = allTasks.map(t => t['Existing Company Name']);
   const workTypes = allTasks.map(t => t['TYPE OF WORK']);
   const assignedByListArr = allTasks.map(t => t['Assigned By']);
@@ -964,6 +977,26 @@ createTaskBtn.onclick = async () => {
   addUniqueOptions(assignedByList, assignedByListArr);
 
   taskModal.style.display = 'flex';
+};
+
+function populateGlobalSuggestions() {
+  const companies = [];
+  const accounts = [];
+
+  allTasks.forEach(task => {
+    const company = task['Existing Company Name'];
+    const account = task['Accounts / Cards'];
+    if (company && company.trim()) companies.push(company.trim());
+    if (account && account.trim()) accounts.push(account.trim());
+  });
+
+  addUniqueOptions(companyList, companies);
+  addUniqueOptions(accountsCardsList, accounts);
+}
+
+window.onload = async () => {
+  await loadTasks();
+  populateGlobalSuggestions(); // ✅ after tasks are loaded
 };
 
 
