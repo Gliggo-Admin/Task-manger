@@ -267,7 +267,7 @@
       <ul>
 <li class="menu-item active" data-section="tasks" id="tasksMenuItem">Tasks</li>
 
-        <li class="menu-item" data-section="chart">View in Chart</li>
+<li class="menu-item active" data-section="Chart" id="ChartMenuItem">Chart</li>
       </ul>
     </nav>
 
@@ -500,7 +500,9 @@
 document.getElementById("tasksMenuItem").addEventListener("click", () => {
   window.location.href = "SubAdminTasks.html";
 });
-
+document.getElementById("ChartMenuItem").addEventListener("click", () => {
+  window.location.href = "SubAdminChart.html";
+});
 
     loadTasks(currentDate);
   </script>
