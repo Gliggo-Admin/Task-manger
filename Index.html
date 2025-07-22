@@ -176,13 +176,17 @@ if (userData.fullName) {
       const role = userData.role ? userData.role.trim().toLowerCase() : "";
 
       // Redirect based on role
-      if (role === "admin") {
-        window.location.href = "Home.html"; // Admin dashboard page
-      } else if (role === "user") {
-        window.location.href = "UserDashboard.html"; // User dashboard page
-      } else {
-        alert("User role not recognized: " + userData.role);
-      }
+  // Redirect based on role
+if (role === "admin") {
+  window.location.href = "Home.html"; // Admin dashboard
+} else if (role === "sub admin") {
+  window.location.href = "Sub Admin Dashboard.html"; // Sub Admin dashboard
+} else if (role === "user") {
+  window.location.href = "UserDashboard.html"; // Regular User dashboard
+} else {
+  alert("User role not recognized: " + userData.role);
+}
+
     })
     .catch(error => {
       console.error("Login error:", error);
