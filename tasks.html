@@ -212,6 +212,53 @@
     }
   });
 </script>
+<!-- PapaParse CSV Parser -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<script>
+  const csvInput = document.getElementById('csvFileInput');
+  const uploadBtn = document.getElementById('uploadCSVBtn');
+
+  // Trigger file selection
+  uploadBtn.addEventListener('click', () => {
+    csvInput.click();
+  });
+
+  // Handle file selection and upload
+  csvInput.addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async function (results) {
+        const data = results.data;
+        const db = firebase.firestore();
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const row of data) {
+          try {
+            // Add validation if necessary
+            await db.collection("tasks").add(row);
+            successCount++;
+          } catch (error) {
+            console.error("Error uploading row:", row, error);
+            failCount++;
+          }
+        }
+
+        alert(`Upload complete. Success: ${successCount}, Failed: ${failCount}`);
+      },
+      error: function (err) {
+        console.error("CSV parse error:", err);
+        alert("Error reading CSV file.");
+      }
+    });
+  });
+</script>
 
 </body>
 </html>
