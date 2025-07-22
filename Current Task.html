@@ -178,44 +178,49 @@ function renderTasks(tasks) {
               await ref.update({ Status: "In Progress", workSessions: sess });
               alert("Resumed");
             }
-            if (btn.classList.contains("btn-complete")) {
-              const i = sess.findIndex(s => !s.end);
-              if (i > -1) sess[i].end = ts;
+if (btn.classList.contains("btn-complete")) {
+  const i = sess.findIndex(s => !s.end);
+  if (i > -1) sess[i].end = ts;
 
-              let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
-              sess.forEach(s => {
-                const startMs = s.start?.toDate?.().getTime();
-                const endMs = s.end?.toDate?.().getTime();
-                if (startMs && endMs) {
-                  totalWorkMs += endMs - startMs;
-                  if (lastEnd !== null) {
-                    const pause = startMs - lastEnd;
-                    if (pause > 0) {
-                      totalPauseMs += pause;
-                      pauseCount++;
-                    }
-                  }
-                  lastEnd = endMs;
-                }
-              });
+  let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
+  sess.forEach(s => {
+    const startMs = s.start?.toDate?.().getTime();
+    const endMs = s.end?.toDate?.().getTime();
+    if (startMs && endMs) {
+      totalWorkMs += endMs - startMs;
+      if (lastEnd !== null) {
+        const pause = startMs - lastEnd;
+        if (pause > 0) {
+          totalPauseMs += pause;
+          pauseCount++;
+        }
+      }
+      lastEnd = endMs;
+    }
+  });
 
-              const startTime = sess[0]?.start || ts;
-              const endTime = sess.at(-1)?.end || ts;
+  const startTime = sess[0]?.start || ts;
+  const endTime = sess.at(-1)?.end || ts;
 
-              await ref.update({
-                Status: "Complete",
-                taskStart: startTime,
-                taskEnd: endTime,
-                workSessions: sess,
-                TimeStarted: startTime.toDate().toLocaleString(),
-                TimeEnd: endTime.toDate().toLocaleString(),
-                TotalWorkHours: formatMs(totalWorkMs),
-                TotalPauseHours: formatMs(totalPauseMs),
-                Remarks: pauseCount > 1 ? "-" : (t.Remarks || "")
-              });
+  // 🔹 Prompt for remarks
+  const userRemarks = prompt("Enter remarks for this task before completing:", t.Remarks || "");
+  if (userRemarks === null) return alert("Task completion cancelled.");
 
-              alert("Completed with time calculations");
-            }
+  await ref.update({
+    Status: "Complete",
+    taskStart: startTime,
+    taskEnd: endTime,
+    workSessions: sess,
+    TimeStarted: startTime.toDate().toLocaleString(),
+    TimeEnd: endTime.toDate().toLocaleString(),
+    TotalWorkHours: formatMs(totalWorkMs),
+    TotalPauseHours: formatMs(totalPauseMs),
+    Remarks: userRemarks.trim() || "-"
+  });
+
+  alert("Task marked as Complete.");
+}
+
 
             loadTasks();
           } catch {
