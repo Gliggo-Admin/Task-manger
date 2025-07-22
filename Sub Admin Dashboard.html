@@ -265,9 +265,9 @@
   <main>
     <nav class="sidebar">
       <ul>
-        <li class="menu-item active" data-section="tasks">Tasks</li>
+<li class="menu-item active" data-section="tasks" id="tasksMenuItem">Tasks</li>
+
         <li class="menu-item" data-section="chart">View in Chart</li>
-        <li class="menu-item" data-section="report">Generate Report</li>
       </ul>
     </nav>
 
@@ -496,6 +496,11 @@
         addTaskBtn.click();
       }
     });
+
+document.getElementById("tasksMenuItem").addEventListener("click", () => {
+  window.location.href = "SubAdminTasks.html";
+});
+
 
     loadTasks(currentDate);
   </script>
