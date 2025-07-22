@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #fff;
+      background: #fff; /* Clean white background */
       margin: 0;
       padding: 0 20px 40px;
       max-width: 1100px;
@@ -97,7 +97,7 @@
 
     .sidebar {
       width: 180px;
-      background-color: #f9f9f9;
+      background-color: #f9f9f9; /* lighter gray for cleaner look */
       border-radius: 15px;
       box-shadow: 0 8px 16px rgba(22, 160, 133, 0.15);
       padding: 20px;
@@ -171,19 +171,18 @@
   <main>
     <nav class="sidebar">
       <ul>
-        <li><a href="SubAdminTasks.html" class="menu-item">Tasks</a></li>
+        <li class="menu-item active" data-section="tasks">Tasks</li>
         <li class="menu-item" data-section="chart">View in Chart</li>
       </ul>
     </nav>
 
     <div class="main-content">
       <section class="left-panel" id="leftPanel">
-        <h2>Welcome, Sub Admin</h2>
-        <p>Select "Tasks" or "Chart View" to proceed.</p>
+        <!-- Task or Chart content will load here -->
       </section>
 
       <section class="right-panel" id="rightPanel">
-        <p>This panel will update based on the selected section.</p>
+        <!-- Task details or chart info will load here -->
       </section>
     </div>
   </main>
@@ -246,20 +245,43 @@
     updateDateTime();
     setInterval(updateDateTime, 60000);
 
-    // Sidebar 'View in Chart' menu click handler
-    document.querySelectorAll(".menu-item").forEach(item => {
-      if (item.getAttribute('data-section') === 'chart') {
-        item.addEventListener("click", () => {
-          // Remove active class from all items
-          document.querySelectorAll(".menu-item").forEach(el => el.classList.remove("active"));
-          // Add active class to this item
-          item.classList.add("active");
+    // Load Tasks view inside the dashboard
+    function loadTasksView() {
+      document.getElementById("leftPanel").innerHTML = `
+        <h2>Your Tasks</h2>
+        <ul id="taskList">
+          <li>Task 1: Review reports</li>
+          <li>Task 2: Update task manager</li>
+          <li>Task 3: Meet with team</li>
+        </ul>
+      `;
+      document.getElementById("rightPanel").innerHTML = `<p>Select a task to view details.</p>`;
+    }
 
-          // Update panels for chart view
-          document.getElementById("leftPanel").innerHTML = `<h2>View in Chart</h2><p>Analyze tasks visually.</p>`;
-          document.getElementById("rightPanel").innerHTML = `<p>Charts or graphs will be shown here.</p>`;
-        });
-      }
+    // Load Chart view inside the dashboard
+    function loadChartView() {
+      document.getElementById("leftPanel").innerHTML = `<h2>View in Chart</h2><p>Analyze tasks visually.</p>`;
+      document.getElementById("rightPanel").innerHTML = `<p>Charts or graphs will be shown here.</p>`;
+    }
+
+    // Initially load the tasks view on page load
+    loadTasksView();
+
+    // Sidebar menu click handlers
+    document.querySelectorAll(".menu-item").forEach(item => {
+      item.addEventListener("click", () => {
+        // Remove active class from all menu items
+        document.querySelectorAll(".menu-item").forEach(el => el.classList.remove("active"));
+        // Add active class to clicked item
+        item.classList.add("active");
+
+        const section = item.getAttribute("data-section");
+        if (section === "tasks") {
+          loadTasksView();
+        } else if (section === "chart") {
+          loadChartView();
+        }
+      });
     });
   </script>
 </body>
