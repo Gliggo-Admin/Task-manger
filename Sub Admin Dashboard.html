@@ -2,241 +2,76 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sub Admin Dashboard – Task Manager</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sub Admin Dashboard – Tasks</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       background: #f4f7f9;
-      margin: 0;
-      padding: 0 20px 40px;
-      max-width: 1100px;
-      margin-left: auto;
-      margin-right: auto;
+      margin: 0; padding: 20px;
+      max-width: 1100px; margin: auto;
     }
-
     header {
-      position: relative;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px 0;
+      display: flex; justify-content: space-between;
+      align-items: center; padding-bottom: 10px;
       border-bottom: 2px solid #16a085;
-      font-weight: 600;
-      color: #16a085;
-      user-select: none;
     }
-
-    .left-label {
-      font-size: 1.2rem;
-    }
-
-    .center-datetime {
-      font-size: 1.2rem;
-      font-weight: 600;
-    }
-
-    .profile-container {
-      position: relative;
-      cursor: pointer;
-    }
-
+    .center-datetime { font-weight: 600; color: #16a085; }
+    .profile-container { position: relative; cursor: pointer; }
     .profile-name {
-      color: #16a085;
-      font-weight: 600;
-      padding: 8px 12px;
-      border-radius: 12px;
-      background: #d1f0eb;
-      transition: background 0.3s;
+      padding: 8px 12px; border-radius: 12px;
+      background: #d1f0eb; color: #16a085;
     }
-
-    .profile-name:hover {
-      background: #b0e4d8;
-    }
-
     .dropdown {
-      display: none;
-      position: absolute;
-      top: 110%;
-      right: 0;
-      background: white;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-shadow: 0 8px 16px rgba(22, 160, 133, 0.25);
+      display: none; position: absolute; top: 110%; right: 0;
+      background: white; box-shadow: 0 8px 16px rgba(22,160,133,0.25);
       width: 120px;
-      z-index: 10;
     }
-
-    .dropdown.show {
-      display: block;
-    }
-
+    .dropdown.show { display: block; }
     .dropdown button {
-      width: 100%;
-      padding: 10px;
-      border: none;
-      background: none;
-      font-weight: 600;
-      color: #16a085;
+      width: 100%; padding: 10px; background: none;
+      border: none; font-weight: 600; color: #16a085;
       cursor: pointer;
-      border-radius: 8px;
-      transition: background 0.2s;
     }
-
-    .dropdown button:hover {
-      background: #ec4545;
-      color: white;
+    .sidebar { width: 180px; }
+    .menu-item {
+      padding: 10px; cursor: pointer;
+      color: #16a085; font-weight: 600;
     }
-
-    main {
-      display: flex;
-      gap: 24px;
+    .menu-item.active, .menu-item:hover {
+      background: #1abc9c; color: white;
+      border-radius: 6px;
+    }
+    main { display: flex; gap: 20px; margin-top: 20px; }
+    .left-panel, .right-panel {
+      background: white; border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(22,160,133,0.15);
+      padding: 20px;
+    }
+    .left-panel { width: 200px; }
+    .task-table {
+      width: 100%; border-collapse: collapse;
       margin-top: 20px;
     }
-
-    .sidebar {
-      width: 180px;
-      background-color: #ffffff;
-      border-radius: 15px;
-      box-shadow: 0 8px 16px rgba(22, 160, 133, 0.15);
-      padding: 20px;
-      font-weight: 600;
-      color: #16a085;
-      user-select: none;
+    .task-table th {
+      background: #34495e; color: white;
+      padding: 12px; text-align: left;
     }
-
-    .sidebar ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+    .task-table td {
+      padding: 10px; border-bottom: 1px solid #ddd;
     }
-
-    .sidebar .menu-item {
-      padding: 10px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    .sidebar .menu-item:hover,
-    .sidebar .menu-item.active {
-      background-color: #1abc9c;
-      color: white;
-    }
-
-    .main-content {
-      display: flex;
-      gap: 24px;
-      flex-grow: 1;
-    }
-
-    .left-panel {
-      flex: 1;
-      background: white;
-      border-radius: 15px;
-      box-shadow: 0 8px 16px rgba(22, 160, 133, 0.15);
-      padding: 20px;
-      min-height: 400px;
-    }
-
-    .right-panel {
-      flex: 1;
-      background: white;
-      border-radius: 15px;
-      box-shadow: 0 8px 16px rgba(22, 160, 133, 0.15);
-      padding: 20px;
-      min-height: 400px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .todo-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .todo-header button {
-      background: #16a085;
-      border: none;
-      color: white;
-      padding: 6px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.3s;
-    }
-
-    .todo-header button:hover {
-      background: #1abc9c;
-    }
-
-    ul.todo-list {
-      list-style: none;
-      padding-left: 0;
-      margin: 0;
-      overflow-y: auto;
-      flex-grow: 1;
-      max-height: 340px;
-    }
-
-    ul.todo-list li {
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      font-size: 1rem;
-    }
-
-    ul.todo-list li label {
-      margin-left: 8px;
-      cursor: pointer;
-      flex-grow: 1;
-      user-select: none;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    ul.todo-list li.completed label {
-      text-decoration: line-through;
-      color: #999;
-    }
-
-    .add-task-container {
-      margin-bottom: 12px;
-      display: flex;
-      gap: 8px;
-    }
-
-    .add-task-container input {
-      flex-grow: 1;
-      padding: 8px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-
-    .add-task-container button {
-      background: #16a085;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 8px 16px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.3s;
-    }
-
-    .add-task-container button:hover {
-      background: #1abc9c;
+    .task-row { cursor: pointer; transition: background 0.3s; }
+    .task-row:hover { background: #f1f1f1; }
+    .details-row td {
+      background: #f9f9f9; padding: 12px;
+      font-size: 14px; color: #555;
     }
   </style>
 </head>
 <body>
   <header>
-    <div class="left-label">Sub Admin</div>
-    <div class="center-datetime" id="dateTimeDisplay">Loading...</div>
+    <div>Sub Admin</div>
+    <div class="center-datetime" id="dateTimeDisplay">Loading…</div>
     <div class="profile-container" id="profileContainer">
       <div class="profile-name" id="profileName">Sub Admin</div>
       <div class="dropdown" id="profileDropdown">
@@ -247,21 +82,25 @@
 
   <main>
     <nav class="sidebar">
-      <ul>
-        <li class="menu-item active" data-section="tasks">Tasks</li>
-        <li class="menu-item" data-section="chart">View in Chart</li>
-      </ul>
+      <div class="menu-item active" data-section="tasks">Tasks</div>
+      <div class="menu-item" data-section="chart">View in Chart</div>
     </nav>
 
-    <div class="main-content">
-      <section class="left-panel" id="leftPanel">
-        <h2>Welcome, Sub Admin</h2>
-        <p>Select "Tasks" or "Chart View" to proceed.</p>
-      </section>
+    <div class="left-panel" id="leftPanel">
+      <h2>Tasks</h2>
+      <p>Click a task to view details.</p>
+    </div>
 
-      <section class="right-panel" id="rightPanel">
-        <p>This panel will update based on the selected section.</p>
-      </section>
+    <div class="right-panel" id="rightPanel">
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th>SINO</th><th>Company</th><th>Work Type</th><th>Status</th><th>Owner</th>
+          </tr>
+        </thead>
+        <tbody id="tasksTable"></tbody>
+      </table>
+      <div id="paginationControls"></div>
     </div>
   </main>
 
@@ -270,83 +109,158 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // Firebase config
+    // Firebase init
     const firebaseConfig = {
-      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-      authDomain: "task-manager-602da.firebaseapp.com",
-      projectId: "task-manager-602da",
-      storageBucket: "task-manager-602da.appspot.com",
-      messagingSenderId: "438978699329",
-      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+      apiKey: "...", authDomain: "...",
+      projectId: "...", /* reuse your config */
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    // Session & profile
     const username = sessionStorage.getItem("username");
     const fullName = sessionStorage.getItem("fullName");
+    if (!username) window.location.href = "index.html";
+    document.getElementById("profileName").textContent = fullName || username;
 
-    if (!username) {
-      window.location.href = "index.html";
-    } else {
-      document.getElementById("profileName").textContent = fullName || username;
-    }
-
-    const profileContainer = document.getElementById("profileContainer");
-    const dropdown = document.getElementById("profileDropdown");
-
-    profileContainer.addEventListener("click", () => {
-      dropdown.classList.toggle("show");
+    // Logout dropdown
+    const profileContainer = document.getElementById("profileContainer"),
+          dropdown = document.getElementById("profileDropdown");
+    profileContainer.addEventListener("click", () => dropdown.classList.toggle("show"));
+    document.addEventListener("click", e => {
+      if (!profileContainer.contains(e.target)) dropdown.classList.remove("show");
     });
-
-    document.addEventListener("click", (e) => {
-      if (!profileContainer.contains(e.target)) {
-        dropdown.classList.remove("show");
-      }
-    });
-
-    document.getElementById("logoutBtn").addEventListener("click", () => {
+    document.getElementById("logoutBtn").onclick = () => {
       sessionStorage.clear();
       window.location.href = "index.html";
-    });
+    };
 
-    const dateTimeDisplay = document.getElementById("dateTimeDisplay");
+    // Dynamic date/time
     function updateDateTime() {
       const now = new Date();
-      const dateStr = now.toLocaleDateString(undefined, {
-        weekday: 'short', year: 'numeric', month: 'short', day: 'numeric'
-      });
-      const timeStr = now.toLocaleTimeString(undefined, {
-        hour: '2-digit', minute: '2-digit'
-      });
-      dateTimeDisplay.textContent = `${dateStr} ${timeStr}`;
+      const date = now.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric', year:'numeric'});
+      const time = now.toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit'});
+      document.getElementById("dateTimeDisplay").textContent = `${date} ${time}`;
     }
-    updateDateTime();
-    setInterval(updateDateTime, 60000);
+    updateDateTime(); setInterval(updateDateTime, 60000);
 
-    // Sidebar menu actions
-    const leftPanel = document.getElementById("leftPanel");
-    const rightPanel = document.getElementById("rightPanel");
-
+    // Sidebar actions
     document.querySelectorAll(".menu-item").forEach(item => {
       item.addEventListener("click", () => {
         document.querySelectorAll(".menu-item").forEach(el => el.classList.remove("active"));
         item.classList.add("active");
-
-        const section = item.getAttribute("data-section");
-
-        switch (section) {
-          case "tasks":
-            leftPanel.innerHTML = `<h2>Manage Tasks</h2><p>You can review or manage user tasks here.</p>`;
-            rightPanel.innerHTML = `<p>Task management UI will appear here.</p>`;
-            break;
-
-          case "chart":
-            leftPanel.innerHTML = `<h2>View in Chart</h2><p>Analyze tasks visually.</p>`;
-            rightPanel.innerHTML = `<p>Charts or graphs will be shown here.</p>`;
-            break;
-        }
+        if (item.dataset.section === "tasks") initTasksView();
+        else if (item.dataset.section === "chart") showChartPlaceholder();
       });
     });
+
+    function showChartPlaceholder() {
+      document.getElementById("leftPanel").innerHTML = "<h2>View in Chart</h2><p>Chart UI coming soon!</p>";
+      document.getElementById("rightPanel").innerHTML = "";
+    }
+
+    // Tasks view logic
+    const taskTableBody = document.getElementById('tasksTable');
+    const paginationDiv = document.getElementById('paginationControls');
+    const rowsPerPage = 10;
+    let allTasks = [], filteredTasks = [], currentPage = 1;
+
+    async function initTasksView() {
+      document.getElementById("leftPanel").innerHTML = "<h2>Tasks</h2><p>Click a task to view details.</p>";
+      document.getElementById("rightPanel").innerHTML = `
+        <table class="task-table">
+          <thead><tr>
+            <th>SINO</th><th>Company</th><th>Work Type</th><th>Status</th><th>Owner</th>
+          </tr></thead>
+          <tbody id="tasksTable"></tbody>
+        </table>
+        <div id="paginationControls"></div>
+      `;
+      await loadTasks();
+    }
+
+    async function loadTasks() {
+      const snap = await db.collection('tasks').get();
+      allTasks = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      allTasks.sort((a,b) => {
+        const nA = parseInt(a.SINO?.match(/\d+$/)?.[0] || 0),
+              nB = parseInt(b.SINO?.match(/\d+$/)?.[0] || 0);
+        return nA - nB;
+      });
+      filteredTasks = allTasks;
+      currentPage = 1;
+      renderPage();
+    }
+
+    function renderPage() {
+      taskTableBody.innerHTML = "";
+      const start = (currentPage-1)*rowsPerPage;
+      filteredTasks.slice(start, start+rowsPerPage).forEach(task => {
+        const tr = document.createElement('tr');
+        tr.className = 'task-row';
+        tr.innerHTML = `
+          <td>${task.SINO || ''}</td>
+          <td>${task['Existing Company Name'] || ''}</td>
+          <td>${task['TYPE OF WORK'] || ''}</td>
+          <td>${task.Status || ''}</td>
+          <td>${task.Owner || ''}</td>`;
+        const detailsTr = document.createElement('tr');
+        detailsTr.className = 'details-row';
+        detailsTr.style.display = 'none';
+        detailsTr.innerHTML = `
+          <td colspan="5">
+            <strong>Account Type:</strong> ${task['ACCOUNT TYPE'] || ''}<br/>
+            <strong>Accounts/Cards:</strong> ${task['Accounts / Cards'] || ''}<br/>
+            <strong>Task:</strong> ${task.Task || ''}<br/>
+            <strong>Work For:</strong> ${task['WORK FOR'] || ''}<br/>
+            <strong>Period:</strong> ${task.PERIOD || ''}<br/>
+            <strong>Due Date:</strong> ${task['Due date'] || ''}<br/>
+            <strong>Assigned By:</strong> ${task['Assigned By'] || ''}<br/>
+            <strong>Notes:</strong> ${task.Notes || ''}<br/>
+            <strong>Time Started:</strong> ${formatTs(task.taskStart)}<br/>
+            <strong>Time End:</strong> ${formatTs(task.taskEnd)}<br/>
+            <strong>Total Work Hours:</strong> ${task.TotalWorkHours || ''}<br/>
+            <strong>Total Pause Hours:</strong> ${task.TotalPauseHours || ''}<br/>
+            <strong>Remarks:</strong> ${task.Remarks || ''}<br/>
+          </td>`;
+        tr.onclick = () => detailsTr.style.display = detailsTr.style.display === 'none' ? 'table-row' : 'none';
+
+        taskTableBody.appendChild(tr);
+        taskTableBody.appendChild(detailsTr);
+      });
+      renderPagination();
+    }
+
+    function formatTs(ts) {
+      if (!ts) return '';
+      try {
+        const d = ts.toDate();
+        return d.toLocaleString();
+      } catch {
+        return '';
+      }
+    }
+
+    function renderPagination() {
+      paginationDiv.innerHTML = "";
+      const total = Math.ceil(filteredTasks.length / rowsPerPage);
+      if (total <= 1) return;
+      const makeBtn = (t, d, fn) => {
+        const btn = document.createElement('button');
+        btn.textContent = t;
+        btn.disabled = d;
+        btn.onclick = fn;
+        return btn;
+      };
+      paginationDiv.appendChild(makeBtn('Prev', currentPage === 1, () => { currentPage--; renderPage(); }));
+      for (let i = 1; i <= total; i++) {
+        paginationDiv.appendChild(makeBtn(i, i === currentPage, () => { currentPage = i; renderPage(); }));
+      }
+      paginationDiv.appendChild(makeBtn('Next', currentPage === total, () => { currentPage++; renderPage(); }));
+    }
+
+    // Load Tasks on startup
+    initTasksView();
   </script>
 </body>
 </html>
