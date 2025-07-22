@@ -300,43 +300,53 @@
     return '';
   }
 
-  function renderPagination(tasks) {
-    paginationDiv.innerHTML = '';
-    const totalPages = Math.ceil(tasks.length / rowsPerPage);
-    if (totalPages <= 1) return;
+function renderPagination(tasks) {
+  paginationDiv.innerHTML = '';
+  const totalPages = Math.ceil(tasks.length / rowsPerPage);
+  if (totalPages <= 1) return;
 
-    const prevBtn = createPageButton('Prev', currentPage === 1, () => {
-      if (currentPage > 1) {
-        currentPage--;
-        renderTablePage(currentPage, filteredTasks);
-      }
-    });
-    paginationDiv.appendChild(prevBtn);
-
-    for (let i = 1; i <= totalPages; i++) {
-      const btn = createPageButton(i, i === currentPage, () => {
-        currentPage = i;
-        renderTablePage(currentPage, filteredTasks);
-      });
-      paginationDiv.appendChild(btn);
+  const prevBtn = createPageButton('Prev', currentPage === 1, () => {
+    if (currentPage > 1) {
+      currentPage--;
+      renderTablePage(currentPage, filteredTasks);
     }
+  });
+  paginationDiv.appendChild(prevBtn);
 
-    const nextBtn = createPageButton('Next', currentPage === totalPages, () => {
-      if (currentPage < totalPages) {
-        currentPage++;
-        renderTablePage(currentPage, filteredTasks);
-      }
+  // Show first 3 pages, then ..., then last page
+  const pagesToShow = [];
+  for (let i = 1; i <= totalPages; i++) {
+    if (i <= 3 || i === totalPages) {
+      pagesToShow.push(i);
+    }
+  }
+
+  // Render pages with ... if needed
+  for (let i = 0; i < pagesToShow.length; i++) {
+    if (i > 0 && pagesToShow[i] - pagesToShow[i - 1] > 1) {
+      // gap detected, add "..."
+      const dots = document.createElement('span');
+      dots.textContent = '...';
+      dots.style.margin = '0 6px';
+      paginationDiv.appendChild(dots);
+    }
+    const pageNum = pagesToShow[i];
+    const btn = createPageButton(pageNum, pageNum === currentPage, () => {
+      currentPage = pageNum;
+      renderTablePage(currentPage, filteredTasks);
     });
-    paginationDiv.appendChild(nextBtn);
+    paginationDiv.appendChild(btn);
   }
 
-  function createPageButton(label, disabled, onClick) {
-    const btn = document.createElement('button');
-    btn.textContent = label;
-    btn.disabled = disabled;
-    if (!disabled) btn.addEventListener('click', onClick);
-    return btn;
-  }
+  const nextBtn = createPageButton('Next', currentPage === totalPages, () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderTablePage(currentPage, filteredTasks);
+    }
+  });
+  paginationDiv.appendChild(nextBtn);
+}
+
 
   function applyFilters() {
     const company = searchCompany.value.toLowerCase();
