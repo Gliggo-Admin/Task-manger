@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Task Charts</title>
+
+  <!-- Firebase & Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f0f4f8;
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #2c3e50;
+    }
+
+    #dateTimeBox {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 5px;
+      margin-bottom: 20px;
+      color: #34495e;
+    }
+
+    #homeButton {
+      display: block;
+      margin: 0 auto 20px auto;
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      background-color: #3498db;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #homeButton:hover {
+      background-color: #1c5980;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 10px;
+    }
+
+    .chart-card {
+      background: white;
+      padding: 25px 20px 30px 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+      min-height: 420px;
+    }
+
+    canvas {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 3px 12px rgb(0 0 0 / 0.12);
+      padding: 20px;
+      max-height: 420px;
+      width: 100% !important;
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .chart-card {
+        min-height: 350px;
+      }
+
+      canvas {
+        max-height: 350px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>
+    <img src="https://cdn-icons-png.flaticon.com/512/3645/3645709.png" style="height: 30px; vertical-align: middle;" />
+    Task Dashboard Charts
+  </h1>
+
+  <!-- Date & Time -->
+  <div id="dateTimeBox"></div>
+
+  <!-- Home Button -->
+  <button id="homeButton" onclick="window.location.href='Sub Admin Dashboard.html'">
+    Home
+  </button>
+
+  <!-- Chart Grid -->
+  <div class="chart-grid">
+    <div class="chart-card"><canvas id="statusChart"></canvas></div>
+    <div class="chart-card"><canvas id="ownerChart"></canvas></div>
+    <div class="chart-card"><canvas id="typeChart"></canvas></div>
+    <div class="chart-card"><canvas id="assignedByChart"></canvas></div>
+    <div class="chart-card"><canvas id="monthlyChart"></canvas></div>
+    <div class="chart-card"><canvas id="avgWorkChart"></canvas></div>
+    <div class="chart-card"><canvas id="avgPauseChart"></canvas></div>
+    <div class="chart-card"><canvas id="completeTimelineChart"></canvas></div>
+  </div>
+
+  <!-- Date & Time Script -->
+  <script>
+    function updateDateTime() {
+      const now = new Date();
+      const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+      const dateStr = now.toLocaleDateString(undefined, options);
+      const timeStr = now.toLocaleTimeString();
+      document.getElementById('dateTimeBox').textContent = `${dateStr} | ${timeStr}`;
+    }
+
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+  </script>
+
+  <!-- Your Chart Logic -->
+  <script src="chart.js"></script>
+</body>
+</html>
