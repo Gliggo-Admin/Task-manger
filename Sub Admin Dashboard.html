@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #fff; /* Clean white background */
+      background: #fff;
       margin: 0;
       padding: 0 20px 40px;
       max-width: 1100px;
@@ -97,7 +97,7 @@
 
     .sidebar {
       width: 180px;
-      background-color: #f9f9f9; /* lighter gray for cleaner look */
+      background-color: #f9f9f9;
       border-radius: 15px;
       box-shadow: 0 8px 16px rgba(22, 160, 133, 0.15);
       padding: 20px;
@@ -122,7 +122,8 @@
       color: #16a085;
     }
 
-    .sidebar .menu-item:hover {
+    .sidebar .menu-item:hover,
+    .sidebar .menu-item.active {
       background-color: #1abc9c;
       color: white;
       text-decoration: none;
@@ -170,7 +171,6 @@
   <main>
     <nav class="sidebar">
       <ul>
-        <!-- Changed to anchor for direct navigation -->
         <li><a href="SubAdminTasks.html" class="menu-item">Tasks</a></li>
         <li class="menu-item" data-section="chart">View in Chart</li>
       </ul>
@@ -246,21 +246,18 @@
     updateDateTime();
     setInterval(updateDateTime, 60000);
 
-    // Sidebar 'View in Chart' menu
+    // Sidebar 'View in Chart' menu click handler
     document.querySelectorAll(".menu-item").forEach(item => {
-      if(item.getAttribute('data-section') === 'chart'){
+      if (item.getAttribute('data-section') === 'chart') {
         item.addEventListener("click", () => {
+          // Remove active class from all items
           document.querySelectorAll(".menu-item").forEach(el => el.classList.remove("active"));
+          // Add active class to this item
           item.classList.add("active");
 
-          const section = item.getAttribute("data-section");
-
-          switch (section) {
-            case "chart":
-              document.getElementById("leftPanel").innerHTML = `<h2>View in Chart</h2><p>Analyze tasks visually.</p>`;
-              document.getElementById("rightPanel").innerHTML = `<p>Charts or graphs will be shown here.</p>`;
-              break;
-          }
+          // Update panels for chart view
+          document.getElementById("leftPanel").innerHTML = `<h2>View in Chart</h2><p>Analyze tasks visually.</p>`;
+          document.getElementById("rightPanel").innerHTML = `<p>Charts or graphs will be shown here.</p>`;
         });
       }
     });
