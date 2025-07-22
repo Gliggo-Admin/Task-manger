@@ -3,39 +3,107 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sub Admin Tasks - Read Only</title>
+<title>Sub Admin Tasks</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 20px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-  tr.task-row { cursor: pointer; }
-  tr.details-row { background: #f9f9f9; }
-  .details-box { padding: 10px; }
-  #paginationControls button { margin: 2px; padding: 5px 10px; }
-  input, select { margin-right: 10px; padding: 5px; }
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 0;
+  }
+  header {
+    background: #004080; /* deep blue */
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header .datetime {
+    font-size: 1.2em;
+    font-weight: bold;
+  }
+  header a.home-btn {
+    background: white;
+    color: #004080;
+    padding: 6px 12px;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+  header a.home-btn:hover {
+    background: #003366;
+    color: white;
+  }
+
+  #filters {
+    padding: 15px 20px;
+    background: #f0f0f0;
+  }
+
+  #filters input, #filters select {
+    margin-right: 10px;
+    padding: 6px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+  }
+  tr.task-row:hover {
+    background-color: #e6f2ff;
+    cursor: pointer;
+  }
+  tr.details-row {
+    background: #f9f9f9;
+  }
+  .details-box {
+    padding: 10px;
+    font-size: 0.9em;
+    color: #333;
+  }
+  #paginationControls {
+    margin: 15px 20px;
+    text-align: center;
+  }
+  #paginationControls button {
+    margin: 0 3px;
+    padding: 6px 10px;
+    border: 1px solid #004080;
+    background: white;
+    color: #004080;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  #paginationControls button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
 </style>
-<!-- Firebase scripts -->
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-<h2>Sub Admin Task View</h2>
+<header>
+  <div class="datetime" id="dateTimeDisplay">Loading Date & Time...</div>
+  <a href="Sub Admin Dashboard.html" class="home-btn">Home</a>
+</header>
 
-<div>
-  <label>Company: <input type="text" id="searchCompany" placeholder="Search company" list="companyList" /></label>
-  <datalist id="companyList"></datalist>
-
-  <label>Owner: <input type="text" id="searchOwner" placeholder="Search owner" /></label>
-
-  <label>Status:
-    <select id="statusFilter">
-      <option value="">All</option>
-      <option value="Not Started">Not Started</option>
-      <option value="In Progress">In Progress</option>
-      <option value="Complete">Complete</option>
-    </select>
-  </label>
+<div id="filters">
+  <input type="search" id="searchCompany" placeholder="Search Company" />
+  <input type="search" id="searchOwner" placeholder="Search Owner" />
+  <select id="statusFilter">
+    <option value="">All Statuses</option>
+    <option value="Not Started">Not Started</option>
+    <option value="In Progress">In Progress</option>
+    <option value="Complete">Complete</option>
+  </select>
 </div>
 
 <table id="tasksTable">
@@ -43,7 +111,7 @@
     <tr>
       <th>SINO</th>
       <th>Company</th>
-      <th>Type of Work</th>
+      <th>Type Of Work</th>
       <th>Status</th>
       <th>Owner</th>
     </tr>
@@ -53,8 +121,11 @@
 
 <div id="paginationControls"></div>
 
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
 <script>
-  // Firebase config (unchanged)
+  // Your Firebase config here (use your existing config)
   const firebaseConfig = {
     apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
     authDomain: "task-manager-602da.firebaseapp.com",
@@ -72,13 +143,25 @@
   const searchCompany = document.getElementById('searchCompany');
   const searchOwner = document.getElementById('searchOwner');
   const statusFilter = document.getElementById('statusFilter');
-  const companyList = document.getElementById('companyList');
+  const dateTimeDisplay = document.getElementById('dateTimeDisplay');
 
   const rowsPerPage = 10;
   let currentPage = 1;
   let allTasks = [];
   let filteredTasks = [];
 
+  // Show Date & Time on top
+  function updateDateTime() {
+    const now = new Date();
+    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+    const dateStr = now.toLocaleDateString(undefined, options);
+    const timeStr = now.toLocaleTimeString();
+    dateTimeDisplay.textContent = `${dateStr} ${timeStr}`;
+  }
+  setInterval(updateDateTime, 1000);
+  updateDateTime();
+
+  // Load tasks from Firestore
   async function loadTasks() {
     try {
       const snapshot = await db.collection('tasks').get();
@@ -87,7 +170,7 @@
         allTasks.push({ id: doc.id, ...doc.data() });
       });
 
-      // Sort ascending by numeric part of SINO
+      // Sort by numeric part of SINO ascending
       allTasks.sort((a, b) => {
         const getNumber = sino => {
           if (!sino) return 0;
@@ -97,31 +180,13 @@
         return getNumber(a.SINO) - getNumber(b.SINO);
       });
 
-      populateCompanyList();
-
       applyFilters();
     } catch (error) {
-      console.error(error);
+      console.error("Error loading tasks:", error);
     }
   }
 
-  function populateCompanyList() {
-    companyList.innerHTML = '';
-    const companiesSet = new Set();
-
-    allTasks.forEach(task => {
-      const company = task['Existing Company Name'];
-      if (company) companiesSet.add(company);
-    });
-
-    companiesSet.forEach(name => {
-      const option = document.createElement('option');
-      option.value = name;
-      companyList.appendChild(option);
-    });
-  }
-
-  // Render a specific page (read-only, no buttons)
+  // Render a specific page
   function renderTablePage(page, tasks) {
     taskTableBody.innerHTML = '';
     const start = (page - 1) * rowsPerPage;
@@ -168,16 +233,22 @@
       taskTableBody.appendChild(tr);
       taskTableBody.appendChild(detailsTr);
     });
+
+    renderPagination(tasks);
   }
 
   function formatTimestamp(ts) {
     if (!ts) return '';
-    if (typeof ts.toDate === 'function') return ts.toDate().toLocaleString();
-    if (ts instanceof Date) return ts.toLocaleString();
+    if (typeof ts.toDate === 'function') {
+      return ts.toDate().toLocaleString();
+    }
+    if (ts instanceof Date) {
+      return ts.toLocaleString();
+    }
     return '';
   }
 
-  // Render pagination controls
+  // Render pagination buttons
   function renderPagination(tasks) {
     paginationDiv.innerHTML = '';
     const totalPages = Math.ceil(tasks.length / rowsPerPage);
@@ -187,7 +258,6 @@
       if (currentPage > 1) {
         currentPage--;
         renderTablePage(currentPage, filteredTasks);
-        renderPagination(filteredTasks);
       }
     });
     paginationDiv.appendChild(prevBtn);
@@ -196,7 +266,6 @@
       const btn = createPageButton(i, i === currentPage, () => {
         currentPage = i;
         renderTablePage(currentPage, filteredTasks);
-        renderPagination(filteredTasks);
       });
       paginationDiv.appendChild(btn);
     }
@@ -205,7 +274,6 @@
       if (currentPage < totalPages) {
         currentPage++;
         renderTablePage(currentPage, filteredTasks);
-        renderPagination(filteredTasks);
       }
     });
     paginationDiv.appendChild(nextBtn);
@@ -219,7 +287,7 @@
     return btn;
   }
 
-  // Apply filters from inputs
+  // Filter tasks based on inputs
   function applyFilters() {
     const company = searchCompany.value.toLowerCase();
     const owner = searchOwner.value.toLowerCase();
@@ -234,7 +302,6 @@
 
     currentPage = 1;
     renderTablePage(currentPage, filteredTasks);
-    renderPagination(filteredTasks);
   }
 
   // Attach filter input listeners
@@ -244,7 +311,7 @@
 
   // Load tasks on page load
   window.onload = loadTasks;
-</script>
 
+</script>
 </body>
 </html>
