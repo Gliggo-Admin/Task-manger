@@ -125,7 +125,7 @@
 
       <button type="submit">Save</button>
       <button type="button" onclick="document.getElementById('taskModal').style.display='none'">Cancel</button>
-    </form>
+    </form> 
   </div>
 </div>
 
@@ -140,6 +140,11 @@
 <script src="tasks.js"></script>
 
 <!-- Modal Show/Hide Logic + Dropdowns -->
+
+<!-- CSV Upload Button and Input -->
+<input type="file" id="csvFileInput" accept=".csv" style="display:none" />
+<button id="uploadCSVBtn" style="position: fixed; bottom: 100px; right: 30px; background-color: #007bff; color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 20px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index:999;">⬆</button>
+
 <script>
   document.getElementById('createTaskBtn').addEventListener('click', () => {
     document.getElementById('taskModal').style.display = 'flex';
