@@ -585,13 +585,13 @@ async function handleCSVUpload(event) {
 const timeStartStr = rowData['Time Started'] || rowData['startTime'];
 const timeEndStr = rowData['Time End'] || rowData['endTime'];
 
-const timeStart = timeStartStr ? new Date(timeStartStr) : null;
-const timeEnd = timeEndStr ? new Date(timeEndStr) : null;
+
 
 
 
       const dueDateStr = rowData['DueDate'];
 
+      let timeStart = null, timeEnd = null;
       try {
         // Try parsing with fixed date (assume DueDate if available)
         const baseDate = dueDateStr ? new Date(dueDateStr) : new Date();
