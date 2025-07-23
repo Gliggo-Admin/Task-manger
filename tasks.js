@@ -585,10 +585,13 @@ async function handleCSVUpload(event) {
 const timeStartStr = rowData['Time Started'] || rowData['startTime'];
 const timeEndStr = rowData['Time End'] || rowData['endTime'];
 
+const timeStart = timeStartStr ? new Date(timeStartStr) : null;
+const timeEnd = timeEndStr ? new Date(timeEndStr) : null;
+
+
 
       const dueDateStr = rowData['DueDate'];
 
-      let timeStart = null, timeEnd = null;
       try {
         // Try parsing with fixed date (assume DueDate if available)
         const baseDate = dueDateStr ? new Date(dueDateStr) : new Date();
@@ -612,28 +615,29 @@ const finalTask = {
   SINO: rowData['SINO'],
   'Existing Company Name': rowData['Company'],
   'TYPE OF WORK': rowData['Type of Work'],
-  'ACCOUNT TYPE': rowData['Account Type'] || '',
-  'Accounts / Cards': rowData['Accounts / Cards'] || '',
-  Task: rowData['Task'] || '',
+  'ACCOUNT TYPE': rowData['Account Type'],
+  'Accounts / Cards': rowData['Accounts / Cards'],
+  Task: rowData['Task'],
   Owner: rowData['Owner'],
-  'WORK FOR': rowData['Work For'] || '',
-  PERIOD: rowData['Period'] || '',
+  'WORK FOR': rowData['Work For'],
+  PERIOD: rowData['Period'],
   'Due date': rowData['DueDate'],
   'Assigned By': rowData['Assigned By'],
-  Notes: rowData['Notes'] || '',
+  Notes: rowData['Notes'],
   Status: rowData['Status'] || 'Not Started',
-  
-  // ✅ These fields are what your UI reads
-  taskStart: timeStart ? firebase.firestore.Timestamp.fromDate(timeStart) : null,
-  taskEnd: timeEnd ? firebase.firestore.Timestamp.fromDate(timeEnd) : null,
+
+  // These are used in rendering and storage
   TimeStarted: timeStart ? timeStart.toLocaleString() : '',
   TimeEnd: timeEnd ? timeEnd.toLocaleString() : '',
-  
+  taskStart: timeStart ? firebase.firestore.Timestamp.fromDate(timeStart) : null,
+  taskEnd: timeEnd ? firebase.firestore.Timestamp.fromDate(timeEnd) : null,
+
   TotalWorkHours: rowData['Total Work Hours'] || '',
   TotalPauseHours: rowData['Total Pause Hours'] || '',
   Remarks: rowData['Remarks'] || '',
-  workSessions: workSessions
+  workSessions: [] // if any
 };
+
 
 
       tasksToUpload.push(finalTask);
