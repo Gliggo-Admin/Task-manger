@@ -1,4 +1,6 @@
-  // Firebase config (unchanged)
+let editingTaskId = null;
+
+// Firebase config (unchanged)
   const firebaseConfig = {
     apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
     authDomain: "task-manager-602da.firebaseapp.com",
@@ -246,7 +248,7 @@ async function updateTaskAsComplete(taskRef, task) {
       });
     });
 
-    let editingTaskId = null;
+
 
 
 document.querySelectorAll('.edit-btn').forEach(btn => {
