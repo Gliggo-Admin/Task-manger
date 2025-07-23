@@ -561,15 +561,12 @@ async function handleCSVUpload(event) {
   reader.onload = async function (e) {
     const text = e.target.result;
 
-    // Parse CSV (basic parser)
     const rows = text.split('\n').map(row => row.trim()).filter(Boolean);
     const headers = rows[0].split(',').map(h => h.trim());
 
     const requiredHeaders = ['SINO', 'Company', 'Type of Work', 'Owner', 'DueDate', 'Assigned By', 'Status'];
     const hasAllRequired = requiredHeaders.every(h => headers.includes(h));
-    if (!hasAllRequired) {
-      return alert('Missing required headers in CSV.');
-    }
+    if (!hasAllRequired) return alert('Missing required headers in CSV.');
 
     const tasksToUpload = [];
 
@@ -580,7 +577,31 @@ async function handleCSVUpload(event) {
         rowData[header] = values[idx] || '';
       });
 
-      // Map and clean fields
+      // 🔹 Parse date and time fields
+      const timeStartStr = rowData['Time Started'];
+      const timeEndStr = rowData['Time End'];
+      const dueDateStr = rowData['DueDate'];
+
+      let timeStart = null, timeEnd = null;
+      try {
+        // Try parsing with fixed date (assume DueDate if available)
+        const baseDate = dueDateStr ? new Date(dueDateStr) : new Date();
+        const [month, day, year] = baseDate.toLocaleDateString('en-US').split('/');
+
+        if (timeStartStr) timeStart = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${timeStartStr}`);
+        if (timeEndStr) timeEnd = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${timeEndStr}`);
+      } catch (e) {
+        console.warn(`Invalid time format in row ${i + 1}`);
+      }
+
+      // 🔹 Create workSessions if both times exist
+      const workSessions = (timeStart && timeEnd)
+        ? [{
+            start: firebase.firestore.Timestamp.fromDate(new Date(timeStart)),
+            end: firebase.firestore.Timestamp.fromDate(new Date(timeEnd))
+          }]
+        : [];
+
       const finalTask = {
         SINO: rowData['SINO'],
         'Existing Company Name': rowData['Company'],
@@ -595,11 +616,12 @@ async function handleCSVUpload(event) {
         'Assigned By': rowData['Assigned By'],
         Notes: rowData['Notes'] || '',
         Status: rowData['Status'] || 'Not Started',
-        TimeStarted: rowData['Time Started'] || '',
-        TimeEnd: rowData['Time End'] || '',
+        TimeStarted: timeStart ? timeStart.toLocaleString() : '',
+        TimeEnd: timeEnd ? timeEnd.toLocaleString() : '',
         TotalWorkHours: rowData['Total Work Hours'] || '',
         TotalPauseHours: rowData['Total Pause Hours'] || '',
-        Remarks: rowData['Remarks'] || ''
+        Remarks: rowData['Remarks'] || '',
+        workSessions: workSessions
       };
 
       tasksToUpload.push(finalTask);
@@ -610,13 +632,13 @@ async function handleCSVUpload(event) {
       const tasksRef = db.collection('tasks');
 
       tasksToUpload.forEach(task => {
-        const newDoc = tasksRef.doc(); // Auto-generate Firestore doc ID
+        const newDoc = tasksRef.doc();
         batch.set(newDoc, task);
       });
 
       await batch.commit();
       alert(`${tasksToUpload.length} tasks uploaded successfully.`);
-      loadTasks(); // Refresh table
+      loadTasks(); // Optional: reload your task table
     } catch (err) {
       console.error('Error uploading tasks:', err);
       alert('Failed to upload tasks. See console for details.');
