@@ -51,7 +51,9 @@ async function loadTasks() {
           task.Status === "Complete" &&
           Array.isArray(task.workSessions) &&
           task.workSessions.length > 0 &&
-          (!task.TotalWorkHours || !task.TotalPauseHours)
+          (task.TotalWorkHours === undefined || task.TotalWorkHours === '' ||
+ task.TotalPauseHours === undefined || task.TotalPauseHours === '')
+
         )
         .map(task => {
           console.log(`Auto-calculating times for task: ${task.SINO} (${task.id})`);
@@ -205,8 +207,9 @@ async function updateTaskAsComplete(taskRef, task) {
 
   const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(sessions);
 
-  const taskStart = toFirestoreTimestamp(startTime) || toFirestoreTimestamp(task.taskStart) || nowTimestamp;
-  const taskEnd = toFirestoreTimestamp(endTime) || nowTimestamp;
+const taskStart = toFirestoreTimestamp(task.taskStart) || toFirestoreTimestamp(startTime) || nowTimestamp;
+const taskEnd = toFirestoreTimestamp(task.taskEnd) || toFirestoreTimestamp(endTime) || nowTimestamp;
+
 
   try {
     await taskRef.update({
