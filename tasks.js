@@ -438,6 +438,12 @@ function generateSINO() {
   return String(nextNumber).padStart(3, '0');
 }
 
+function cleanUndefined(obj) {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, v]) => v !== undefined)
+  );
+}
+
 taskForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -453,11 +459,9 @@ taskForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Prepare Firestore field mappings
   const taskData = {
-    SINO: editingTaskId ? undefined : generateSINO(), // Only generate new SINO if creating
+    SINO: editingTaskId ? undefined : generateSINO(),
     Status: editingTaskId ? undefined : 'Not Started',
-
     'Existing Company Name': data.company,
     'TYPE OF WORK': data.typeOfWork,
     'ACCOUNT TYPE': data.accountType || '',
@@ -471,22 +475,17 @@ taskForm.addEventListener('submit', async (e) => {
     Notes: data.notes || ''
   };
 
-  // Logging for debugging
-  console.log(editingTaskId ? 'Updating task:' : 'Creating new task:', taskData);
-
   try {
     if (editingTaskId) {
-      // Merge with existing task to preserve fields like workSessions, timestamps, etc.
       const existingTask = allTasks.find(t => t.id === editingTaskId);
       if (!existingTask) throw new Error("Task not found for editing.");
 
-      const mergedTask = { ...existingTask, ...taskData };
+      const mergedTask = { ...existingTask, ...cleanUndefined(taskData) };
 
       await db.collection('tasks').doc(editingTaskId).set(mergedTask);
       alert('Task updated successfully!');
       editingTaskId = null;
     } else {
-      // Create new task
       await db.collection('tasks').add(taskData);
       alert('Task created successfully!');
     }
@@ -498,6 +497,7 @@ taskForm.addEventListener('submit', async (e) => {
     alert('Error saving task. See console for details.');
   }
 });
+
 
 
 
