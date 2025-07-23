@@ -246,35 +246,37 @@ async function updateTaskAsComplete(taskRef, task) {
       });
     });
 
-    document.querySelectorAll('.edit-btn').forEach(btn => {
-      btn.addEventListener('click', async e => {
-        e.stopPropagation();
-        const id = e.target.dataset.id;
-        const task = allTasks.find(t => t.id === id);
-        if (!task) return alert('Not found');
+    let editingTaskId = null;
 
-        // Clone task data to avoid editing timestamp fields as strings by mistake
-        const updated = { ...task };
 
-        // Disable editing timestamp fields to prevent corruption
-        const timestampKeys = ['taskStart', 'taskEnd'];
+document.querySelectorAll('.edit-btn').forEach(btn => {
+  btn.addEventListener('click', async e => {
+    e.stopPropagation();
+    const id = e.target.dataset.id;
+    const task = allTasks.find(t => t.id === id);
+    if (!task) return alert('Task not found');
 
-        for (const key in updated) {
-          if (key === 'id' || timestampKeys.includes(key)) continue; // skip timestamps and id
-          const value = prompt(`Edit ${key}`, updated[key] || '');
-          if (value !== null) updated[key] = value;
-        }
+    editingTaskId = id; // Track the task being edited
+    populateDropdowns(); // Ensure dropdowns are filled
+    taskForm.reset(); // Clear previous data
 
-        try {
-          await db.collection('tasks').doc(id).set(updated);
-          alert('Updated');
-          loadTasks();
-        } catch (err) {
-          console.error(err);
-          alert('Update failed');
-        }
-      });
-    });
+    // Populate form fields
+    taskForm.elements['company'].value = task['Existing Company Name'] || '';
+    taskForm.elements['typeOfWork'].value = task['TYPE OF WORK'] || '';
+    taskForm.elements['accountType'].value = task['ACCOUNT TYPE'] || '';
+    taskForm.elements['accountsCards'].value = task['Accounts / Cards'] || '';
+    taskForm.elements['task'].value = task.Task || '';
+    taskForm.elements['owner'].value = task.Owner || '';
+    taskForm.elements['workFor'].value = task['WORK FOR'] || '';
+    taskForm.elements['period'].value = task.PERIOD || '';
+    taskForm.elements['dueDate'].value = task['Due date'] || '';
+    taskForm.elements['assignedBy'].value = task['Assigned By'] || '';
+    taskForm.elements['notes'].value = task.Notes || '';
+
+    taskModal.style.display = 'flex';
+  });
+});
+
 
  
   }
@@ -477,15 +479,25 @@ taskForm.addEventListener('submit', async (e) => {
   delete data.assignedBy;
   delete data.notes;
 
-  try {
+try {
+  if (editingTaskId) {
+    // Editing an existing task
+    await db.collection('tasks').doc(editingTaskId).update(data);
+    alert('Task updated successfully!');
+    editingTaskId = null;
+  } else {
+    // Creating a new task
     await db.collection('tasks').add(data);
     alert('Task created successfully!');
-    taskModal.style.display = 'none';
-    loadTasks();
-  } catch (err) {
-    console.error(err);
-    alert('Error creating task.');
   }
+
+  taskModal.style.display = 'none';
+  loadTasks();
+} catch (err) {
+  console.error(err);
+  alert('Error saving task.');
+}
+
 });
 
 
