@@ -585,6 +585,7 @@ async function handleCSVUpload(event) {
 const timeStartStr = rowData['Time Started'] || rowData['startTime'];
 const timeEndStr = rowData['Time End'] || rowData['endTime'];
 
+
       const dueDateStr = rowData['DueDate'];
 
       let timeStart = null, timeEnd = null;
@@ -607,28 +608,33 @@ const timeEndStr = rowData['Time End'] || rowData['endTime'];
           }]
         : [];
 
-      const finalTask = {
-        SINO: rowData['SINO'],
-        'Existing Company Name': rowData['Company'],
-        'TYPE OF WORK': rowData['Type of Work'],
-        'ACCOUNT TYPE': rowData['Account Type'] || '',
-        'Accounts / Cards': rowData['Accountsds'] || '',
-        Task: rowData['Task'] || '',
-        Owner: rowData['Owner'],
-        'WORK FOR': rowData['Work For'] || '',
-        PERIOD: rowData['Period'] || '',
-        'Due date': rowData['DueDate'],
-        'Assigned By': rowData['Assigned By'],
-        Notes: rowData['Notes'] || '',
-        Status: rowData['Status'] || 'Not Started',
-        TimeStarted: timeStart ? timeStart.toLocaleString() : '',
-        TimeEnd: timeEnd ? timeEnd.toLocaleString() : '',
-TotalWorkHours: rowData['Total Work'] || rowData['Total Work Hours'] || '',
-TotalPauseHours: rowData['Total Pause'] || rowData['Total Pause Hours'] || '',
+const finalTask = {
+  SINO: rowData['SINO'],
+  'Existing Company Name': rowData['Company'],
+  'TYPE OF WORK': rowData['Type of Work'],
+  'ACCOUNT TYPE': rowData['Account Type'] || '',
+  'Accounts / Cards': rowData['Accounts / Cards'] || '',
+  Task: rowData['Task'] || '',
+  Owner: rowData['Owner'],
+  'WORK FOR': rowData['Work For'] || '',
+  PERIOD: rowData['Period'] || '',
+  'Due date': rowData['DueDate'],
+  'Assigned By': rowData['Assigned By'],
+  Notes: rowData['Notes'] || '',
+  Status: rowData['Status'] || 'Not Started',
+  
+  // ✅ These fields are what your UI reads
+  taskStart: timeStart ? firebase.firestore.Timestamp.fromDate(timeStart) : null,
+  taskEnd: timeEnd ? firebase.firestore.Timestamp.fromDate(timeEnd) : null,
+  TimeStarted: timeStart ? timeStart.toLocaleString() : '',
+  TimeEnd: timeEnd ? timeEnd.toLocaleString() : '',
+  
+  TotalWorkHours: rowData['Total Work Hours'] || '',
+  TotalPauseHours: rowData['Total Pause Hours'] || '',
+  Remarks: rowData['Remarks'] || '',
+  workSessions: workSessions
+};
 
-        Remarks: rowData['Remarks'] || '',
-        workSessions: workSessions
-      };
 
       tasksToUpload.push(finalTask);
     }
