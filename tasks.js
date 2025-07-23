@@ -580,9 +580,11 @@ async function handleCSVUpload(event) {
         rowData[header] = values[idx] || '';
       });
 
-      // 🔹 Parse date and time fields
-      const timeStartStr = rowData['Time Started'];
-      const timeEndStr = rowData['Time End'];
+    
+// 🔹 Parse date and time fields
+const timeStartStr = rowData['Time Started'] || rowData['startTime'];
+const timeEndStr = rowData['Time End'] || rowData['endTime'];
+
       const dueDateStr = rowData['DueDate'];
 
       let timeStart = null, timeEnd = null;
@@ -621,8 +623,9 @@ async function handleCSVUpload(event) {
         Status: rowData['Status'] || 'Not Started',
         TimeStarted: timeStart ? timeStart.toLocaleString() : '',
         TimeEnd: timeEnd ? timeEnd.toLocaleString() : '',
-        TotalWorkHours: rowData['Total Work Hours'] || '',
-        TotalPauseHours: rowData['Total Pause Hours'] || '',
+TotalWorkHours: rowData['Total Work'] || rowData['Total Work Hours'] || '',
+TotalPauseHours: rowData['Total Pause'] || rowData['Total Pause Hours'] || '',
+
         Remarks: rowData['Remarks'] || '',
         workSessions: workSessions
       };
