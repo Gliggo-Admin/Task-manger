@@ -649,3 +649,33 @@ async function handleCSVUpload(event) {
   });
 }
 
+window.addEventListener('DOMContentLoaded', () => {
+  const uploadCSVBtn = document.getElementById('uploadCSVBtn');
+  const csvUpload = document.getElementById('csvUpload');
+
+  // When user clicks the blue button, open file picker
+  uploadCSVBtn.addEventListener('click', () => {
+    csvUpload.click();
+  });
+
+  // When file is selected, parse it
+  csvUpload.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+        console.log('Parsed CSV Data:', results.data);
+        alert('CSV file parsed! Check console for data.');
+
+        // Here, add your logic to save to Firestore, etc.
+        // Example: saveCSVToFirestore(results.data);
+      },
+      error: function(err) {
+        alert('Error parsing CSV: ' + err.message);
+      }
+    });
+  });
+});
