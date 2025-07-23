@@ -560,110 +560,91 @@ async function handleCSVUpload(event) {
   const file = event.target.files[0];
   if (!file) return alert('No file selected.');
 
-  const reader = new FileReader();
-  reader.onload = async function (e) {
-    const text = e.target.result;
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: async function (results) {
+      const rows = results.data;
 
-    const rows = text.split('\n').map(row => row.trim()).filter(Boolean);
-    const headers = rows[0].split(',').map(h => h.trim());
+      const requiredHeaders = ['SINO', 'Company', 'Type of Work', 'Owner', 'DueDate', 'Assigned By', 'Status'];
+      const csvHeaders = Object.keys(rows[0]);
 
-    const requiredHeaders = ['SINO', 'Company', 'Type of Work', 'Owner', 'DueDate', 'Assigned By', 'Status'];
-    const hasAllRequired = requiredHeaders.every(h => headers.includes(h));
-    if (!hasAllRequired) return alert('Missing required headers in CSV.');
+      const hasAllRequired = requiredHeaders.every(h => csvHeaders.includes(h));
+      if (!hasAllRequired) return alert('Missing required headers in CSV.');
 
-    const tasksToUpload = [];
+      const tasksToUpload = [];
 
-    for (let i = 1; i < rows.length; i++) {
-      const values = rows[i].split(',').map(v => v.trim());
-      const rowData = {};
-      headers.forEach((header, idx) => {
-        rowData[header] = values[idx] || '';
-      });
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const dueDateStr = row['DueDate'];
+        const timeStartStr = row['Time Started'];
+        const timeEndStr = row['Time End'];
 
-    
-// 🔹 Parse date and time fields
-const timeStartStr = rowData['Time Started'] || rowData['startTime'];
-const timeEndStr = rowData['Time End'] || rowData['endTime'];
+        let timeStart = null, timeEnd = null;
+        try {
+          // Convert to valid Date
+          timeStart = timeStartStr ? new Date(timeStartStr) : null;
+          timeEnd = timeEndStr ? new Date(timeEndStr) : null;
+        } catch (e) {
+          console.warn(`Invalid time format in row ${i + 2}`);
+        }
 
+        const workSessions = (timeStart && timeEnd)
+          ? [{
+              start: firebase.firestore.Timestamp.fromDate(timeStart),
+              end: firebase.firestore.Timestamp.fromDate(timeEnd)
+            }]
+          : [];
 
+        const finalTask = {
+          SINO: row['SINO'],
+          'Existing Company Name': row['Company'],
+          'TYPE OF WORK': row['Type of Work'],
+          'ACCOUNT TYPE': row['Account Type'],
+          'Accounts / Cards': row['Accounts / Cards'],
+          Task: row['Task'],
+          Owner: row['Owner'],
+          'WORK FOR': row['Work For'],
+          PERIOD: row['Period'],
+          'Due date': row['DueDate'],
+          'Assigned By': row['Assigned By'],
+          Notes: row['Notes'],
+          Status: row['Status'] || 'Not Started',
 
+          TimeStarted: timeStart ? timeStart.toLocaleString() : '',
+          TimeEnd: timeEnd ? timeEnd.toLocaleString() : '',
+          taskStart: timeStart ? firebase.firestore.Timestamp.fromDate(timeStart) : null,
+          taskEnd: timeEnd ? firebase.firestore.Timestamp.fromDate(timeEnd) : null,
 
+          TotalWorkHours: row['Total Work Hours'] || '',
+          TotalPauseHours: row['Total Pause Hours'] || '',
+          Remarks: row['Remarks'] || '',
+          workSessions
+        };
 
-      const dueDateStr = rowData['DueDate'];
-
-      let timeStart = null, timeEnd = null;
-      try {
-        // Try parsing with fixed date (assume DueDate if available)
-        const baseDate = dueDateStr ? new Date(dueDateStr) : new Date();
-        const [month, day, year] = baseDate.toLocaleDateString('en-US').split('/');
-
-        if (timeStartStr) timeStart = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${timeStartStr}`);
-        if (timeEndStr) timeEnd = new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${timeEndStr}`);
-      } catch (e) {
-        console.warn(`Invalid time format in row ${i + 1}`);
+        tasksToUpload.push(finalTask);
       }
 
-      // 🔹 Create workSessions if both times exist
-      const workSessions = (timeStart && timeEnd)
-        ? [{
-            start: firebase.firestore.Timestamp.fromDate(new Date(timeStart)),
-            end: firebase.firestore.Timestamp.fromDate(new Date(timeEnd))
-          }]
-        : [];
+      try {
+        const batch = db.batch();
+        const tasksRef = db.collection('tasks');
 
-const finalTask = {
-  SINO: rowData['SINO'],
-  'Existing Company Name': rowData['Company'],
-  'TYPE OF WORK': rowData['Type of Work'],
-  'ACCOUNT TYPE': rowData['Account Type'],
-  'Accounts / Cards': rowData['Accounts / Cards'],
-  Task: rowData['Task'],
-  Owner: rowData['Owner'],
-  'WORK FOR': rowData['Work For'],
-  PERIOD: rowData['Period'],
-  'Due date': rowData['DueDate'],
-  'Assigned By': rowData['Assigned By'],
-  Notes: rowData['Notes'],
-  Status: rowData['Status'] || 'Not Started',
+        tasksToUpload.forEach(task => {
+          const newDoc = tasksRef.doc();
+          batch.set(newDoc, task);
+        });
 
-  // These are used in rendering and storage
-  TimeStarted: timeStart ? timeStart.toLocaleString() : '',
-  TimeEnd: timeEnd ? timeEnd.toLocaleString() : '',
-  taskStart: timeStart ? firebase.firestore.Timestamp.fromDate(timeStart) : null,
-  taskEnd: timeEnd ? firebase.firestore.Timestamp.fromDate(timeEnd) : null,
-
-  TotalWorkHours: rowData['Total Work Hours'] || '',
-  TotalPauseHours: rowData['Total Pause Hours'] || '',
-  Remarks: rowData['Remarks'] || '',
-  workSessions: [] // if any
-};
-
-
-
-      tasksToUpload.push(finalTask);
+        await batch.commit();
+        alert(`${tasksToUpload.length} tasks uploaded successfully.`);
+        loadTasks(); // Reload the task table
+      } catch (err) {
+        console.error('Error uploading tasks:', err);
+        alert('Failed to upload tasks. See console for details.');
+      }
+    },
+    error: function (err) {
+      console.error("PapaParse error:", err);
+      alert("CSV parsing failed.");
     }
-
-    try {
-      const batch = db.batch();
-      const tasksRef = db.collection('tasks');
-
-      tasksToUpload.forEach(task => {
-        const newDoc = tasksRef.doc();
-        batch.set(newDoc, task);
-      });
-
-      await batch.commit();
-      alert(`${tasksToUpload.length} tasks uploaded successfully.`);
-      loadTasks(); // Optional: reload your task table
-    } catch (err) {
-      console.error('Error uploading tasks:', err);
-      alert('Failed to upload tasks. See console for details.');
-    }
-  };
-
-  reader.readAsText(file);
+  });
 }
-
-document.getElementById('uploadCSVBtn').addEventListener('click', () => {
-  document.getElementById('csvUpload').click();
-});
