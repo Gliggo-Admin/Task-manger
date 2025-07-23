@@ -585,8 +585,7 @@ async function handleCSVUpload(event) {
 const timeStartStr = rowData['Time Started'] || rowData['startTime'];
 const timeEndStr = rowData['Time End'] || rowData['endTime'];
 
-const timeStart = timeStartStr ? new Date(timeStartStr) : null;
-const timeEnd = timeEndStr ? new Date(timeEndStr) : null;
+
 
 
 
