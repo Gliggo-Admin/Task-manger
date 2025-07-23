@@ -453,53 +453,50 @@ taskForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  data.SINO = generateSINO();
-  data.Status = 'Not Started';
+  // Prepare Firestore field mappings
+  const taskData = {
+    SINO: editingTaskId ? undefined : generateSINO(), // Only generate new SINO if creating
+    Status: editingTaskId ? undefined : 'Not Started',
 
-  data['Existing Company Name'] = data.company;
-  data['TYPE OF WORK'] = data.typeOfWork;
-  data['ACCOUNT TYPE'] = data.accountType || '';
-  data['Accounts / Cards'] = data.accountsCards || '';
-  data.Task = data.task || '';
-  data.Owner = data.owner;
-  data['WORK FOR'] = data.workFor || '';
-  data.PERIOD = data.period || '';
-  data['Due date'] = data.dueDate;
-  data['Assigned By'] = data.assignedBy;
-  data.Notes = data.notes || '';
+    'Existing Company Name': data.company,
+    'TYPE OF WORK': data.typeOfWork,
+    'ACCOUNT TYPE': data.accountType || '',
+    'Accounts / Cards': data.accountsCards || '',
+    Task: data.task || '',
+    Owner: data.owner,
+    'WORK FOR': data.workFor || '',
+    PERIOD: data.period || '',
+    'Due date': data.dueDate,
+    'Assigned By': data.assignedBy,
+    Notes: data.notes || ''
+  };
 
-  // Remove raw keys
-  delete data.company;
-  delete data.typeOfWork;
-  delete data.accountType;
-  delete data.accountsCards;
-  delete data.task;
-  delete data.owner;
-  delete data.workFor;
-  delete data.period;
-  delete data.dueDate;
-  delete data.assignedBy;
-  delete data.notes;
+  // Logging for debugging
+  console.log(editingTaskId ? 'Updating task:' : 'Creating new task:', taskData);
 
-try {
-  if (editingTaskId) {
-    // Editing an existing task
-    await db.collection('tasks').doc(editingTaskId).update(data);
-    alert('Task updated successfully!');
-    editingTaskId = null;
-  } else {
-    // Creating a new task
-    await db.collection('tasks').add(data);
-    alert('Task created successfully!');
+  try {
+    if (editingTaskId) {
+      // Merge with existing task to preserve fields like workSessions, timestamps, etc.
+      const existingTask = allTasks.find(t => t.id === editingTaskId);
+      if (!existingTask) throw new Error("Task not found for editing.");
+
+      const mergedTask = { ...existingTask, ...taskData };
+
+      await db.collection('tasks').doc(editingTaskId).set(mergedTask);
+      alert('Task updated successfully!');
+      editingTaskId = null;
+    } else {
+      // Create new task
+      await db.collection('tasks').add(taskData);
+      alert('Task created successfully!');
+    }
+
+    taskModal.style.display = 'none';
+    loadTasks();
+  } catch (err) {
+    console.error('Error saving task:', err);
+    alert('Error saving task. See console for details.');
   }
-
-  taskModal.style.display = 'none';
-  loadTasks();
-} catch (err) {
-  console.error(err);
-  alert('Error saving task.');
-}
-
 });
 
 
