@@ -437,12 +437,7 @@ tbody td:last-child {
 }
 
 
-#csvUploadContainer {
-  position: fixed; /* fixed to viewport, or use absolute relative to parent */
-  top: 10px;       /* distance from top */
-  right: 10px;     /* distance from right */
-  z-index: 1000;   /* ensure on top */
-}
+
 
 
 
