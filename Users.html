@@ -221,64 +221,6 @@
     }
      .del-btn { color: #e74c3c; cursor: pointer; font-size: 18px; }
     .del-btn:hover { color: #c0392b; }
-
-    /* Settings Button */
-.settings button {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 22px;
-  cursor: pointer;
-  transition: color 0.3s;
-}
-.settings button:hover {
-  color: #ecf0f1;
-}
-
-/* Overlay */
-.overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.5);
-  z-index: 100;
-  justify-content: center;
-  align-items: center;
-}
-
-/* Settings Popup */
-.settings-popup {
-  background: white;
-  padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-  width: 300px;
-  text-align: center;
-}
-
-.settings-popup h3 {
-  margin-bottom: 20px;
-  color: #16a085;
-}
-
-.settings-popup button {
-  display: block;
-  width: 100%;
-  margin: 10px 0;
-  padding: 12px;
-  font-size: 16px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  background: #1abc9c;
-  color: white;
-  transition: background 0.3s;
-}
-.settings-popup button:hover {
-  background: #16a085;
-}
-
   </style>
 </head>
 <body>
@@ -287,12 +229,6 @@
     <div class="left">
       <a href="Home.html" title="Go to Dashboard Home">🏠 Home</a>
     </div>
-<!-- Inside .topbar div -->
-<div class="settings">
-  <button id="settingsBtn" title="Sub Admin Settings">⚙️</button>
-</div>
-
-
     <div id="dateTime">Loading...</div>
     <div class="profile">
       <img src="https://i.pravatar.cc/40" alt="User" />
@@ -429,38 +365,6 @@ const firebaseConfig = {
       // make sure editCheckbox state reflects current mode
       document.querySelectorAll("#userTable tbody .chk-edit").forEach(cb => cb.disabled = !editMode);
     });
-
-
-    const overlay = document.getElementById("settingsOverlay");
-
-document.getElementById("settingsBtn").onclick = () => {
-  overlay.style.display = "flex";
-};
-
-function closeSettings() {
-  overlay.style.display = "none";
-}
-
-function viewAllTasks() {
-  closeSettings();
-  alert("Showing all tasks... (You can implement actual filtering here)");
-}
-
-function viewSelectedTasks() {
-  closeSettings();
-  alert("Showing only selected tasks... (You can implement actual filtering here)");
-}
-
   </script>
-
-  <div class="overlay" id="settingsOverlay">
-  <div class="settings-popup">
-    <h3>Task View Options</h3>
-    <button onclick="viewAllTasks()">All Tasks</button>
-    <button onclick="viewSelectedTasks()">Only Selected</button>
-    <button onclick="closeSettings()">Close</button>
-  </div>
-</div>
-
 </body>
 </html>
