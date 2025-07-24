@@ -239,9 +239,11 @@
     <div class="center-datetime" id="dateTimeDisplay">Loading...</div>
     <div class="profile-container" id="profileContainer" tabindex="0" aria-haspopup="true" aria-expanded="false">
       <div class="profile-name" id="profileName">User</div>
-      <div class="dropdown" id="profileDropdown">
-        <button id="logoutBtn">Logout</button>
-      </div>
+<div class="dropdown" id="profileDropdown">
+  <button id="settingBtn">Setting</button> <!-- New -->
+  <button id="logoutBtn">Logout</button>
+</div>
+
     </div>
   </header>
 
@@ -318,10 +320,13 @@
       }
     });
 
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      sessionStorage.clear();
-      window.location.href = "index.html";
-    });
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  sessionStorage.clear();
+  window.location.href = "index.html";
+});
+document.getElementById("settingBtn").addEventListener("click", () => {
+  window.location.href = "Change Password.html";
+});
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
