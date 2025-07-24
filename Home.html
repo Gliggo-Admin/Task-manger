@@ -266,24 +266,24 @@
       const username = sessionStorage.getItem("username") || "Guest User";
 
       // Build profile HTML with bell icon and badge container
-      profileDiv.innerHTML = `
-        <div class="top-right-controls">
-          <svg tabindex="0" role="button" aria-label="Notifications" title="Notifications" class="bell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" >
-            <path fill="currentColor" d="M12 24c1.104 0 2-.896 2-2h-4c0 1.104.896 2 2 2zm6-6v-5c0-3.072-1.63-5.64-4.5-6.32V6c0-.828-.672-1.5-1.5-1.5S10.5 5.172 10.5 6v.68C7.63 7.36 6 9.928 6 13v5l-2 2v1h16v-1l-2-2z"/>
-          </svg>
-          <span class="badge" aria-label="New notifications"></span>
+profileDiv.innerHTML = `
+  <div class="top-right-controls">
+    <svg tabindex="0" role="button" aria-label="Notifications" title="Notifications" class="bell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" >
+      <path fill="currentColor" d="M12 24c1.104 0 2-.896 2-2h-4c0 1.104.896 2 2 2zm6-6v-5c0-3.072-1.63-5.64-4.5-6.32V6c0-.828-.672-1.5-1.5-1.5S10.5 5.172 10.5 6v.68C7.63 7.36 6 9.928 6 13v5l-2 2v1h16v-1l-2-2z"/>
+    </svg>
+    <span class="badge" aria-label="New notifications"></span>
 
-          <div id="profileToggle" style="display:flex; align-items:center; cursor:pointer;" tabindex="0">
-            <img src="https://i.pravatar.cc/40" alt="User" />
-            <span>${username}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
-          </div>
-        </div>
-        <div id="${profileDropdownId}">
-          <a href="ChangePassword.html" id="ChangePassword.html">Settings</a>
-          <button id="logoutBtn">Logout</button>
-        </div>
-      `;
+    <div id="profileToggle" style="display:flex; align-items:center; cursor:pointer;" tabindex="0">
+      <img src="https://i.pravatar.cc/40" alt="User" />
+      <span>${username}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+    </div>
+  </div>
+  <div id="${profileDropdownId}">
+    <a href="ChangePassword.html" id="settingsLink">Settings</a>
+    <button id="logoutBtn">Logout</button>
+  </div>
+`;
 
 
 
@@ -380,6 +380,14 @@
         }
       });
     });
+
+const settingsLink = document.getElementById("settingsLink");
+settingsLink.addEventListener("click", (e) => {
+  // If you want to do something before navigating, you can do it here.
+  // Otherwise, this is optional since href already navigates.
+});
+
+
   </script>
 </head>
 <body>
