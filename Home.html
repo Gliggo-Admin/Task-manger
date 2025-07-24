@@ -252,6 +252,8 @@
       const sidebar = document.getElementById("sidebar");
       const profileDiv = document.querySelector(".profile");
       const profileDropdownId = "profileDropdown";
+      const settingsLink = document.getElementById("settingsLink");
+
 
       // Show date/time
       const dateTime = document.getElementById("dateTime");
@@ -282,6 +284,11 @@
           <button id="logoutBtn">Logout</button>
         </div>
       `;
+
+      settingsLink.addEventListener("click", (e) => {
+  e.preventDefault();
+  window.location.href = "ChangePassword.html";
+});
 
       const profileToggle = document.getElementById("profileToggle");
       const profileDropdown = document.getElementById(profileDropdownId);
