@@ -287,46 +287,77 @@ document.querySelectorAll('.edit-btn').forEach(btn => {
   }
 
   // Render pagination with page numbers
-  function renderPagination(tasks) {
-    paginationDiv.innerHTML = '';
-    const totalPages = Math.ceil(tasks.length / rowsPerPage);
-    if (totalPages <= 1) return;
+function renderPagination(tasks) {
+  paginationDiv.innerHTML = '';
+  const totalPages = Math.ceil(tasks.length / rowsPerPage);
+  if (totalPages <= 1) return;
 
-    const prevBtn = createPageButton('Prev', currentPage === 1, () => {
-      if (currentPage > 1) {
-        currentPage--;
-        renderTablePage(currentPage, filteredTasks);
-        renderPagination(filteredTasks);
-      }
-    });
-    paginationDiv.appendChild(prevBtn);
+  const maxVisiblePages = 5;
+  const pages = [];
 
-    for (let i = 1; i <= totalPages; i++) {
-      const btn = createPageButton(i, i === currentPage, () => {
-        currentPage = i;
+  // Always show first page
+  pages.push(1);
+
+  let start = Math.max(2, currentPage - 1);
+  let end = Math.min(totalPages - 1, currentPage + 1);
+
+  if (currentPage <= 3) {
+    end = Math.min(4, totalPages - 1);
+  } else if (currentPage >= totalPages - 2) {
+    start = Math.max(totalPages - 3, 2);
+  }
+
+  if (start > 2) pages.push('...');
+  for (let i = start; i <= end; i++) {
+    pages.push(i);
+  }
+  if (end < totalPages - 1) pages.push('...');
+  
+  // Always show last page
+  if (totalPages > 1) pages.push(totalPages);
+
+  const prevBtn = createPageButton('Prev', currentPage === 1, () => {
+    if (currentPage > 1) {
+      currentPage--;
+      renderTablePage(currentPage, filteredTasks);
+      renderPagination(filteredTasks);
+    }
+  });
+  paginationDiv.appendChild(prevBtn);
+
+  pages.forEach(p => {
+    const isEllipsis = p === '...';
+    const btn = document.createElement('button');
+    btn.textContent = p;
+    btn.disabled = isEllipsis || p === currentPage;
+    if (!isEllipsis && p !== currentPage) {
+      btn.addEventListener('click', () => {
+        currentPage = p;
         renderTablePage(currentPage, filteredTasks);
         renderPagination(filteredTasks);
       });
-      paginationDiv.appendChild(btn);
     }
+    paginationDiv.appendChild(btn);
+  });
 
-    const nextBtn = createPageButton('Next', currentPage === totalPages, () => {
-      if (currentPage < totalPages) {
-        currentPage++;
-        renderTablePage(currentPage, filteredTasks);
-        renderPagination(filteredTasks);
-      }
-    });
-    paginationDiv.appendChild(nextBtn);
-  }
+  const nextBtn = createPageButton('Next', currentPage === totalPages, () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderTablePage(currentPage, filteredTasks);
+      renderPagination(filteredTasks);
+    }
+  });
+  paginationDiv.appendChild(nextBtn);
+}
 
-  function createPageButton(label, disabled, onClick) {
-    const btn = document.createElement('button');
-    btn.textContent = label;
-    btn.disabled = disabled;
-    if (!disabled) btn.addEventListener('click', onClick);
-    return btn;
-  }
+
+function createPageButton(label, disabled, onClick) {
+  const btn = document.createElement('button');
+  btn.textContent = label;
+  btn.disabled = disabled;
+  if (!disabled) btn.addEventListener('click', onClick);
+  return btn;
+}
 
   // Filter tasks based on inputs
   function applyFilters() {
