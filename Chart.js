@@ -76,10 +76,9 @@ function toDate(value) {
 
 
 function parseDueDate(dueDateStr) {
-  if (!dueDateStr) return null;
-  const d = new Date(dueDateStr);
-  return isNaN(d.getTime()) ? null : d;
+  return toDate(dueDateStr); // supports multiple formats
 }
+
 
 
 function filterByDateRange(tasks, startDate, endDate) {
