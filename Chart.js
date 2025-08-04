@@ -366,7 +366,8 @@ document.getElementById('applyCustomBtn').addEventListener('click', () => {
   const startInput = document.getElementById('startDate').value;
   const endInput = document.getElementById('endDate').value;
   const start = startInput ? new Date(startInput) : null;
-  const end = endInput ? new Date(endInput) : null;
+ const end = endInput ? new Date(new Date(endInput).setHours(23,59,59,999)) : null;
+
 
   if (start && end && start > end) {
     alert('Start date cannot be after end date.');
