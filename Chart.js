@@ -75,23 +75,23 @@ function toDate(value) {
 }
 
 
-function parseDueDate(dateStr) {
-  return toDate(dateStr);
+function parseDueDate(dueDateStr) {
+  if (!dueDateStr) return null;
+  const d = new Date(dueDateStr);
+  return isNaN(d.getTime()) ? null : d;
 }
+
 
 function filterByDateRange(tasks, startDate, endDate) {
   return tasks.filter(task => {
-    const startTime = toDate(task['Time Started']);
-    const endTime = toDate(task['Time End']);
     const dueDate = parseDueDate(task['Due Date']);
-    if (startDate && endDate) {
-      if (startTime && endTime) return startTime >= startDate && endTime <= endDate;
-      if (dueDate) return dueDate >= startDate && dueDate <= endDate;
-      return false;
-    }
+    if (!dueDate) return false;
+    if (startDate && dueDate < startDate) return false;
+    if (endDate && dueDate > endDate) return false;
     return true;
   });
 }
+
 
 // Count helpers
 function countByField(tasks, field) {
