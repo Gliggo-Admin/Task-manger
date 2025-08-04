@@ -207,7 +207,7 @@ function tasksByOwnerInRange(tasks, startDate, endDate) {
 
   tasks.forEach(t => {
     const owner = t.Owner || 'Unknown';
-    const date = toDate(t['Time Started']) || parseDueDate(t['Due Date']);
+    const date = parseDueDate(t['Due Date']);
     if (!date || date < startDate || date > endDate) return;
     const key = `${date.getFullYear()}-${date.toLocaleString('default', { month: 'short' })}`;
     const idx = months.indexOf(key);
