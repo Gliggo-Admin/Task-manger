@@ -48,23 +48,35 @@ function toDate(value) {
   if (!value) return null;
   if (value instanceof Date) return value;
   if (value.toDate) return value.toDate();
-  return new Date(value);
+
+  // Try parsing ISO or yyyy-mm-dd
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return new Date(value);
+
+  // Try parsing dd-mm-yyyy or dd/mm/yyyy
+  const dmyMatch = value.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (dmyMatch) {
+    const [_, d, m, y] = dmyMatch;
+    return new Date(y, parseInt(m) - 1, parseInt(d));
+  }
+
+  // Try parsing dd-MMM-yyyy (e.g., 12-Jan-2024)
+  const mmmMatch = value.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/);
+  if (mmmMatch) {
+    let [_, d, mmm, y] = mmmMatch;
+    const months = {
+      Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+      Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+    };
+    if (y.length === 2) y = '20' + y;
+    return new Date(parseInt(y), months[mmm], parseInt(d));
+  }
+
+  return new Date(value); // fallback
 }
 
-function parseDueDate(dueDateStr) {
-  if (!dueDateStr) return null;
-  const parts = dueDateStr.split('-');
-  if (parts.length !== 3) return null;
-  let [day, monthStr, year] = parts;
-  if (year.length === 2) year = '20' + year;
 
-  const months = {
-    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
-    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
-  };
-
-  const month = months[monthStr];
-  return month !== undefined ? new Date(year, month, parseInt(day)) : null;
+function parseDueDate(dateStr) {
+  return toDate(dateStr);
 }
 
 function filterByDateRange(tasks, startDate, endDate) {
