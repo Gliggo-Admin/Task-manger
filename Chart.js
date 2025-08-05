@@ -319,23 +319,29 @@ function applyFilter(filterFunc) {
 }
 
 function loadTasks() {
-  db.collection('Tasks').get().then(snapshot => {
-    allTasks = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        ...data,
-        'Due date': toDate(data['Due date']),
-        'Time Started': toDate(data['Time Started']),
-        'Time End': toDate(data['Time End']),
-        'TOTAL OUT OF HOURS': data['TOTAL OUT OF HOURS'] || '0:00:00',
-        'TotalPauseHours': data['TotalPauseHours'] || '0:00:00',
-        'Company': data['Existing Company Name'] || 'Unknown'
-      };
+  db.collection('Tasks').get()
+    .then(snapshot => {
+      allTasks = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          'Due date': toDate(data['Due date']),
+          'Time Started': toDate(data['Time Started']),
+          'Time End': toDate(data['Time End']),
+          'TOTAL OUT OF HOURS': data['TOTAL OUT OF HOURS'] || '0:00:00',
+          'TotalPauseHours': data['TotalPauseHours'] || '0:00:00',
+          'Company': data['Existing Company Name'] || 'Unknown'
+        };
+      });
+      console.log("Loaded tasks:", allTasks.length);
+      filteredTasks = [...allTasks];
+      updateCharts(filteredTasks);
+    })
+    .catch(error => {
+      console.error("Error loading tasks:", error);
     });
-    filteredTasks = [...allTasks];
-    updateCharts(filteredTasks);
-  });
 }
+
 
 // Event listeners for filter buttons
 document.getElementById('showAllBtn').onclick = () => applyFilter(() => true);
