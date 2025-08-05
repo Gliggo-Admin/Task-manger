@@ -50,7 +50,47 @@ filterSection.innerHTML = `
 `;
 document.body.insertBefore(filterSection, document.body.querySelector('h1').nextSibling);
 
-// Utility functions (same as your code)
+// Utility: robust date parser for your string formats
+function toDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value;
+  if (value.toDate) return value.toDate();
+
+  if (typeof value !== 'string') return null;
+
+  // yyyy-mm-dd or ISO
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return new Date(value);
+
+  // dd-mm-yyyy or dd/mm/yyyy
+  const dmyMatch = value.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (dmyMatch) {
+    const [_, d, m, y] = dmyMatch;
+    return new Date(y, parseInt(m) - 1, parseInt(d));
+  }
+
+  // dd-MMM-yy or dd-MMM-yyyy like 08-Apr-25 or 08-Apr-2025
+  const mmmMatch = value.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/);
+  if (mmmMatch) {
+    let [_, d, mmm, y] = mmmMatch;
+    const months = {
+      Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+      Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11
+    };
+    if (y.length === 2) y = '20' + y;
+    return new Date(parseInt(y), months[mmm], parseInt(d));
+  }
+
+  // US datetime like "4/8/2025 21:41:26"
+  const usDateTimeMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$/);
+  if (usDateTimeMatch) {
+    const [_, m, d, y, hh, mm, ss] = usDateTimeMatch;
+    return new Date(y, parseInt(m) - 1, d, hh, mm, ss);
+  }
+
+  // fallback to Date constructor
+  return new Date(value);
+}
+
 
 function toDate(value) {
   if (!value) return null;
