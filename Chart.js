@@ -78,7 +78,7 @@ function toDate(value) {
 function parseDueDate(dueDateStr) {
   const date = toDate(dueDateStr);
   if (!date || isNaN(date.getTime())) {
-    console.warn('Invalid Due Date:', dueDateStr);
+    console.warn('Invalid Due date:', dueDateStr);
   }
   return date;
 }
@@ -87,7 +87,7 @@ function parseDueDate(dueDateStr) {
 
 function filterByDateRange(tasks, startDate, endDate) {
   return tasks.filter(task => {
-    const dueDate = parseDueDate(task['Due Date'] || task['due date']);
+    const dueDate = parseDueDate(task['Due date'] || task['Due date']);
     if (!dueDate) return false;
     if (startDate && dueDate < startDate) return false;
     if (endDate && dueDate > endDate) return false;
@@ -121,7 +121,7 @@ function monthlyCompletedTasks(tasks) {
   }
   tasks.forEach(t => {
     if (t.Status === 'Complete') {
-      const endDate = parseDueDate(task['Due Date'] || task['due date'])
+      const endDate = parseDueDate(task['Due date'] || task['Due date'])
       if (!endDate) return;
       const key = endDate.toLocaleString('default', { year: 'numeric', month: 'short' });
       if (counts[key] !== undefined) counts[key]++;
@@ -210,7 +210,7 @@ function tasksByOwnerInRange(tasks, startDate, endDate) {
 
   tasks.forEach(t => {
     const owner = t.Owner || 'Unknown';
-    const date = parseDueDate(t['Due Date']);
+    const date = parseDueDate(t['Due date']);
     if (!date || date < startDate || date > endDate) return;
     const key = `${date.getFullYear()}-${date.toLocaleString('default', { month: 'short' })}`;
     const idx = months.indexOf(key);
