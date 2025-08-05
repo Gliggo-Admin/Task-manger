@@ -394,19 +394,22 @@ function setDateInputs(start, end) {
 // Load tasks
 async function loadTasks() {
   try {
-    const snapshot = await db.collection('tasks').get();
-    allTasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
-    // Log sample task to debug
-    console.log('Sample task:', allTasks[0]);
-
+    const snap = await db.collection("tasks").get(); // no where filter
+    allTasks = snap.docs.map(d => {
+      const data = d.data();
+      let dt = null;
+      const due = data["Due date"];
+      if (due?.seconds) dt = new Date(due.seconds * 1000);
+      else if (typeof due === "string") dt = new Date(due);
+      return { id: d.id, ...data, "Due date": dt };
+    });
     filteredTasks = allTasks;
-    updateCharts();
+    renderAll(filteredTasks);
   } catch (error) {
     console.error("Error loading tasks:", error);
-    alert("Failed to load tasks from database.");
   }
 }
+
 
 
 
