@@ -375,4 +375,153 @@ function loadData() {
   });
 }
 
+
+
+function calcTaskDurationMinutes(task) {
+  const start = toDate(task['Time Started']);
+  const end = toDate(task['Time End']);
+  if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+  return (end - start) / 60000; // ms to minutes
+}
+
+function countByCompany(tasks) {
+  return countByField(tasks, 'Existing Company Name');
+}
+
+const companyData = countByCompany(tasks);
+const companyLabels = Object.keys(companyData);
+const companyCounts = Object.values(companyData);
+const companyColors = generateColors(companyLabels.length);
+
+const companyChart = createOrUpdateChart(companyCtx, 'pie', {
+  labels: companyLabels,
+  datasets: [{ data: companyCounts, backgroundColor: companyColors }]
+}, { responsive: true }, companyChart);
+
+function avgDurationByCompany(tasks) {
+  const durations = {};
+  const counts = {};
+
+  tasks.forEach(task => {
+    const company = task['Existing Company Name'] || 'Unknown';
+    const dur = calcTaskDurationMinutes(task);
+    if (dur > 0) {
+      durations[company] = (durations[company] || 0) + dur;
+      counts[company] = (counts[company] || 0) + 1;
+    }
+  });
+
+  const averages = {};
+  for (const c in durations) {
+    averages[c] = durations[c] / counts[c];
+  }
+  return averages;
+}
+
+const avgDurationData = avgDurationByCompany(tasks);
+const avgDurationLabels = Object.keys(avgDurationData);
+const avgDurationValues = Object.values(avgDurationData);
+const avgDurationColors = generateColors(avgDurationLabels.length);
+
+const avgDurationChart = createOrUpdateChart(avgDurationCtx, 'bar', {
+  labels: avgDurationLabels,
+  datasets: [{
+    label: 'Avg Task Duration (mins)',
+    data: avgDurationValues,
+    backgroundColor: avgDurationColors
+  }]
+}, { responsive: true, scales: { y: { beginAtZero: true } } }, avgDurationChart);
+
+function avgDurationByOwner(tasks) {
+  const durations = {};
+  const counts = {};
+
+  tasks.forEach(task => {
+    const owner = task.Owner || 'Unknown';
+    const dur = calcTaskDurationMinutes(task);
+    if (dur > 0) {
+      durations[owner] = (durations[owner] || 0) + dur;
+      counts[owner] = (counts[owner] || 0) + 1;
+    }
+  });
+
+  const averages = {};
+  for (const o in durations) {
+    averages[o] = durations[o] / counts[o];
+  }
+  return averages;
+}
+
+const avgDurationOwnerData = avgDurationByOwner(tasks);
+const sortedOwners = Object.entries(avgDurationOwnerData)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 10); // Top 10
+
+const ownerLabels = sortedOwners.map(e => e[0]);
+const ownerValues = sortedOwners.map(e => e[1]);
+const ownerColors = generateColors(ownerLabels.length);
+
+const avgDurationOwnerChart = createOrUpdateChart(avgDurationOwnerCtx, 'bar', {
+  labels: ownerLabels,
+  datasets: [{
+    label: 'Avg Task Duration (mins)',
+    data: ownerValues,
+    backgroundColor: ownerColors
+  }]
+}, {
+  indexAxis: 'y',
+  responsive: true,
+  scales: { x: { beginAtZero: true } }
+}, avgDurationOwnerChart);
+
+function radarStatusOwner(tasks) {
+  const owners = Object.keys(countOwner(tasks));
+  const statuses = Object.keys(countStatus(tasks));
+
+  // Prepare dataset: For each status, count tasks per owner
+  const datasets = statuses.map((status, i) => {
+    const data = owners.map(owner => 
+      tasks.filter(t => t.Status === status && t.Owner === owner).length
+    );
+    return {
+      label: status,
+      data,
+      fill: true,
+      backgroundColor: `hsla(${(i*360/statuses.length)}, 70%, 60%, 0.4)`,
+      borderColor: `hsl(${(i*360/statuses.length)}, 70%, 50%)`,
+      pointBackgroundColor: `hsl(${(i*360/statuses.length)}, 70%, 50%)`,
+      borderWidth: 1
+    };
+  });
+
+  return { labels: owners, datasets };
+}
+
+const radarData = radarStatusOwner(tasks);
+const radarChart = createOrUpdateChart(radarCtx, 'radar', radarData, { responsive: true }, radarChart);
+
+const ownersIndex = {};
+let idx = 0;
+allTasks.forEach(t => {
+  const owner = t.Owner || 'Unknown';
+  if (!ownersIndex.hasOwnProperty(owner)) ownersIndex[owner] = idx++;
+});
+
+const bubbleDataPoints = allTasks.map(task => {
+  return {
+    x: calcTaskDurationMinutes(task),
+    y: parseTimeToMinutes(task['TOTAL OUT OF HOURS']),
+    r: 5, // radius fixed or based on other metric
+    ownerIdx: ownersIndex[task.Owner || 'Unknown']
+  };
+});
+
+const bubbleChart = createOrUpdateChart(bubbleCtx, 'bubble', {
+  datasets: [{
+    label: 'Task Duration vs Pause',
+    data: bubbleDataPoints.map(pt => ({x: pt.x, y: pt.y, r: pt.r})),
+    backgroundColor: 'rgba(54, 162, 235, 0.5)'
+  }]
+}, { responsive: true, scales: { x: { title: { display: true, text: 'Duration (mins)' } }, y: { title: { display: true, text: 'Pause (mins)' } } } }, bubbleChart);
+
 loadData();
