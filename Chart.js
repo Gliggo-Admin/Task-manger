@@ -1,5 +1,3 @@
-// chart.js
-
 // Firebase config and init
 const firebaseConfig = {
   apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
@@ -23,10 +21,18 @@ const avgWorkCtx = document.getElementById('avgWorkChart').getContext('2d');
 const avgPauseCtx = document.getElementById('avgPauseChart').getContext('2d');
 const completeTimelineCtx = document.getElementById('completeTimelineChart').getContext('2d');
 
+const companyCtx = document.getElementById('companyChart').getContext('2d');
+const avgDurationCtx = document.getElementById('avgDurationChart').getContext('2d');
+const avgDurationOwnerCtx = document.getElementById('avgDurationOwnerChart').getContext('2d');
+const radarCtx = document.getElementById('radarChart').getContext('2d');
+const bubbleCtx = document.getElementById('bubbleChart').getContext('2d');
+// You can add more ctx variables here for other charts if needed.
+
 let allTasks = [];
 let filteredTasks = [];
 
 let statusChart, ownerChart, typeChart, assignedByChart, monthlyChart, avgWorkChart, avgPauseChart, completeTimelineChart;
+let companyChart, avgDurationChart, avgDurationOwnerChart, radarChart, bubbleChart;
 
 // Add filter UI
 const filterSection = document.createElement('div');
@@ -44,7 +50,8 @@ filterSection.innerHTML = `
 `;
 document.body.insertBefore(filterSection, document.body.querySelector('h1').nextSibling);
 
-// Utility: robust date parser for your string formats
+// Utility functions (same as your code)
+
 function toDate(value) {
   if (!value) return null;
   if (value instanceof Date) return value;
@@ -52,17 +59,14 @@ function toDate(value) {
 
   if (typeof value !== 'string') return null;
 
-  // yyyy-mm-dd or ISO
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return new Date(value);
 
-  // dd-mm-yyyy or dd/mm/yyyy
   const dmyMatch = value.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
   if (dmyMatch) {
     const [_, d, m, y] = dmyMatch;
     return new Date(y, parseInt(m) - 1, parseInt(d));
   }
 
-  // dd-MMM-yy or dd-MMM-yyyy like 08-Apr-25 or 08-Apr-2025
   const mmmMatch = value.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/);
   if (mmmMatch) {
     let [_, d, mmm, y] = mmmMatch;
@@ -74,14 +78,12 @@ function toDate(value) {
     return new Date(parseInt(y), months[mmm], parseInt(d));
   }
 
-  // US datetime like "4/8/2025 21:41:26"
   const usDateTimeMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$/);
   if (usDateTimeMatch) {
     const [_, m, d, y, hh, mm, ss] = usDateTimeMatch;
     return new Date(y, parseInt(m) - 1, d, hh, mm, ss);
   }
 
-  // fallback to Date constructor
   return new Date(value);
 }
 
@@ -104,7 +106,6 @@ function filterByDateRange(tasks, startDate, endDate) {
   });
 }
 
-// Count by any field helper
 function countByField(tasks, field) {
   const counts = {};
   tasks.forEach(t => {
@@ -114,13 +115,11 @@ function countByField(tasks, field) {
   return counts;
 }
 
-// Specific counts
 function countStatus(tasks) { return countByField(tasks, 'Status'); }
 function countOwner(tasks) { return countByField(tasks, 'Owner'); }
 function countType(tasks) { return countByField(tasks, 'TYPE OF WORK'); }
 function countAssignedBy(tasks) { return countByField(tasks, 'Assigned By'); }
 
-// Monthly completed task counts for last 12 months
 function monthlyCompletedTasks(tasks) {
   const counts = {};
   const now = new Date();
@@ -140,7 +139,6 @@ function monthlyCompletedTasks(tasks) {
   return counts;
 }
 
-// Parse time string like "0:00:00" or "hh:mm:ss" into minutes
 function parseTimeToMinutes(timeStr) {
   if (!timeStr) return 0;
   const parts = timeStr.split(':');
@@ -170,7 +168,6 @@ function avgWorkPause(tasks) {
   return { avgWorkMins: avg(workMins), avgPauseMins: avg(pauseMins) };
 }
 
-// Completion timeline last 30 days (by Time End)
 function completionTimeline(tasks) {
   const counts = {};
   const now = new Date();
@@ -181,298 +178,274 @@ function completionTimeline(tasks) {
   }
   tasks.forEach(t => {
     if (t.Status === 'Complete') {
-      const endDate = toDate(t['Time End']);
-      if (!endDate || isNaN(endDate.getTime())) return;
-      const key = endDate.toISOString().slice(0,10);
+      const dueDate = parseDueDate(t['Due date']);
+      if (!dueDate) return;
+      const key = dueDate.toISOString().slice(0,10);
       if (counts[key] !== undefined) counts[key]++;
     }
   });
   return counts;
 }
 
-// Generate distinct HSL colors for charts
-function generateColors(count) {
-  const colors = [];
-  for (let i = 0; i < count; i++) {
-    const hue = Math.floor((360 / count) * i);
-    colors.push(`hsl(${hue}, 70%, 60%)`);
-  }
-  return colors;
+function companyTaskCount(tasks) {
+  return countByField(tasks, 'Company');
 }
-
-function createOrUpdateChart(ctx, type, data, options, existingChart) {
-  if (existingChart) {
-    existingChart.data = data;
-    existingChart.options = options;
-    existingChart.update();
-    return existingChart;
-  }
-  return new Chart(ctx, { type, data, options });
-}
-
-// Render charts
-function renderCharts(tasks) {
-  // Status Chart
-  const statusData = countStatus(tasks);
-  const statusLabels = Object.keys(statusData);
-  const statusCounts = Object.values(statusData);
-  const statusColors = generateColors(statusLabels.length);
-
-  statusChart = createOrUpdateChart(statusCtx, 'pie', {
-    labels: statusLabels,
-    datasets: [{ data: statusCounts, backgroundColor: statusColors }]
-  }, { responsive: true }, statusChart);
-
-  // Owner Chart
-  const ownerData = countOwner(tasks);
-  const ownerLabels = Object.keys(ownerData);
-  const ownerCounts = Object.values(ownerData);
-  const ownerColors = generateColors(ownerLabels.length);
-
-  ownerChart = createOrUpdateChart(ownerCtx, 'bar', {
-    labels: ownerLabels,
-    datasets: [{
-      label: 'Tasks per Owner',
-      data: ownerCounts,
-      backgroundColor: ownerColors
-    }]
-  }, { responsive: true, scales: { y: { beginAtZero: true } } }, ownerChart);
-
-  // Type of Work Chart
-  const typeData = countType(tasks);
-  const typeLabels = Object.keys(typeData);
-  const typeCounts = Object.values(typeData);
-  const typeColors = generateColors(typeLabels.length);
-
-  typeChart = createOrUpdateChart(typeCtx, 'doughnut', {
-    labels: typeLabels,
-    datasets: [{ data: typeCounts, backgroundColor: typeColors }]
-  }, { responsive: true }, typeChart);
-
-  // Assigned By Chart
-  const assignedByData = countAssignedBy(tasks);
-  const assignedByLabels = Object.keys(assignedByData);
-  const assignedByCounts = Object.values(assignedByData);
-  const assignedByColors = generateColors(assignedByLabels.length);
-
-  assignedByChart = createOrUpdateChart(assignedByCtx, 'pie', {
-    labels: assignedByLabels,
-    datasets: [{ data: assignedByCounts, backgroundColor: assignedByColors }]
-  }, { responsive: true }, assignedByChart);
-
-  // Monthly Completed Chart
-  const monthlyDataObj = monthlyCompletedTasks(tasks);
-  const monthlyLabels = Object.keys(monthlyDataObj);
-  const monthlyCounts = Object.values(monthlyDataObj);
-  const monthlyColors = generateColors(monthlyLabels.length);
-
-  monthlyChart = createOrUpdateChart(monthlyCtx, 'line', {
-    labels: monthlyLabels,
-    datasets: [{
-      label: 'Completed Tasks',
-      data: monthlyCounts,
-      borderColor: 'blue',
-      backgroundColor: 'lightblue',
-      fill: true,
-      tension: 0.2
-    }]
-  }, { responsive: true, scales: { y: { beginAtZero: true } } }, monthlyChart);
-
-  // Avg Work vs Pause Chart
-  const { avgWorkMins, avgPauseMins } = avgWorkPause(tasks);
-  avgWorkChart = createOrUpdateChart(avgWorkCtx, 'bar', {
-    labels: ['Average Work Time (mins)'],
-    datasets: [{
-      label: 'Work Time',
-      data: [avgWorkMins],
-      backgroundColor: 'green'
-    }]
-  }, { responsive: true, scales: { y: { beginAtZero: true } } }, avgWorkChart);
-
-  avgPauseChart = createOrUpdateChart(avgPauseCtx, 'bar', {
-    labels: ['Average Pause Time (mins)'],
-    datasets: [{
-      label: 'Pause Time',
-      data: [avgPauseMins],
-      backgroundColor: 'orange'
-    }]
-  }, { responsive: true, scales: { y: { beginAtZero: true } } }, avgPauseChart);
-
-  // Completion Timeline Chart
-  const timelineDataObj = completionTimeline(tasks);
-  const timelineLabels = Object.keys(timelineDataObj);
-  const timelineCounts = Object.values(timelineDataObj);
-
-  completeTimelineChart = createOrUpdateChart(completeTimelineCtx, 'line', {
-    labels: timelineLabels,
-    datasets: [{
-      label: 'Tasks Completed (Last 30 days)',
-      data: timelineCounts,
-      borderColor: 'purple',
-      backgroundColor: 'violet',
-      fill: true,
-      tension: 0.3
-    }]
-  }, { responsive: true, scales: { y: { beginAtZero: true } } }, completeTimelineChart);
-}
-
-// Filter buttons and inputs handlers
-document.getElementById('showAllBtn').addEventListener('click', () => {
-  filteredTasks = allTasks.slice();
-  renderCharts(filteredTasks);
-  clearDateInputs();
-});
-
-document.getElementById('prevMonthBtn').addEventListener('click', () => {
-  const now = new Date();
-  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const startDate = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
-  const endDate = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0);
-  filteredTasks = filterByDateRange(allTasks, startDate, endDate);
-  renderCharts(filteredTasks);
-  setDateInputs(startDate, endDate);
-});
-
-document.getElementById('thisMonthBtn').addEventListener('click', () => {
-  const now = new Date();
-  const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  filteredTasks = filterByDateRange(allTasks, startDate, endDate);
-  renderCharts(filteredTasks);
-  setDateInputs(startDate, endDate);
-});
-
-document.getElementById('applyCustomBtn').addEventListener('click', () => {
-  const startDateInput = document.getElementById('startDate').value;
-  const endDateInput = document.getElementById('endDate').value;
-  const startDate = startDateInput ? new Date(startDateInput) : null;
-  const endDate = endDateInput ? new Date(endDateInput) : null;
-  filteredTasks = filterByDateRange(allTasks, startDate, endDate);
-  renderCharts(filteredTasks);
-});
-
-function clearDateInputs() {
-  document.getElementById('startDate').value = '';
-  document.getElementById('endDate').value = '';
-}
-
-function setDateInputs(startDate, endDate) {
-  document.getElementById('startDate').value = startDate.toISOString().slice(0,10);
-  document.getElementById('endDate').value = endDate.toISOString().slice(0,10);
-}
-
-// Fetch data from Firestore
-function loadData() {
-  db.collection('tasks').get().then(snapshot => {
-    allTasks = [];
-    snapshot.forEach(doc => {
-      allTasks.push(doc.data());
-    });
-    filteredTasks = allTasks.slice();
-    renderCharts(filteredTasks);
-  }).catch(err => {
-    console.error('Error fetching tasks:', err);
-  });
-}
-
-
-
-function calcTaskDurationMinutes(task) {
-  const start = toDate(task['Time Started']);
-  const end = toDate(task['Time End']);
-  if (!start || !end || isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
-  return (end - start) / 60000; // ms to minutes
-}
-
-function countByCompany(tasks) {
-  return countByField(tasks, 'Existing Company Name');
-}
-
-const companyData = countByCompany(tasks);
-const companyLabels = Object.keys(companyData);
-const companyCounts = Object.values(companyData);
-const companyColors = generateColors(companyLabels.length);
-
-const companyChart = createOrUpdateChart(companyCtx, 'pie', {
-  labels: companyLabels,
-  datasets: [{ data: companyCounts, backgroundColor: companyColors }]
-}, { responsive: true }, companyChart);
 
 function avgDurationByCompany(tasks) {
-  const durations = {};
-  const counts = {};
-
-  tasks.forEach(task => {
-    const company = task['Existing Company Name'] || 'Unknown';
-    const dur = calcTaskDurationMinutes(task);
-    if (dur > 0) {
-      durations[company] = (durations[company] || 0) + dur;
-      counts[company] = (counts[company] || 0) + 1;
+  const companyTimes = {};
+  tasks.forEach(t => {
+    if (t.Status === 'Complete') {
+      const c = t.Company || 'Unknown';
+      const dur = parseTimeToMinutes(t['TOTAL OUT OF HOURS']);
+      if (!companyTimes[c]) companyTimes[c] = [];
+      if (dur) companyTimes[c].push(dur);
     }
   });
-
   const averages = {};
-  for (const c in durations) {
-    averages[c] = durations[c] / counts[c];
+  for (const c in companyTimes) {
+    const arr = companyTimes[c];
+    averages[c] = arr.reduce((a,b) => a+b, 0) / arr.length;
   }
   return averages;
 }
-
-const avgDurationData = avgDurationByCompany(tasks);
-const avgDurationLabels = Object.keys(avgDurationData);
-const avgDurationValues = Object.values(avgDurationData);
-const avgDurationColors = generateColors(avgDurationLabels.length);
-
-const avgDurationChart = createOrUpdateChart(avgDurationCtx, 'bar', {
-  labels: avgDurationLabels,
-  datasets: [{
-    label: 'Avg Task Duration (mins)',
-    data: avgDurationValues,
-    backgroundColor: avgDurationColors
-  }]
-}, { responsive: true, scales: { y: { beginAtZero: true } } }, avgDurationChart);
 
 function avgDurationByOwner(tasks) {
-  const durations = {};
-  const counts = {};
-
-  tasks.forEach(task => {
-    const owner = task.Owner || 'Unknown';
-    const dur = calcTaskDurationMinutes(task);
-    if (dur > 0) {
-      durations[owner] = (durations[owner] || 0) + dur;
-      counts[owner] = (counts[owner] || 0) + 1;
+  const ownerTimes = {};
+  tasks.forEach(t => {
+    if (t.Status === 'Complete') {
+      const owner = t.Owner || 'Unknown';
+      const dur = parseTimeToMinutes(t['TOTAL OUT OF HOURS']);
+      if (!ownerTimes[owner]) ownerTimes[owner] = [];
+      if (dur) ownerTimes[owner].push(dur);
     }
   });
-
   const averages = {};
-  for (const o in durations) {
-    averages[o] = durations[o] / counts[o];
+  for (const owner in ownerTimes) {
+    const arr = ownerTimes[owner];
+    averages[owner] = arr.reduce((a,b) => a+b, 0) / arr.length;
   }
   return averages;
 }
 
-const avgDurationOwnerData = avgDurationByOwner(tasks);
-const sortedOwners = Object.entries(avgDurationOwnerData)
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 10); // Top 10
+// ... Additional radar and bubble chart data preparation can be added similarly.
 
-const ownerLabels = sortedOwners.map(e => e[0]);
-const ownerValues = sortedOwners.map(e => e[1]);
-const ownerColors = generateColors(ownerLabels.length);
+// Create or update charts
+function createOrUpdateBarChart(chart, ctx, labels, data, title) {
+  if (chart) {
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = data;
+    chart.update();
+    return chart;
+  }
+  return new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: title,
+        data,
+        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: true }, title: { display: true, text: title } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
 
-const avgDurationOwnerChart = createOrUpdateChart(avgDurationOwnerCtx, 'bar', {
-  labels: ownerLabels,
-  datasets: [{
-    label: 'Avg Task Duration (mins)',
-    data: ownerValues,
-    backgroundColor: ownerColors
-  }]
-}, {
-  indexAxis: 'y',
-  responsive: true,
-  scales: { x: { beginAtZero: true } }
-}, avgDurationOwnerChart);
+function createOrUpdatePieChart(chart, ctx, labels, data, title) {
+  if (chart) {
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = data;
+    chart.update();
+    return chart;
+  }
+  return new Chart(ctx, {
+    type: 'pie',
+    data: {
+      labels,
+      datasets: [{
+        label: title,
+        data,
+        backgroundColor: [
+          '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+          '#9966FF', '#FF9F40', '#C9CBCF', '#FF6384'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'right' }, title: { display: true, text: title } }
+    }
+  });
+}
+
+function createOrUpdateLineChart(chart, ctx, labels, data, title) {
+  if (chart) {
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = data;
+    chart.update();
+    return chart;
+  }
+  return new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: title,
+        data,
+        fill: false,
+        borderColor: 'rgb(75, 192, 192)',
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { title: { display: true, text: title } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+
+function createOrUpdateRadarChart(chart, ctx, labels, data, title) {
+  if (chart) {
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = data;
+    chart.update();
+    return chart;
+  }
+  return new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{
+        label: title,
+        data,
+        fill: true,
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgb(54, 162, 235)',
+        pointBackgroundColor: 'rgb(54, 162, 235)'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { title: { display: true, text: title } }
+    }
+  });
+}
+
+// Main rendering function
+function renderCharts() {
+  // Status Chart
+  const statusData = countStatus(filteredTasks);
+  statusChart = createOrUpdatePieChart(
+    statusChart,
+    statusCtx,
+    Object.keys(statusData),
+    Object.values(statusData),
+    'Task Status Distribution'
+  );
+
+  // Owner Chart
+  const ownerData = countOwner(filteredTasks);
+  ownerChart = createOrUpdatePieChart(
+    ownerChart,
+    ownerCtx,
+    Object.keys(ownerData),
+    Object.values(ownerData),
+    'Task Owner Distribution'
+  );
+
+  // Type of Work Chart
+  const typeData = countType(filteredTasks);
+  typeChart = createOrUpdatePieChart(
+    typeChart,
+    typeCtx,
+    Object.keys(typeData),
+    Object.values(typeData),
+    'Type of Work Distribution'
+  );
+
+  // Assigned By Chart
+  const assignedData = countAssignedBy(filteredTasks);
+  assignedByChart = createOrUpdatePieChart(
+    assignedByChart,
+    assignedByCtx,
+    Object.keys(assignedData),
+    Object.values(assignedData),
+    'Assigned By Distribution'
+  );
+
+  // Monthly Completed Tasks Chart
+  const monthlyData = monthlyCompletedTasks(filteredTasks);
+  monthlyChart = createOrUpdateLineChart(
+    monthlyChart,
+    monthlyCtx,
+    Object.keys(monthlyData),
+    Object.values(monthlyData),
+    'Monthly Completed Tasks (Last 12 Months)'
+  );
+
+  // Avg Work & Pause Time (Bar charts)
+  const avgTimes = avgWorkPause(filteredTasks);
+  avgWorkChart = createOrUpdateBarChart(
+    avgWorkChart,
+    avgWorkCtx,
+    ['Average Work Time (minutes)'],
+    [avgTimes.avgWorkMins],
+    'Average Work Time'
+  );
+  avgPauseChart = createOrUpdateBarChart(
+    avgPauseChart,
+    avgPauseCtx,
+    ['Average Pause Time (minutes)'],
+    [avgTimes.avgPauseMins],
+    'Average Pause Time'
+  );
+
+  // Completion Timeline (Last 30 days)
+  const timelineData = completionTimeline(filteredTasks);
+  completeTimelineChart = createOrUpdateLineChart(
+    completeTimelineChart,
+    completeTimelineCtx,
+    Object.keys(timelineData),
+    Object.values(timelineData),
+    'Completed Tasks Timeline (Last 30 Days)'
+  );
+
+  // Company Tasks
+  const companyData = companyTaskCount(filteredTasks);
+  companyChart = createOrUpdateBarChart(
+    companyChart,
+    companyCtx,
+    Object.keys(companyData),
+    Object.values(companyData),
+    'Tasks per Company'
+  );
+
+  // Avg Duration by Company
+  const avgDurationData = avgDurationByCompany(filteredTasks);
+  avgDurationChart = createOrUpdateBarChart(
+    avgDurationChart,
+    avgDurationCtx,
+    Object.keys(avgDurationData),
+    Object.values(avgDurationData),
+    'Average Duration by Company (minutes)'
+  );
+
+  // Avg Duration by Owner
+  const avgDurationOwnerData = avgDurationByOwner(filteredTasks);
+  avgDurationOwnerChart = createOrUpdateBarChart(
+    avgDurationOwnerChart,
+    avgDurationOwnerCtx,
+    Object.keys(avgDurationOwnerData),
+    Object.values(avgDurationOwnerData),
+    'Average Duration by Owner (minutes)'
+  );
 
 function radarStatusOwner(tasks) {
   const owners = Object.keys(countOwner(tasks));
@@ -487,9 +460,9 @@ function radarStatusOwner(tasks) {
       label: status,
       data,
       fill: true,
-      backgroundColor: `hsla(${(i*360/statuses.length)}, 70%, 60%, 0.4)`,
-      borderColor: `hsl(${(i*360/statuses.length)}, 70%, 50%)`,
-      pointBackgroundColor: `hsl(${(i*360/statuses.length)}, 70%, 50%)`,
+      backgroundColor: hsla(${(i*360/statuses.length)}, 70%, 60%, 0.4),
+      borderColor: hsl(${(i*360/statuses.length)}, 70%, 50%),
+      pointBackgroundColor: hsl(${(i*360/statuses.length)}, 70%, 50%),
       borderWidth: 1
     };
   });
@@ -524,4 +497,46 @@ const bubbleChart = createOrUpdateChart(bubbleCtx, 'bubble', {
   }]
 }, { responsive: true, scales: { x: { title: { display: true, text: 'Duration (mins)' } }, y: { title: { display: true, text: 'Pause (mins)' } } } }, bubbleChart);
 
-loadData();
+}
+
+// Filter button handlers
+document.getElementById('showAllBtn').addEventListener('click', () => {
+  filteredTasks = [...allTasks];
+  renderCharts();
+});
+
+document.getElementById('prevMonthBtn').addEventListener('click', () => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+  filteredTasks = filterByDateRange(allTasks, start, end);
+  renderCharts();
+});
+
+document.getElementById('thisMonthBtn').addEventListener('click', () => {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  filteredTasks = filterByDateRange(allTasks, start, end);
+  renderCharts();
+});
+
+document.getElementById('applyCustomBtn').addEventListener('click', () => {
+  const startInput = document.getElementById('startDate').value;
+  const endInput = document.getElementById('endDate').value;
+  const start = startInput ? new Date(startInput) : null;
+  const end = endInput ? new Date(endInput + 'T23:59:59') : null;
+  filteredTasks = filterByDateRange(allTasks, start, end);
+  renderCharts();
+});
+
+// Load data once from Firestore
+async function loadData() {
+  const snapshot = await db.collection('Tasks').get();
+  allTasks = snapshot.docs.map(doc => doc.data());
+  filteredTasks = [...allTasks];
+  renderCharts();
+}
+
+// Start
+loadData().catch(console.error);
