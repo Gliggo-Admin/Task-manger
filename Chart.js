@@ -53,22 +53,15 @@ function toDate(value) {
   if (value.toDate) return value.toDate();
   if (typeof value !== 'string') return null;
 
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return new Date(value);
-  const dmy = value.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
-  if (dmy) return new Date(dmy[3], dmy[2] - 1, dmy[1]);
-
-  const mmm = value.match(/^(\d{1,2})-([A-Za-z]{3})-(\d{2,4})$/);
-  if (mmm) {
-    let [_, d, mon, y] = mmm;
-    if (y.length === 2) y = '20' + y;
-    const months = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
-    return new Date(+y, months[mon], +d);
+  // If it's yyyy-mm-dd
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? null : date;
   }
 
-  const us = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$/);
-  if (us) return new Date(us[3], us[1] - 1, us[2], us[4], us[5], us[6]);
-
-  return new Date(value);
+  // fallback: try letting Date parse it
+  const date = new Date(value);
+  return isNaN(date.getTime()) ? null : date;
 }
 
 function parseTimeToMinutes(str) {
@@ -95,9 +88,8 @@ function monthlyCompletedTasks(tasks) {
     counts[key] = 0;
   }
   tasks.forEach(t => {
-    if (t.Status === 'Complete') {
-      const d = toDate(t['Due date']);
-      if (!d) return;
+    if (t.Status === 'Complete' && t['Due date']) {
+      const d = t['Due date'];
       const key = d.toLocaleString('default', { year: 'numeric', month: 'short' });
       if (counts[key] !== undefined) counts[key]++;
     }
@@ -126,9 +118,8 @@ function completionTimeline(tasks) {
     counts[d.toISOString().slice(0, 10)] = 0;
   }
   tasks.forEach(t => {
-    if (t.Status === 'Complete') {
-      const d = toDate(t['Due date']);
-      if (!d) return;
+    if (t.Status === 'Complete' && t['Due date']) {
+      const d = t['Due date'];
       const key = d.toISOString().slice(0, 10);
       if (counts[key] !== undefined) counts[key]++;
     }
@@ -342,22 +333,30 @@ function loadTasks() {
     });
 }
 
-
 // Event listeners for filter buttons
 document.getElementById('showAllBtn').onclick = () => applyFilter(() => true);
 document.getElementById('thisMonthBtn').onclick = () => {
   const now = new Date();
-  applyFilter(t => t['Due date']?.getMonth() === now.getMonth() && t['Due date']?.getFullYear() === now.getFullYear());
+  applyFilter(t => {
+    const d = t['Due date'];
+    return d instanceof Date && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
 };
 document.getElementById('prevMonthBtn').onclick = () => {
   const now = new Date();
   const prev = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  applyFilter(t => t['Due date']?.getMonth() === prev.getMonth() && t['Due date']?.getFullYear() === prev.getFullYear());
+  applyFilter(t => {
+    const d = t['Due date'];
+    return d instanceof Date && d.getMonth() === prev.getMonth() && d.getFullYear() === prev.getFullYear();
+  });
 };
 document.getElementById('applyCustomBtn').onclick = () => {
   const start = new Date(document.getElementById('startDate').value);
   const end = new Date(document.getElementById('endDate').value);
-  applyFilter(t => t['Due date'] >= start && t['Due date'] <= end);
+  applyFilter(t => {
+    const d = t['Due date'];
+    return d instanceof Date && d >= start && d <= end;
+  });
 };
 
 // Load data initially
