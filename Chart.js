@@ -27,7 +27,7 @@ const ctxs = {
 };
 
 let charts = {};
-let allTasks = [], filteredTasks = [];
+let alltasks = [], filteredtasks = [];
 
 // Inject filter UI
 const filterHTML = `
@@ -69,7 +69,7 @@ function countByField(tasks, field) {
   return counts;
 }
 
-function monthlyCompletedTasks(tasks) {
+function monthlyCompletedtasks(tasks) {
   const now = new Date();
   const counts = {};
   for (let i = 11; i >= 0; i--) {
@@ -208,8 +208,8 @@ function updateCharts(tasks) {
 
   createChart(ctxs.monthly, {
     type: 'bar',
-    data: formatPie(monthlyCompletedTasks(tasks)),
-    options: { plugins: { title: { display: true, text: 'Monthly Completed Tasks' } } }
+    data: formatPie(monthlyCompletedtasks(tasks)),
+    options: { plugins: { title: { display: true, text: 'Monthly Completed tasks' } } }
   });
 
   const avg = avgWorkPause(tasks);
@@ -233,7 +233,7 @@ function updateCharts(tasks) {
     type: 'line',
     data: formatPie(completionTimeline(tasks)),
     options: {
-      plugins: { title: { display: true, text: 'Daily Completed Tasks (30 Days)' } },
+      plugins: { title: { display: true, text: 'Daily Completed tasks (30 Days)' } },
       scales: { x: { ticks: { maxRotation: 90, minRotation: 45 } } }
     }
   });
@@ -241,7 +241,7 @@ function updateCharts(tasks) {
   createChart(ctxs.company, {
     type: 'pie',
     data: formatPie(countByField(tasks, 'Company')),
-    options: { plugins: { title: { display: true, text: 'Company Tasks' } } }
+    options: { plugins: { title: { display: true, text: 'Company tasks' } } }
   });
 
   createChart(ctxs.avgDuration, {
@@ -279,9 +279,9 @@ function updateCharts(tasks) {
       }]
     },
     options: {
-      plugins: { title: { display: true, text: 'Bubble Chart - Company Tasks' } },
+      plugins: { title: { display: true, text: 'Bubble Chart - Company tasks' } },
       scales: {
-        x: { title: { display: true, text: 'Number of Tasks' } },
+        x: { title: { display: true, text: 'Number of tasks' } },
         y: { title: { display: true, text: 'Avg Duration (min)' } }
       }
     }
@@ -290,14 +290,14 @@ function updateCharts(tasks) {
 
 // FILTERS
 function applyFilter(filterFunc) {
-  filteredTasks = allTasks.filter(filterFunc);
-  updateCharts(filteredTasks);
+  filteredtasks = alltasks.filter(filterFunc);
+  updateCharts(filteredtasks);
 }
 
-function loadTasks() {
-  db.collection('Tasks').get()
+function loadtasks() {
+  db.collection('tasks').get()
     .then(snapshot => {
-      allTasks = snapshot.docs.map(doc => {
+      alltasks = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
           ...data,
@@ -309,8 +309,8 @@ function loadTasks() {
           'Company': data['Existing Company Name'] || 'Unknown'
         };
       });
-      filteredTasks = [...allTasks];
-      updateCharts(filteredTasks);
+      filteredtasks = [...alltasks];
+      updateCharts(filteredtasks);
     })
     .catch(error => console.error("Error loading tasks:", error));
 }
@@ -346,4 +346,4 @@ document.getElementById('applyCustomBtn').onclick = () => {
 };
 
 // Initial load
-loadTasks();
+loadtasks();
