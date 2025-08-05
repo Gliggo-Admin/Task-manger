@@ -87,7 +87,7 @@ function parseDueDate(dueDateStr) {
 
 function filterByDateRange(tasks, startDate, endDate) {
   return tasks.filter(task => {
-    const dueDate = parseDueDate(task['Due Date']);
+    const dueDate = parseDueDate(task['Due Date'] || task['due date']);
     if (!dueDate) return false;
     if (startDate && dueDate < startDate) return false;
     if (endDate && dueDate > endDate) return false;
@@ -121,7 +121,7 @@ function monthlyCompletedTasks(tasks) {
   }
   tasks.forEach(t => {
     if (t.Status === 'Complete') {
-      const endDate = parseDueDate(t['Due Date']);
+      const endDate = parseDueDate(task['Due Date'] || task['due date'])
       if (!endDate) return;
       const key = endDate.toLocaleString('default', { year: 'numeric', month: 'short' });
       if (counts[key] !== undefined) counts[key]++;
