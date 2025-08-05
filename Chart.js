@@ -76,7 +76,11 @@ function toDate(value) {
 
 
 function parseDueDate(dueDateStr) {
-  return toDate(dueDateStr); // supports multiple formats
+  const date = toDate(dueDateStr);
+  if (!date || isNaN(date.getTime())) {
+    console.warn('Invalid Due Date:', dueDateStr);
+  }
+  return date;
 }
 
 
@@ -392,6 +396,10 @@ async function loadTasks() {
   try {
     const snapshot = await db.collection('tasks').get();
     allTasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Log sample task to debug
+    console.log('Sample task:', allTasks[0]);
+
     filteredTasks = allTasks;
     updateCharts();
   } catch (error) {
@@ -399,6 +407,7 @@ async function loadTasks() {
     alert("Failed to load tasks from database.");
   }
 }
+
 
 
 
