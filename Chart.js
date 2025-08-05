@@ -117,7 +117,7 @@ function monthlyCompletedTasks(tasks) {
   }
   tasks.forEach(t => {
     if (t.Status === 'Complete') {
-      const endDate = toDate(t['Time End'] || t.taskEnd);
+      const endDate = parseDueDate(t['Due Date']);
       if (!endDate) return;
       const key = endDate.toLocaleString('default', { year: 'numeric', month: 'short' });
       if (counts[key] !== undefined) counts[key]++;
@@ -400,5 +400,9 @@ async function loadTasks() {
   }
 }
 
+
+
 // Initial load
-loadTasks();
+loadTasks().then(() => {
+  document.getElementById('thisMonthBtn').click();
+});
