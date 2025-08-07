@@ -4,391 +4,209 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Task Manager Dashboard</title>
-
-  <!-- Firebase SDK -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
   <style>
-    /* Reset & base */
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f4f6f8;
+      margin: 0; padding: 0; height: 100%;
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
       color: #2c3e50;
+      overflow-x: hidden;
     }
-
-    /* Topbar */
     .topbar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 60px;
-      background: #007BFF;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      z-index: 100;
+      position: fixed; top: 0; left: 0; right: 0;
+      height: 60px; background: #007BFF;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 20px; z-index: 1001;
     }
-
-    /* Hamburger menu toggle for sidebar */
-    .menu-toggle {
-      font-size: 26px;
-      color: white;
+    #dateTime { font-weight: bold; font-size: 16px; color: #fafafa; }
+    
+    /* Hamburger toggle button */
+    #sidebarToggle {
+      font-size: 24px;
+      color: #fafafa;
       background: none;
       border: none;
       cursor: pointer;
-      display: none;
-    }
-
-    #dateTime {
-      font-weight: bold;
-      font-size: 16px;
-      color: #ffffff;
-      user-select: none;
+      margin-right: 10px;
+      display: none; /* only show on small screens */
     }
 
     /* Profile area */
     .profile {
-      position: relative;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      color: #ffffff;
+      position: relative; cursor: pointer; display: flex; align-items: center;
       user-select: none;
     }
-
-    .avatar {
-      background-color: #ffffff;
-      color: #007BFF;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 18px;
-      margin-right: 8px;
+    .profile img {
+      border-radius: 50%; width: 40px; height: 40px; margin-right: 8px;
+      object-fit: cover;
+      background: #ccc;
     }
-
-    .dropdown-arrow {
-      margin-left: 4px;
-      font-size: 12px;
-      user-select: none;
+    .profile span {
+      font-weight: bold; color: #fafafa; margin-right: 5px;
     }
-
     #profileDropdown {
-      display: none;
-      position: absolute;
-      top: 50px;
-      right: 0;
-      background: white;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      min-width: 150px;
-      z-index: 200;
+      display: none; position: absolute; top: 50px; right: 0;
+      background: white; border: 1px solid #ccc; border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 140px; z-index: 1002;
     }
-
-    #profileDropdown a,
-    #profileDropdown button {
-      display: block;
-      width: 100%;
-      padding: 10px 15px;
-      text-align: left;
-      border: none;
-      background: none;
-      color: #333;
-      font-size: 14px;
-      cursor: pointer;
-      outline: none;
-      user-select: none;
+    #profileDropdown a, #profileDropdown button {
+      display: block; width: 100%;
+      padding: 10px 15px; text-align: left;
+      border: none; background: none; color: #333; font-size: 14px; cursor: pointer;
     }
-
-    #profileDropdown button {
-      color: #e74c3c;
-    }
-
-    #profileDropdown a:hover,
-    #profileDropdown button:hover {
-      background: #f0f0f0;
-    }
-
-    /* Container */
-    .container {
-      display: flex;
-      height: 100vh;
-      padding-top: 60px;
-    }
+    #profileDropdown button { color: #e74c3c; }
+    a:hover, button:hover { background: #f0f0f0; }
 
     /* Sidebar */
     .sidebar {
+      position: fixed;
+      top: 60px;
+      left: 0;
       width: 220px;
+      height: calc(100% - 60px);
       background: #2c3e50;
       color: white;
-      padding: 20px 0;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      transform: translateX(-100%);
       transition: transform 0.3s ease;
-      user-select: none;
+      z-index: 1000;
     }
-
+    .sidebar.visible {
+      transform: translateX(0);
+    }
     .sidebar ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+      list-style: none; padding: 0; margin: 0;
     }
-
+    .sidebar .menu-item {
+      margin-bottom: 12px;
+    }
     .sidebar .menu-item a {
-      color: #ecf0f1;
-      text-decoration: none;
-      font-weight: 600;
-      padding: 12px 24px;
-      display: block;
-      border-radius: 6px;
-      transition: background 0.2s ease;
+      color: #ecf0f1; text-decoration: none; font-weight: 600;
+      padding: 10px; display: block; border-radius: 6px;
     }
-
     .sidebar .menu-item a:hover {
       background: #34495e;
     }
 
-    .sidebar.hidden {
-      transform: translateX(-100%);
-      position: fixed;
-      top: 60px;
-      left: 0;
-      height: calc(100% - 60px);
-      z-index: 99;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.2);
-    }
-
     /* Main content */
     .main-content {
-      flex: 1;
-      padding: 30px 40px 30px 40px;
-      background: #f9f9f9;
-      overflow-y: auto;
-      user-select: none;
+      margin-top: 60px;
+      padding: 30px;
+      transition: margin-left 0.3s ease;
+      margin-left: 0;
+    }
+    /* When sidebar visible, push main content */
+    .main-content.shifted {
+      margin-left: 220px;
     }
 
-    .main-content h1 {
-      margin-top: 0;
-      margin-bottom: 30px;
-      font-weight: 700;
-      color: #34495e;
-    }
-
-    /* To-Do Panel */
+    /* Todo panel styles */
     .todo-panel {
-      background: white;
-      border-radius: 15px;
+      background: white; border-radius: 15px;
       box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-      padding: 25px;
-      max-width: 450px;
-      margin-left: auto;
+      padding: 20px; max-width: 400px; margin-left: auto;
     }
-
     .todo-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
     }
-
     .todo-header button {
-      background: #007BFF;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      user-select: none;
-      transition: background 0.2s ease;
+      background: #007BFF; color: white; border: none; padding: 6px 12px;
+      border-radius: 6px; cursor: pointer;
     }
-
-    .todo-header button:hover {
-      background: #0056b3;
-    }
-
-    #todoDateLabel {
-      font-weight: 700;
-      font-size: 18px;
-      color: #2c3e50;
-    }
-
     .add-task {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
+      display: flex; gap: 8px; margin-bottom: 12px;
     }
-
     .add-task input {
-      flex: 1;
-      padding: 10px 15px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s ease;
+      flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px;
     }
-
-    .add-task input:focus {
-      border-color: #007BFF;
-    }
-
     .add-task button {
-      background: #28a745;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      user-select: none;
-      transition: background 0.2s ease;
+      background: #007BFF; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;
     }
-
-    .add-task button:hover {
-      background: #1e7e34;
-    }
-
     .todo-list {
-      list-style: none;
-      padding: 0;
-      max-height: 350px;
-      overflow-y: auto;
+      list-style: none; padding: 0; max-height: 300px; overflow-y: auto;
     }
-
     .todo-list li {
-      display: flex;
-      align-items: center;
-      margin-bottom: 12px;
-      user-select: none;
+      display: flex; align-items: center; margin-bottom: 8px;
     }
-
     .todo-list li.completed label {
-      text-decoration: line-through;
-      color: #999;
+      text-decoration: line-through; color: #999;
     }
-
-    .todo-list input[type="checkbox"] {
-      cursor: pointer;
-      width: 18px;
-      height: 18px;
-    }
-
     .todo-list label {
-      margin-left: 10px;
-      flex: 1;
-      cursor: pointer;
-      font-size: 15px;
-      color: #2c3e50;
+      margin-left: 8px; flex: 1; cursor: pointer;
     }
-
     .delete-btn {
-      margin-left: 10px;
-      background: #e74c3c;
-      color: white;
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      user-select: none;
-      transition: background 0.2s ease;
+      margin-left: 8px; background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;
     }
 
-    .delete-btn:hover {
-      background: #c0392b;
-    }
-
-    /* Responsive */
+    /* Responsive: Show hamburger on small */
     @media (max-width: 768px) {
-      .menu-toggle {
+      #sidebarToggle {
         display: block;
       }
-
       .sidebar {
-        position: fixed;
         top: 60px;
-        left: 0;
         height: calc(100% - 60px);
-        z-index: 99;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.2);
-        background: #2c3e50;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
+        width: 220px;
+        padding: 20px;
+        /* transform handled by JS toggle */
       }
-
-      .sidebar.visible {
-        transform: translateX(0);
-      }
-
       .main-content {
-        padding: 20px 20px 20px 20px;
-        max-width: 100%;
-        margin-left: 0;
+        margin-left: 0 !important;
       }
-
-      .todo-panel {
-        max-width: 100%;
-        margin-left: 0;
+      .main-content.shifted {
+        margin-left: 0 !important;
       }
     }
   </style>
 </head>
 <body>
-
   <div class="topbar">
-    <button class="menu-toggle" id="menuToggleBtn" aria-label="Toggle menu">☰</button>
+    <button id="sidebarToggle" aria-label="Toggle menu">&#9776;</button>
     <div id="dateTime">Loading date/time...</div>
-    <div class="profile" id="profileDiv" tabindex="0" aria-haspopup="true" aria-expanded="false" aria-controls="profileDropdown">
-      <div class="avatar" id="profileAvatar">U</div>
-      <div class="dropdown-arrow">▼</div>
-      <div id="profileDropdown" role="menu" aria-hidden="true">
-        <a href="Change Password.html" role="menuitem" tabindex="-1">Settings</a>
-        <button id="logoutBtn" role="menuitem" tabindex="-1">Logout</button>
+    <div class="profile" id="profileDiv" tabindex="0" aria-haspopup="true" aria-expanded="false">
+      <img src="https://i.pravatar.cc/40" alt="User" />
+      <span id="profileName"></span>
+      <div id="profileDropdown" role="menu" aria-label="Profile options">
+        <a href="Change Password.html" role="menuitem">Settings</a>
+        <button id="logoutBtn" role="menuitem">Logout</button>
       </div>
     </div>
   </div>
 
-  <div class="container">
-    <nav class="sidebar" id="sidebar" aria-label="Main navigation">
-      <ul>
-        <li class="menu-item"><a href="Home.html">Dashboard</a></li>
-        <li class="menu-item"><a href="Users.html">Users</a></li>
-        <li class="menu-item"><a href="tasks.html">All Tasks</a></li>
-        <li class="menu-item"><a href="Chart.html">Charts</a></li>
-        <li class="menu-item"><a href="AssignTask.html">Assign Task</a></li>
-        <li class="menu-item"><a href="Generate Report.html">Report</a></li>
-      </ul>
-    </nav>
+  <nav class="sidebar" id="sidebar" aria-label="Main navigation">
+    <ul>
+      <li class="menu-item"><a href="Home.html">Dashboard</a></li>
+      <li class="menu-item"><a href="Users.html">Users</a></li>
+      <li class="menu-item"><a href="tasks.html">All Tasks</a></li>
+      <li class="menu-item"><a href="Chart.html">Charts</a></li>
+      <li class="menu-item"><a href="AssignTask.html">Assign Task</a></li>
+      <li class="menu-item"><a href="Generate Report.html">Report</a></li>
+    </ul>
+  </nav>
 
-    <main class="main-content" role="main" tabindex="-1">
-      <h1>Welcome, <span id="userGreeting">User</span>!</h1>
-
-      <div class="todo-panel" aria-label="To-do task manager panel">
-        <div class="todo-header">
-          <button id="prevDayBtn" aria-label="Previous day">&lt; Prev</button>
-          <div id="todoDateLabel" aria-live="polite" aria-atomic="true">--</div>
-          <button id="nextDayBtn" aria-label="Next day">Next &gt;</button>
-        </div>
-
-        <div class="add-task">
-          <input type="text" id="newTaskInput" placeholder="Add new task..." aria-label="New task input" />
-          <button id="addTaskBtn" aria-label="Add task">Add</button>
-        </div>
-
-        <ul class="todo-list" id="todoList" aria-live="polite" aria-atomic="true" aria-relevant="all"></ul>
+  <main class="main-content" id="mainContent">
+    <h1>Welcome, <span id="userGreeting"></span>!</h1>
+    <div class="todo-panel">
+      <div class="todo-header">
+        <button id="prevDayBtn">&lt; Prev</button>
+        <div id="todoDateLabel">--</div>
+        <button id="nextDayBtn">Next &gt;</button>
       </div>
-    </main>
-  </div>
+
+      <div class="add-task">
+        <input type="text" id="newTaskInput" placeholder="Add new task..." />
+        <button id="addTaskBtn">Add</button>
+      </div>
+
+      <ul class="todo-list" id="todoList"></ul>
+    </div>
+  </main>
 
   <script>
     // Firebase config
@@ -403,81 +221,38 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Elements
-    const sidebar = document.getElementById('sidebar');
-    const menuToggleBtn = document.getElementById('menuToggleBtn');
+    const username = sessionStorage.getItem("username") || "Guest";
+    document.getElementById("userGreeting").textContent = username;
+    document.getElementById("profileName").textContent = username;
+
+    // Profile dropdown
     const profileDiv = document.getElementById("profileDiv");
-    const profileDropdown = document.getElementById("profileDropdown");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const profileAvatar = document.getElementById("profileAvatar");
-    const userGreeting = document.getElementById("userGreeting");
-    const dateTimeEl = document.getElementById("dateTime");
-
-    // Sidebar toggle logic
-    menuToggleBtn.addEventListener('click', () => {
-      if (sidebar.classList.contains('visible')) {
-        sidebar.classList.remove('visible');
-        sidebar.classList.add('hidden');
-      } else {
-        sidebar.classList.add('visible');
-        sidebar.classList.remove('hidden');
+    const dropdown = document.getElementById("profileDropdown");
+    profileDiv.addEventListener("click", () => {
+      const isOpen = dropdown.style.display === "block";
+      dropdown.style.display = isOpen ? "none" : "block";
+      profileDiv.setAttribute('aria-expanded', !isOpen);
+    });
+    document.addEventListener("click", e => {
+      if (!profileDiv.contains(e.target)) {
+        dropdown.style.display = "none";
+        profileDiv.setAttribute('aria-expanded', 'false');
       }
     });
-
-    // Close sidebar clicking outside on small screens
-    document.addEventListener('click', (e) => {
-      if (!sidebar.contains(e.target) && e.target !== menuToggleBtn) {
-        if (sidebar.classList.contains('visible')) {
-          sidebar.classList.remove('visible');
-          sidebar.classList.add('hidden');
-        }
-      }
-    });
-
-    // Get username from sessionStorage or default "User"
-    const username = sessionStorage.getItem("username") || "User";
-    userGreeting.textContent = username;
-
-    // Show first letter in avatar uppercase
-    profileAvatar.textContent = username.charAt(0).toUpperCase();
-
-    // Profile dropdown toggle
-    profileDiv.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const isVisible = profileDropdown.style.display === "block";
-      if (isVisible) {
-        profileDropdown.style.display = "none";
-        profileDiv.setAttribute("aria-expanded", "false");
-        profileDropdown.setAttribute("aria-hidden", "true");
-      } else {
-        profileDropdown.style.display = "block";
-        profileDiv.setAttribute("aria-expanded", "true");
-        profileDropdown.setAttribute("aria-hidden", "false");
-      }
-    });
-
-    // Hide dropdown clicking outside
-    document.addEventListener("click", () => {
-      profileDropdown.style.display = "none";
-      profileDiv.setAttribute("aria-expanded", "false");
-      profileDropdown.setAttribute("aria-hidden", "true");
-    });
-
-    // Logout button logic
-    logoutBtn.addEventListener("click", () => {
+    document.getElementById("logoutBtn").addEventListener("click", () => {
       sessionStorage.clear();
       window.location.href = "index.html";
     });
 
-    // Live date/time in topbar
+    // Date/time display
     function updateClock() {
       const now = new Date();
-      dateTimeEl.textContent = now.toLocaleString();
+      document.getElementById("dateTime").textContent = now.toLocaleString();
     }
     updateClock();
     setInterval(updateClock, 1000);
 
-    // Task Manager Elements
+    // To-Do logic
     const todoListEl = document.getElementById("todoList");
     const todoDateLabel = document.getElementById("todoDateLabel");
     const prevBtn = document.getElementById("prevDayBtn");
@@ -488,125 +263,98 @@
     let currentDate = new Date();
     let tasks = [];
 
-    // Format date as YYYY-MM-DD for key
     function fmt(date) {
       return date.toISOString().split("T")[0];
     }
-    // Format date for display, e.g. Aug 7, 2025
     function rdt(date) {
-      return date.toLocaleDateString(undefined, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
+      return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     }
 
-    // Load tasks from Firestore for current user & date
     async function loadTasks() {
       const key = fmt(currentDate);
       todoDateLabel.textContent = rdt(currentDate);
-      todoListEl.innerHTML = "<li>Loading tasks...</li>";
-
+      todoListEl.innerHTML = "<li>Loading...</li>";
       try {
-        const docRef = db.collection("userTasks").doc(username);
-        const docSnap = await docRef.get();
-
-        if (docSnap.exists) {
-          const data = docSnap.data();
-          tasks = (data.tasks && data.tasks[key]) || [];
-        } else {
-          tasks = [];
-        }
+        const snap = await db.collection("userTasks").doc(username).get();
+        const data = snap.exists ? snap.data() : {};
+        tasks = (data.tasks && data.tasks[key]) || [];
         renderTasks();
-      } catch (error) {
+      } catch {
         todoListEl.innerHTML = "<li>Error loading tasks.</li>";
-        console.error("Firestore error:", error);
       }
     }
 
-    // Render task list in UI
     function renderTasks() {
       if (tasks.length === 0) {
         todoListEl.innerHTML = "<li>No tasks for this date.</li>";
         return;
       }
       todoListEl.innerHTML = "";
-
-      tasks.forEach((task, index) => {
+      tasks.forEach((t, i) => {
         const li = document.createElement("li");
-        if (task.completed) li.classList.add("completed");
-
+        if (t.completed) li.classList.add("completed");
         const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.checked = task.completed;
-        cb.setAttribute("aria-label", "Mark task complete");
-        cb.onchange = () => {
-          task.completed = cb.checked;
-          saveTasks();
-        };
-
+        cb.type = "checkbox"; cb.checked = t.completed;
+        cb.onchange = () => { t.completed = cb.checked; saveTasks(); };
         const lbl = document.createElement("label");
-        lbl.textContent = task.text;
-        lbl.style.marginLeft = "10px";
-
-        const delBtn = document.createElement("button");
-        delBtn.textContent = "Delete";
-        delBtn.className = "delete-btn";
-        delBtn.setAttribute("aria-label", "Delete task");
-        delBtn.onclick = () => {
-          if (confirm("Delete this task?")) {
-            tasks.splice(index, 1);
-            saveTasks();
-          }
+        lbl.textContent = t.text; lbl.style.marginLeft = "8px";
+        const del = document.createElement("button");
+        del.textContent = "Delete"; del.className = "delete-btn";
+        del.onclick = () => {
+          if (confirm("Delete this task?")) { tasks.splice(i, 1); saveTasks(); }
         };
-
-        li.append(cb, lbl, delBtn);
-        todoListEl.appendChild(li);
+        li.append(cb, lbl, del);
+        todoListEl.append(li);
       });
     }
 
-    // Save tasks back to Firestore
     async function saveTasks() {
       const key = fmt(currentDate);
-      try {
-        await db.collection("userTasks").doc(username).set({
-          tasks: {
-            [key]: tasks
-          }
-        }, { merge: true });
-        renderTasks();
-      } catch (error) {
-        console.error("Failed to save tasks:", error);
-      }
+      const payload = { tasks: { [key]: tasks } };
+      await db.collection("userTasks").doc(username).set(payload, { merge: true });
+      renderTasks();
     }
 
-    // Date navigation buttons
-    prevBtn.onclick = () => {
-      currentDate.setDate(currentDate.getDate() - 1);
-      loadTasks();
-    };
-    nextBtn.onclick = () => {
-      currentDate.setDate(currentDate.getDate() + 1);
-      loadTasks();
-    };
-
-    // Add new task button
+    prevBtn.onclick = () => { currentDate.setDate(currentDate.getDate() - 1); loadTasks(); };
+    nextBtn.onclick = () => { currentDate.setDate(currentDate.getDate() + 1); loadTasks(); };
     addBtn.onclick = () => {
-      const text = input.value.trim();
-      if (!text) return;
-      tasks.push({ text, completed: false });
+      const txt = input.value.trim();
+      if (!txt) return;
+      tasks.push({ text: txt, completed: false });
       input.value = "";
       saveTasks();
     };
+    input.addEventListener("keypress", e => { if (e.key === "Enter") addBtn.click(); });
 
-    // Allow adding task with Enter key
-    input.addEventListener("keypress", e => {
-      if (e.key === "Enter") addBtn.click();
+    loadTasks();
+
+    // Sidebar toggle logic
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    const sidebar = document.getElementById("sidebar");
+    const mainContent = document.getElementById("mainContent");
+
+    sidebarToggle.addEventListener("click", () => {
+      const isVisible = sidebar.classList.contains("visible");
+      if (isVisible) {
+        sidebar.classList.remove("visible");
+        mainContent.classList.remove("shifted");
+      } else {
+        sidebar.classList.add("visible");
+        mainContent.classList.add("shifted");
+      }
     });
 
-    // Initial load
-    loadTasks();
+    // Close sidebar if click outside on small screens
+    document.addEventListener("click", (e) => {
+      if (
+        sidebar.classList.contains("visible") &&
+        !sidebar.contains(e.target) &&
+        e.target !== sidebarToggle
+      ) {
+        sidebar.classList.remove("visible");
+        mainContent.classList.remove("shifted");
+      }
+    });
   </script>
-
 </body>
 </html>
