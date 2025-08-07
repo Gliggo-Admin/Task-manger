@@ -61,6 +61,7 @@
       outline: none;
     }
 
+    /* Notification badge on bell icon */
     .badge {
       position: absolute;
       top: 2px;
@@ -71,9 +72,10 @@
       border-radius: 50%;
       box-shadow: 0 0 6px #b33a3a;
       pointer-events: none;
-      display: none;
+      display: none; /* Hidden by default */
     }
 
+    /* Profile */
     .profile {
       position: relative;
       cursor: pointer;
@@ -101,6 +103,7 @@
       transform: rotate(180deg);
     }
 
+    /* Profile dropdown */
     #profileDropdown {
       display: none;
       position: absolute;
@@ -131,12 +134,14 @@
       color: #e74c3c;
     }
 
+    /* Container */
     .container {
       display: flex;
       height: 100vh;
-      padding-top: 60px;
+      padding-top: 60px; /* leave space for topbar */
     }
 
+    /* Sidebar */
     .sidebar {
       width: 250px;
       background: #2c3e50;
@@ -144,11 +149,13 @@
       padding: 20px;
       position: fixed;
       top: 60px;
-      left: -260px;
+      left: -260px; /* hidden by default */
       height: calc(100% - 60px);
       border-top-right-radius: 15px;
       border-bottom-right-radius: 15px;
-      box-shadow: inset 0 0 8px rgba(255,255,255,0.1), 5px 0 20px rgba(0,0,0,0.3);
+      box-shadow:
+        inset 0 0 8px rgba(255,255,255,0.1),
+        5px 0 20px rgba(0,0,0,0.3);
       transition: left 0.3s ease;
       z-index: 15;
       perspective: 800px;
@@ -171,8 +178,13 @@
       margin-bottom: 14px;
       border-radius: 10px;
       background: linear-gradient(145deg, #34495e, #2c3e50);
-      box-shadow: 3px 3px 6px #22303f, -3px -3px 6px #3d5369;
-      transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+      box-shadow:
+        3px 3px 6px #22303f,
+        -3px -3px 6px #3d5369;
+      transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        background 0.3s ease;
       cursor: pointer;
       transform-style: preserve-3d;
     }
@@ -185,45 +197,19 @@
       user-select: none;
       transition: color 0.3s ease;
     }
+    /* 3D hover effect */
     .menu-item:hover {
       transform: translateZ(10px) translateY(-4px) rotateX(5deg);
-      box-shadow: 5px 8px 15px rgba(0,0,0,0.4), inset 0 0 10px rgba(255,255,255,0.2);
+      box-shadow:
+        5px 8px 15px rgba(0,0,0,0.4),
+        inset 0 0 10px rgba(255,255,255,0.2);
       background: linear-gradient(145deg, #4a6a91, #3a506e);
     }
     .menu-item:hover a {
-      color: #ffd700;
+      color: #ffd700; /* golden highlight on hover */
     }
 
-    /* To-do section */
-    .todo-panel {
-      margin-top: 20px;
-      padding-top: 10px;
-      border-top: 1px solid rgba(255,255,255,0.2);
-    }
-    .todo-panel h3 {
-      font-size: 16px;
-      margin-bottom: 10px;
-      color: #f1c40f;
-    }
-    #todoList {
-      list-style: none;
-      padding-left: 0;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-    #todoList li {
-      font-size: 14px;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      color: #ecf0f1;
-    }
-    #todoList input[type="checkbox"] {
-      margin-right: 10px;
-      transform: scale(1.1);
-      cursor: pointer;
-    }
-
+    /* Main content */
     .main-content {
       flex: 1;
       padding: 80px 30px 30px 30px;
@@ -236,10 +222,14 @@
       position: relative;
       transition: margin-left 0.3s ease, width 0.3s ease;
     }
+
+    /* When sidebar is open, push main content */
     .sidebar.open ~ .main-content {
       margin-left: 250px;
       width: calc(100% - 250px);
     }
+
+    /* Toggle button */
     .menu-btn {
       font-size: 24px;
       background: none;
@@ -258,49 +248,200 @@
   </style>
 
   <script defer>
-    // Your Firebase config here
-    const firebaseConfig = {
-      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-      authDomain: "task-manager-602da.firebaseapp.com",
-      projectId: "task-manager-602da",
-      storageBucket: "task-manager-602da.appspot.com",
-      messagingSenderId: "438978699329",
-      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
     document.addEventListener("DOMContentLoaded", () => {
       const sidebar = document.getElementById("sidebar");
       const profileDiv = document.querySelector(".profile");
       const profileDropdownId = "profileDropdown";
+      const todoListEl = document.getElementById("todoList");
+const todoDateLabel = document.getElementById("todoDateLabel");
+const prevDayBtn = document.getElementById("prevDayBtn");
+const nextDayBtn = document.getElementById("nextDayBtn");
+const newTaskInput = document.getElementById("newTaskInput");
+const addTaskBtn = document.getElementById("addTaskBtn");
 
+let currentDate = new Date();
+let currentTasks = [];
+
+function getFormattedDate(date) {
+  return date.toISOString().split("T")[0];
+}
+
+function getReadableDate(date) {
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric', month: 'short', day: 'numeric'
+  });
+}
+
+async function loadTasks(dateObj) {
+  const dateKey = getFormattedDate(dateObj);
+  todoDateLabel.textContent = getReadableDate(dateObj);
+  todoListEl.innerHTML = "<li>Loading...</li>";
+
+  try {
+    const docRef = firebase.firestore().collection("userTasks").doc(username);
+    const docSnap = await docRef.get();
+    let tasks = [];
+
+    if (docSnap.exists) {
+      const data = docSnap.data();
+      if (data?.tasks?.[dateKey]) {
+        tasks = data.tasks[dateKey];
+      }
+    }
+
+    currentTasks = tasks;
+    renderTasks(tasks);
+  } catch (error) {
+    console.error("Error loading tasks:", error);
+    todoListEl.innerHTML = "<li>Error loading tasks.</li>";
+  }
+}
+
+function renderTasks(tasks) {
+  if (!tasks || tasks.length === 0) {
+    todoListEl.innerHTML = "<li>No tasks for this date.</li>";
+    return;
+  }
+
+  todoListEl.innerHTML = "";
+  tasks.forEach((task, i) => {
+    const li = document.createElement("li");
+    if (task.completed) li.classList.add("completed");
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = task.completed || false;
+
+    const taskId = `task-${i}-${task.text.replace(/\s+/g, '-')}`;
+    checkbox.id = taskId;
+
+    const label = document.createElement("label");
+    label.htmlFor = taskId;
+    label.textContent = task.text;
+    label.style.marginLeft = "8px";
+    label.style.flexGrow = "1";
+
+    checkbox.addEventListener("change", () => {
+      task.completed = checkbox.checked;
+      li.classList.toggle("completed", checkbox.checked);
+      saveTasks(currentDate, currentTasks);
+    });
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Delete";
+    deleteBtn.className = "delete-btn";
+    deleteBtn.title = "Delete this task";
+    deleteBtn.style.marginLeft = "8px";
+    deleteBtn.style.backgroundColor = "#e74c3c";
+    deleteBtn.style.color = "white";
+    deleteBtn.style.border = "none";
+    deleteBtn.style.borderRadius = "6px";
+    deleteBtn.style.cursor = "pointer";
+    deleteBtn.style.padding = "2px 6px";
+    deleteBtn.style.fontSize = "0.9rem";
+
+    deleteBtn.addEventListener("click", () => {
+      if (confirm("Are you sure you want to delete this task?")) {
+        currentTasks.splice(i, 1);
+        saveTasks(currentDate, currentTasks).then(() => {
+          renderTasks(currentTasks);
+        });
+      }
+    });
+
+    li.style.display = "flex";
+    li.style.alignItems = "center";
+    li.style.marginBottom = "10px";
+
+    li.appendChild(checkbox);
+    li.appendChild(label);
+    li.appendChild(deleteBtn);
+
+    todoListEl.appendChild(li);
+  });
+}
+
+async function saveTasks(dateObj, tasks) {
+  const dateKey = getFormattedDate(dateObj);
+  try {
+    const docRef = firebase.firestore().collection("userTasks").doc(username);
+    await docRef.set({
+      tasks: {
+        [dateKey]: tasks
+      }
+    }, { merge: true });
+  } catch (error) {
+    console.error("Error saving tasks:", error);
+  }
+}
+
+prevDayBtn.addEventListener("click", () => {
+  currentDate.setDate(currentDate.getDate() - 1);
+  loadTasks(currentDate);
+});
+
+nextDayBtn.addEventListener("click", () => {
+  currentDate.setDate(currentDate.getDate() + 1);
+  loadTasks(currentDate);
+});
+
+addTaskBtn.addEventListener("click", () => {
+  const text = newTaskInput.value.trim();
+  if (!text) return;
+  currentTasks.push({ text, completed: false });
+  saveTasks(currentDate, currentTasks).then(() => {
+    renderTasks(currentTasks);
+    newTaskInput.value = "";
+    newTaskInput.focus();
+  });
+});
+
+newTaskInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    addTaskBtn.click();
+  }
+});
+
+// Greet user
+document.getElementById("userGreetingName").textContent = username || "User";
+
+// Load tasks on page load
+loadTasks(currentDate);
+
+
+
+
+      // Show date/time
       const dateTime = document.getElementById("dateTime");
       setInterval(() => {
         const now = new Date();
         dateTime.textContent = now.toLocaleString();
       }, 1000);
 
+      // Get username from sessionStorage or fallback
       const username = sessionStorage.getItem("username") || "Guest User";
 
-      profileDiv.innerHTML = `
-        <div class="top-right-controls">
-          <svg tabindex="0" role="button" aria-label="Notifications" title="Notifications" class="bell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" >
-            <path fill="currentColor" d="M12 24c1.104 0 2-.896 2-2h-4c0 1.104.896 2 2 2zm6-6v-5c0-3.072-1.63-5.64-4.5-6.32V6c0-.828-.672-1.5-1.5-1.5S10.5 5.172 10.5 6v.68C7.63 7.36 6 9.928 6 13v5l-2 2v1h16v-1l-2-2z"/>
-          </svg>
-          <span class="badge" aria-label="New notifications"></span>
+      // Build profile HTML with bell icon and badge container
+profileDiv.innerHTML = 
+  <div class="top-right-controls">
+    <svg tabindex="0" role="button" aria-label="Notifications" title="Notifications" class="bell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" >
+      <path fill="currentColor" d="M12 24c1.104 0 2-.896 2-2h-4c0 1.104.896 2 2 2zm6-6v-5c0-3.072-1.63-5.64-4.5-6.32V6c0-.828-.672-1.5-1.5-1.5S10.5 5.172 10.5 6v.68C7.63 7.36 6 9.928 6 13v5l-2 2v1h16v-1l-2-2z"/>
+    </svg>
+    <span class="badge" aria-label="New notifications"></span>
 
-          <div id="profileToggle" style="display:flex; align-items:center; cursor:pointer;" tabindex="0">
-            <img src="https://i.pravatar.cc/40" alt="User" />
-            <span>${username}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
-          </div>
-        </div>
-        <div id="${profileDropdownId}">
-          <a href="Change Password.html" id="settingsLink">Settings</a>
-          <button id="logoutBtn">Logout</button>
-        </div>
-      `;
+    <div id="profileToggle" style="display:flex; align-items:center; cursor:pointer;" tabindex="0">
+      <img src="https://i.pravatar.cc/40" alt="User" />
+      <span>${username}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+    </div>
+  </div>
+  <div id="${profileDropdownId}">
+    <a href="Change Password.html" id="settingsLink">Settings</a>
+    <button id="logoutBtn">Logout</button>
+  </div>
+;
+
+
 
       const profileToggle = document.getElementById("profileToggle");
       const profileDropdown = document.getElementById(profileDropdownId);
@@ -308,38 +449,53 @@
       const bellIcon = profileDiv.querySelector(".bell-icon");
       const notificationBadge = profileDiv.querySelector(".badge");
 
+      // Function to update badge visibility
       function updateNotificationBadge() {
         const hasNew = localStorage.getItem('hasNewNotifications') === 'true';
-        notificationBadge.style.display = hasNew ? 'block' : 'none';
+        if (hasNew) {
+          notificationBadge.style.display = 'block';
+        } else {
+          notificationBadge.style.display = 'none';
+        }
       }
       updateNotificationBadge();
 
+      // Toggle dropdown on profile click
       profileToggle.addEventListener("click", (e) => {
         e.stopPropagation();
         const isOpen = profileDropdown.style.display === "block";
-        profileDropdown.style.display = isOpen ? "none" : "block";
-        profileDiv.classList.toggle("open", !isOpen);
-        sidebar.classList.remove("open");
+        if (isOpen) {
+          profileDropdown.style.display = "none";
+          profileDiv.classList.remove("open");
+        } else {
+          profileDropdown.style.display = "block";
+          profileDiv.classList.add("open");
+          sidebar.classList.remove("open"); // close sidebar if open
+        }
       });
 
+      // Open notification.html on bell click or keyboard activation
       function openNotifications() {
         window.open("notification.html", "_blank");
+        // Clear new notifications flag and hide badge
         localStorage.setItem('hasNewNotifications', 'false');
         updateNotificationBadge();
       }
       bellIcon.addEventListener("click", openNotifications);
       bellIcon.addEventListener("keydown", (e) => {
-        if (["Enter", " ", "Spacebar"].includes(e.key)) {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
           e.preventDefault();
           openNotifications();
         }
       });
 
+      // Logout
       logoutBtn.addEventListener("click", () => {
         sessionStorage.clear();
         window.location.href = "index.html";
       });
 
+      // Sidebar toggle button handler
       function bindToggleSidebar() {
         const toggleBtn = document.getElementById("toggleSidebar");
         if (toggleBtn) {
@@ -353,20 +509,25 @@
       }
       bindToggleSidebar();
 
+      // Close sidebar and dropdown on outside click
       document.addEventListener("click", (e) => {
-        if (!sidebar.contains(e.target)) sidebar.classList.remove("open");
+        if (!sidebar.contains(e.target)) {
+          sidebar.classList.remove("open");
+        }
         if (!profileDiv.contains(e.target)) {
           profileDropdown.style.display = "none";
           profileDiv.classList.remove("open");
         }
       });
 
-      document.getElementById("homeLink").addEventListener("click", () => {
+      // Home link closes sidebar and dropdown
+      homeLink.addEventListener("click", (e) => {
         sidebar.classList.remove("open");
         profileDropdown.style.display = "none";
         profileDiv.classList.remove("open");
       });
 
+      // Accessibility: close dropdown on Escape key
       document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
           sidebar.classList.remove("open");
@@ -374,47 +535,15 @@
           profileDiv.classList.remove("open");
         }
       });
-
-      // === TODO: Replace static TODOs with Firestore data ===
-      const todoList = document.getElementById('todoList');
-
-      function renderTodoItem(id, task, done) {
-        const li = document.createElement('li');
-        li.style.color = "#ecf0f1";
-
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = id;
-        checkbox.checked = done;
-        checkbox.style.marginRight = '10px';
-        checkbox.style.transform = 'scale(1.1)';
-        checkbox.style.cursor = 'pointer';
-
-        checkbox.addEventListener('change', () => {
-          db.collection('tasks').doc(id).update({ done: checkbox.checked })
-            .catch(console.error);
-        });
-
-        li.appendChild(checkbox);
-        li.appendChild(document.createTextNode(task));
-        todoList.appendChild(li);
-      }
-
-      // Clear existing static tasks
-      todoList.innerHTML = '';
-
-      // Fetch tasks from Firestore and listen for realtime updates
-      db.collection('tasks').onSnapshot(snapshot => {
-        todoList.innerHTML = ''; // Clear current list
-
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          renderTodoItem(doc.id, data.task, data.done);
-        });
-      }, err => {
-        console.error("Error fetching tasks: ", err);
-      });
     });
+
+const settingsLink = document.getElementById("settingsLink");
+settingsLink.addEventListener("click", (e) => {
+  // If you want to do something before navigating, you can do it here.
+  // Otherwise, this is optional since href already navigates.
+});
+
+
   </script>
 </head>
 <body>
@@ -432,35 +561,30 @@
       <li class="menu-item"><a href="Users.html">Users</a></li>
       <li class="menu-item"><a href="tasks.html">All Task</a></li>
       <li class="menu-item"><a href="Chart.html">Chart View</a></li>
-      <li class="menu-item"><a href="AssignTasks.html">Assign Task</a></li>
-      <li class="menu-item"><a href="createTask.html">Create Task</a></li>
+      <li class="menu-item"><a href="AssignTask.html">Assign Task</a></li>
+      <li class="menu-item"><a href="Genrate Report.html">Report</a></li>
     </ul>
+  </aside>
 
-    <div class="todo-panel" aria-label="To-Do Tasks">
-      <h3>To-Do Tasks</h3>
-      <ul id="todoList">
-        <!-- Tasks loaded dynamically from Firestore -->
-      </ul>
+<main class="main-content" id="main" tabindex="0">
+  <h1>Welcome, <span id="userGreetingName"></span></h1>
+
+  <section class="right-panel" style="margin-top: 20px; background: white; border-radius: 15px; box-shadow: 0 8px 16px rgba(22, 160, 133, 0.15); padding: 20px;">
+    <div class="todo-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <button id="prevDayBtn" style="background: #007BFF; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-weight: bold;">&lt; Prev</button>
+      <div id="todoDateLabel" style="font-weight: bold; font-size: 16px;">Loading...</div>
+      <button id="nextDayBtn" style="background: #007BFF; color: white; border: none; padding: 6px 14px; border-radius: 6px; font-weight: bold;">Next &gt;</button>
     </div>
-  </aside>
 
-  <main class="main-content" tabindex="0" style="display: flex; gap: 40px; padding: 80px 30px 30px 30px; margin-left: 0; width: 100%; min-height: calc(100vh - 60px); background: #f9f9f9; border-top-left-radius: 20px;">
+    <div class="add-task-container" style="margin-bottom: 12px; display: flex; gap: 8px;">
+      <input type="text" id="newTaskInput" placeholder="Add a new task..." style="flex-grow: 1; padding: 8px; border-radius: 8px; border: 1px solid #ccc;" />
+      <button id="addTaskBtn" style="background: #007BFF; color: white; border: none; border-radius: 8px; padding: 8px 16px; font-weight: bold;">Add Task</button>
+    </div>
 
-  <section style="flex: 2;">
-    <h1>Welcome to Task Manager</h1>
-    <p>Your tasks and stats will appear here.</p>
+    <ul class="todo-list" id="todoList" style="list-style: none; padding-left: 0; margin: 0;"></ul>
   </section>
-
-  <aside style="flex: 1; background: #2c3e50; border-radius: 12px; padding: 20px; color: white; max-height: 400px; overflow-y: auto;">
-    <h3 style="color: #f1c40f; margin-top: 0;">To-Do Tasks</h3>
-    <ul id="todoList" style="list-style: none; padding-left: 0;">
-      <!-- Tasks loaded dynamically from Firestore -->
-    </ul>
-  </aside>
-
 </main>
 
 </div>
-
 </body>
 </html>
