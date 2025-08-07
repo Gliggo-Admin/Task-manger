@@ -258,6 +258,18 @@
   </style>
 
   <script defer>
+    // Your Firebase config here
+    const firebaseConfig = {
+      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+      authDomain: "task-manager-602da.firebaseapp.com",
+      projectId: "task-manager-602da",
+      storageBucket: "task-manager-602da.appspot.com",
+      messagingSenderId: "438978699329",
+      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
     document.addEventListener("DOMContentLoaded", () => {
       const sidebar = document.getElementById("sidebar");
       const profileDiv = document.querySelector(".profile");
@@ -363,14 +375,44 @@
         }
       });
 
-      // === TODO CHECKBOX LOGIC ===
-      const checkboxes = document.querySelectorAll('#todoList input[type="checkbox"]');
-      checkboxes.forEach(cb => {
-        const stored = localStorage.getItem(cb.id);
-        if (stored) cb.checked = stored === 'true';
-        cb.addEventListener('change', () => {
-          localStorage.setItem(cb.id, cb.checked);
+      // === TODO: Replace static TODOs with Firestore data ===
+      const todoList = document.getElementById('todoList');
+
+      function renderTodoItem(id, task, done) {
+        const li = document.createElement('li');
+        li.style.color = "#ecf0f1";
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = id;
+        checkbox.checked = done;
+        checkbox.style.marginRight = '10px';
+        checkbox.style.transform = 'scale(1.1)';
+        checkbox.style.cursor = 'pointer';
+
+        checkbox.addEventListener('change', () => {
+          db.collection('tasks').doc(id).update({ done: checkbox.checked })
+            .catch(console.error);
         });
+
+        li.appendChild(checkbox);
+        li.appendChild(document.createTextNode(task));
+        todoList.appendChild(li);
+      }
+
+      // Clear existing static tasks
+      todoList.innerHTML = '';
+
+      // Fetch tasks from Firestore and listen for realtime updates
+      db.collection('tasks').onSnapshot(snapshot => {
+        todoList.innerHTML = ''; // Clear current list
+
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          renderTodoItem(doc.id, data.task, data.done);
+        });
+      }, err => {
+        console.error("Error fetching tasks: ", err);
       });
     });
   </script>
@@ -390,27 +432,23 @@
       <li class="menu-item"><a href="Users.html">Users</a></li>
       <li class="menu-item"><a href="tasks.html">All Task</a></li>
       <li class="menu-item"><a href="Chart.html">Chart View</a></li>
-      <li class="menu-item"><a href="AssignTask.html">Assign Task</a></li>
-      <li class="menu-item"><a href="Genrate Report.html">Report</a></li>
+      <li class="menu-item"><a href="AssignTasks.html">Assign Task</a></li>
+      <li class="menu-item"><a href="createTask.html">Create Task</a></li>
     </ul>
 
-    <!-- To-do list section -->
-    <div class="todo-panel">
+    <div class="todo-panel" aria-label="To-Do Tasks">
       <h3>To-Do Tasks</h3>
       <ul id="todoList">
-        <li><input type="checkbox" id="task1" /> Update user list</li>
-        <li><input type="checkbox" id="task2" /> Review new tasks</li>
-        <li><input type="checkbox" id="task3" /> Send daily report</li>
-        <li><input type="checkbox" id="task4" /> Check notifications</li>
+        <!-- Tasks loaded dynamically from Firestore -->
       </ul>
     </div>
   </aside>
 
-  <main class="main-content" id="main" tabindex="0">
-    <h1>Welcome to the Task Manager</h1>
-    <p>Your productivity dashboard.</p>
-    <a href="Home.html" id="homeLink">Home</a>
+  <main class="main-content" tabindex="0">
+    <h1>Welcome to Task Manager</h1>
+    <p>Your tasks and stats will appear here.</p>
   </main>
 </div>
+
 </body>
 </html>
