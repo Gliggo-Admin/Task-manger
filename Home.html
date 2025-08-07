@@ -23,8 +23,8 @@
       display: flex; align-items: center; justify-content: space-between;
       padding: 0 20px; z-index: 1001;
     }
-    #dateTime { font-weight: bold; font-size: 16px; color: #fafafa; }
-    
+    #dateTime { font-weight: bold; font-size: 16px; color: #fafafa; display: flex; align-items: center; }
+
     /* Hamburger toggle button */
     #sidebarToggle {
       font-size: 24px;
@@ -36,17 +36,21 @@
       display: block;
     }
 
-    /* Profile area - photo only */
+    /* Profile area - initial letter circle */
     .profile {
       position: relative; cursor: pointer; display: flex; align-items: center;
       user-select: none;
+      width: 40px;
+      height: 40px;
+      background: #0056b3;
+      border-radius: 50%;
+      color: white;
+      font-weight: bold;
+      font-size: 20px;
+      justify-content: center;
+      text-transform: uppercase;
+      user-select: none;
     }
-    .profile img {
-      border-radius: 50%; width: 40px; height: 40px; 
-      object-fit: cover;
-      background: #ccc;
-    }
-    /* Removed profile name span */
 
     #profileDropdown {
       display: none; position: absolute; top: 50px; right: 0;
@@ -149,9 +153,9 @@
   <div class="topbar">
     <button id="sidebarToggle" aria-label="Toggle menu">&#9776;</button>
     <div id="dateTime">Loading date/time...</div>
-    <div class="profile" id="profileDiv" tabindex="0" aria-haspopup="true" aria-expanded="false">
-      <img src="https://i.pravatar.cc/40" alt="User" />
-      <!-- Removed profile name -->
+    <div class="profile" id="profileDiv" tabindex="0" aria-haspopup="true" aria-expanded="false" title="User menu">
+      <!-- Show first letter of username here -->
+      <div id="profileInitial" aria-label="User initial" role="img"></div>
       <div id="profileDropdown" role="menu" aria-label="Profile options">
         <a href="Change Password.html" role="menuitem">Settings</a>
         <button id="logoutBtn" role="menuitem">Logout</button>
@@ -204,7 +208,15 @@
     const username = sessionStorage.getItem("username") || "Guest";
     document.getElementById("userGreeting").textContent = username;
 
-    // Profile dropdown
+    // Set profile initial letter
+    const profileInitial = document.getElementById("profileInitial");
+    if (username && username.length > 0) {
+      profileInitial.textContent = username[0].toUpperCase();
+    } else {
+      profileInitial.textContent = "?";
+    }
+
+    // Profile dropdown toggle
     const profileDiv = document.getElementById("profileDiv");
     const dropdown = document.getElementById("profileDropdown");
     profileDiv.addEventListener("click", (e) => {
