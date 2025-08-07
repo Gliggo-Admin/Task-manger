@@ -245,6 +245,40 @@
     .menu-btn:hover {
       transform: scale(1.2);
     }
+    .todo-panel {
+  margin-top: 30px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.todo-panel h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: #f1c40f;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+#todoList {
+  list-style: none;
+  padding-left: 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+#todoList li {
+  font-size: 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  color: #ecf0f1;
+}
+
+#todoList input[type="checkbox"] {
+  margin-right: 10px;
+  transform: scale(1.1);
+  cursor: pointer;
+}
+
   </style>
 
   <script defer>
@@ -266,7 +300,7 @@
       const username = sessionStorage.getItem("username") || "Guest User";
 
       // Build profile HTML with bell icon and badge container
-profileDiv.innerHTML = `
+profileDiv.innerHTML = 
   <div class="top-right-controls">
     <svg tabindex="0" role="button" aria-label="Notifications" title="Notifications" class="bell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" >
       <path fill="currentColor" d="M12 24c1.104 0 2-.896 2-2h-4c0 1.104.896 2 2 2zm6-6v-5c0-3.072-1.63-5.64-4.5-6.32V6c0-.828-.672-1.5-1.5-1.5S10.5 5.172 10.5 6v.68C7.63 7.36 6 9.928 6 13v5l-2 2v1h16v-1l-2-2z"/>
@@ -283,7 +317,7 @@ profileDiv.innerHTML = `
     <a href="Change Password.html" id="settingsLink">Settings</a>
     <button id="logoutBtn">Logout</button>
   </div>
-`;
+;
 
 
 
@@ -387,155 +421,14 @@ settingsLink.addEventListener("click", (e) => {
   // Otherwise, this is optional since href already navigates.
 });
 
-    <script>
-  const username = sessionStorage.getItem("username") || "guest";
+    document.querySelectorAll('#todoList input[type="checkbox"]').forEach((checkbox, index) => {
+  const saved = localStorage.getItem(`todo_${index}`);
+  checkbox.checked = saved === 'true';
 
-  const db = firebase.firestore();
-
-  const todoListEl = document.getElementById("todoList");
-  const todoDateLabel = document.getElementById("todoDateLabel");
-  const prevDayBtn = document.getElementById("prevDayBtn");
-  const nextDayBtn = document.getElementById("nextDayBtn");
-  const newTaskInput = document.getElementById("newTaskInput");
-  const addTaskBtn = document.getElementById("addTaskBtn");
-
-  let currentDate = new Date();
-  let currentTasks = [];
-
-  function getFormattedDate(date) {
-    return date.toISOString().split("T")[0];
-  }
-
-  function getReadableDate(date) {
-    return date.toLocaleDateString(undefined, {
-      year: 'numeric', month: 'short', day: 'numeric'
-    });
-  }
-
-  async function loadTasks(dateObj) {
-    const dateKey = getFormattedDate(dateObj);
-    todoDateLabel.textContent = getReadableDate(dateObj);
-    todoListEl.innerHTML = "<li>Loading...</li>";
-
-    try {
-      const docRef = db.collection("userTasks").doc(username);
-      const docSnap = await docRef.get();
-      let tasks = [];
-
-      if (docSnap.exists) {
-        const data = docSnap.data();
-        if (data?.tasks?.[dateKey]) {
-          tasks = data.tasks[dateKey];
-        }
-      }
-
-      currentTasks = tasks;
-      renderTasks(tasks);
-    } catch (error) {
-      console.error("Error loading tasks:", error);
-      todoListEl.innerHTML = "<li>Error loading tasks.</li>";
-    }
-  }
-
-  function renderTasks(tasks) {
-    if (!tasks || tasks.length === 0) {
-      todoListEl.innerHTML = "<li>No tasks for this date.</li>";
-      return;
-    }
-
-    todoListEl.innerHTML = "";
-    tasks.forEach((task, i) => {
-      const li = document.createElement("li");
-      li.style.display = "flex";
-      li.style.alignItems = "center";
-      li.style.marginBottom = "8px";
-
-      if (task.completed) li.style.textDecoration = "line-through";
-
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.checked = task.completed || false;
-
-      checkbox.addEventListener("change", () => {
-        task.completed = checkbox.checked;
-        li.style.textDecoration = checkbox.checked ? "line-through" : "none";
-        saveTasks(currentDate, currentTasks);
-      });
-
-      const label = document.createElement("span");
-      label.textContent = task.text;
-      label.style.marginLeft = "10px";
-      label.style.flexGrow = "1";
-
-      const deleteBtn = document.createElement("button");
-      deleteBtn.textContent = "Delete";
-      deleteBtn.style.marginLeft = "10px";
-      deleteBtn.style.backgroundColor = "#dc3545";
-      deleteBtn.style.color = "white";
-      deleteBtn.style.border = "none";
-      deleteBtn.style.padding = "4px 8px";
-      deleteBtn.style.borderRadius = "4px";
-      deleteBtn.style.cursor = "pointer";
-
-      deleteBtn.addEventListener("click", () => {
-        if (confirm("Delete this task?")) {
-          currentTasks.splice(i, 1);
-          saveTasks(currentDate, currentTasks).then(() => {
-            renderTasks(currentTasks);
-          });
-        }
-      });
-
-      li.appendChild(checkbox);
-      li.appendChild(label);
-      li.appendChild(deleteBtn);
-      todoListEl.appendChild(li);
-    });
-  }
-
-  async function saveTasks(dateObj, tasks) {
-    const dateKey = getFormattedDate(dateObj);
-    try {
-      const docRef = db.collection("userTasks").doc(username);
-      await docRef.set({
-        tasks: {
-          [dateKey]: tasks
-        }
-      }, { merge: true });
-    } catch (error) {
-      console.error("Error saving tasks:", error);
-    }
-  }
-
-  prevDayBtn.addEventListener("click", () => {
-    currentDate.setDate(currentDate.getDate() - 1);
-    loadTasks(currentDate);
+  checkbox.addEventListener('change', () => {
+    localStorage.setItem(`todo_${index}`, checkbox.checked);
   });
-
-  nextDayBtn.addEventListener("click", () => {
-    currentDate.setDate(currentDate.getDate() + 1);
-    loadTasks(currentDate);
-  });
-
-  addTaskBtn.addEventListener("click", () => {
-    const text = newTaskInput.value.trim();
-    if (!text) return;
-    currentTasks.push({ text, completed: false });
-    saveTasks(currentDate, currentTasks).then(() => {
-      renderTasks(currentTasks);
-      newTaskInput.value = "";
-      newTaskInput.focus();
-    });
-  });
-
-  newTaskInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      addTaskBtn.click();
-    }
-  });
-
-  loadTasks(currentDate);
-
+});
 
 
   </script>
@@ -548,33 +441,35 @@ settingsLink.addEventListener("click", (e) => {
 </div>
 
 <div class="container">
-  <aside class="sidebar" id="sidebar" aria-label="Sidebar Navigation">
-    <h2>Menu</h2>
-    <ul class="menu">
-      <li class="menu-item"><a href="Home.html">Dashboard</a></li>
-      <li class="menu-item"><a href="Users.html">Users</a></li>
-      <li class="menu-item"><a href="tasks.html">All Task</a></li>
-      <li class="menu-item"><a href="Chart.html">Chart View</a></li>
-      <li class="menu-item"><a href="AssignTask.html">Assign Task</a></li>
-      <li class="menu-item"><a href="Genrate Report.html">Report</a></li>
+<!-- Place this inside your <aside class="sidebar" ...> -->
+<aside class="sidebar" id="sidebar" aria-label="Sidebar Navigation">
+  <h2>Menu</h2>
+  <ul class="menu">
+    <li class="menu-item"><a href="Home.html">Dashboard</a></li>
+    <li class="menu-item"><a href="Users.html">Users</a></li>
+    <li class="menu-item"><a href="tasks.html">All Task</a></li>
+    <li class="menu-item"><a href="Chart.html">Chart View</a></li>
+    <li class="menu-item"><a href="AssignTask.html">Assign Task</a></li>
+    <li class="menu-item"><a href="Genrate Report.html">Report</a></li>
+  </ul>
+
+  <!-- To-Do Task Section -->
+  <div class="todo-panel">
+    <h3>To-Do Tasks</h3>
+    <ul id="todoList">
+      <li><input type="checkbox" /> Complete login UI</li>
+      <li><input type="checkbox" /> Review user feedback</li>
+      <li><input type="checkbox" /> Schedule meeting</li>
+      <li><input type="checkbox" /> Update report</li>
     </ul>
-  </aside>
+  </div>
+</aside>
+
 
   <main class="main-content" id="main" tabindex="0">
-    <section style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-    <button id="prevDayBtn">&lt; Prev</button>
-    <h2 id="todoDateLabel">Date</h2>
-    <button id="nextDayBtn">Next &gt;</button>
-  </div>
-
-  <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-    <input type="text" id="newTaskInput" placeholder="Add a new task..." style="flex-grow: 1; padding: 10px; border-radius: 6px; border: 1px solid #ccc;" />
-    <button id="addTaskBtn" style="padding: 10px 20px; background: #007BFF; color: white; border: none; border-radius: 6px; cursor: pointer;">Add Task</button>
-  </div>
-
-  <ul id="todoList" style="list-style: none; padding-left: 0; max-height: 400px; overflow-y: auto;"></ul>
-</section>
+<h1>Welcome to the Task Manager</h1>
+<p>Your productivity dashboard.</p>
+<a href="Home.html" id="homeLink">Home</a>
 
   </main>
 </div>
