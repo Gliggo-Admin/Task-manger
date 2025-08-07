@@ -444,10 +444,22 @@
     </div>
   </aside>
 
-  <main class="main-content" tabindex="0">
+  <main class="main-content" tabindex="0" style="display: flex; gap: 40px; padding: 80px 30px 30px 30px; margin-left: 0; width: 100%; min-height: calc(100vh - 60px); background: #f9f9f9; border-top-left-radius: 20px;">
+
+  <section style="flex: 2;">
     <h1>Welcome to Task Manager</h1>
     <p>Your tasks and stats will appear here.</p>
-  </main>
+  </section>
+
+  <aside style="flex: 1; background: #2c3e50; border-radius: 12px; padding: 20px; color: white; max-height: 400px; overflow-y: auto;">
+    <h3 style="color: #f1c40f; margin-top: 0;">To-Do Tasks</h3>
+    <ul id="todoList" style="list-style: none; padding-left: 0;">
+      <!-- Tasks loaded dynamically from Firestore -->
+    </ul>
+  </aside>
+
+</main>
+
 </div>
 
 </body>
