@@ -34,10 +34,10 @@
       margin-right: 8px;
     }
 
-    /* Home Button */
+    /* Buttons & Filter */
     .button-container {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
 
     .home-button {
@@ -49,10 +49,19 @@
       border-radius: 8px;
       cursor: pointer;
       transition: background-color 0.3s;
+      margin-right: 10px;
     }
 
     .home-button:hover {
       background-color: #1c5980;
+    }
+
+    .filter-select {
+      padding: 10px 16px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      outline: none;
     }
 
     /* Chart Grid */
@@ -78,7 +87,6 @@
       flex-grow: 1;
     }
 
-    /* Responsive */
     @media (max-width: 900px) {
       .chart-card {
         width: 100%;
@@ -97,6 +105,12 @@
     <button class="home-button" onclick="window.location.href='Sub Admin Dashboard.html'">
       🏠 Home
     </button>
+
+    <!-- Company Filter Dropdown -->
+    <select id="companyFilter" class="filter-select" onchange="filterByCompany()">
+      <option value="all">All Companies</option>
+      <!-- Options will be populated by JavaScript -->
+    </select>
   </div>
 
   <!-- Chart Grid Layout -->
@@ -116,7 +130,7 @@
     <div class="chart-card"><canvas id="bubbleChart"></canvas></div>
   </div>
 
-  <!-- Link your chart logic -->
+  <!-- Chart logic -->
   <script src="chart.js"></script>
 
 </body>
