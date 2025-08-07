@@ -33,22 +33,21 @@
       border: none;
       cursor: pointer;
       margin-right: 10px;
-      display: none; /* only show on small screens */
+      display: block;
     }
 
-    /* Profile area */
+    /* Profile area - photo only */
     .profile {
       position: relative; cursor: pointer; display: flex; align-items: center;
       user-select: none;
     }
     .profile img {
-      border-radius: 50%; width: 40px; height: 40px; margin-right: 8px;
+      border-radius: 50%; width: 40px; height: 40px; 
       object-fit: cover;
       background: #ccc;
     }
-    .profile span {
-      font-weight: bold; color: #fafafa; margin-right: 5px;
-    }
+    /* Removed profile name span */
+
     #profileDropdown {
       display: none; position: absolute; top: 50px; right: 0;
       background: white; border: 1px solid #ccc; border-radius: 6px;
@@ -144,25 +143,6 @@
       margin-left: 8px; background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;
     }
 
-    /* Responsive: Show hamburger on small */
-    @media (max-width: 768px) {
-      #sidebarToggle {
-        display: block;
-      }
-      .sidebar {
-        top: 60px;
-        height: calc(100% - 60px);
-        width: 220px;
-        padding: 20px;
-        /* transform handled by JS toggle */
-      }
-      .main-content {
-        margin-left: 0 !important;
-      }
-      .main-content.shifted {
-        margin-left: 0 !important;
-      }
-    }
   </style>
 </head>
 <body>
@@ -171,7 +151,7 @@
     <div id="dateTime">Loading date/time...</div>
     <div class="profile" id="profileDiv" tabindex="0" aria-haspopup="true" aria-expanded="false">
       <img src="https://i.pravatar.cc/40" alt="User" />
-      <span id="profileName"></span>
+      <!-- Removed profile name -->
       <div id="profileDropdown" role="menu" aria-label="Profile options">
         <a href="Change Password.html" role="menuitem">Settings</a>
         <button id="logoutBtn" role="menuitem">Logout</button>
@@ -179,7 +159,7 @@
     </div>
   </div>
 
- <nav class="sidebar hidden" id="sidebar" aria-label="Main navigation">
+  <nav class="sidebar" id="sidebar" aria-label="Main navigation">
     <ul>
       <li class="menu-item"><a href="Home.html">Dashboard</a></li>
       <li class="menu-item"><a href="Users.html">Users</a></li>
@@ -223,21 +203,19 @@
 
     const username = sessionStorage.getItem("username") || "Guest";
     document.getElementById("userGreeting").textContent = username;
-    document.getElementById("profileName").textContent = username;
 
     // Profile dropdown
     const profileDiv = document.getElementById("profileDiv");
     const dropdown = document.getElementById("profileDropdown");
-    profileDiv.addEventListener("click", () => {
+    profileDiv.addEventListener("click", (e) => {
+      e.stopPropagation(); // prevent click bubbling to document
       const isOpen = dropdown.style.display === "block";
       dropdown.style.display = isOpen ? "none" : "block";
       profileDiv.setAttribute('aria-expanded', !isOpen);
     });
-    document.addEventListener("click", e => {
-      if (!profileDiv.contains(e.target)) {
-        dropdown.style.display = "none";
-        profileDiv.setAttribute('aria-expanded', 'false');
-      }
+    document.addEventListener("click", () => {
+      dropdown.style.display = "none";
+      profileDiv.setAttribute('aria-expanded', 'false');
     });
     document.getElementById("logoutBtn").addEventListener("click", () => {
       sessionStorage.clear();
@@ -333,7 +311,8 @@
     const sidebar = document.getElementById("sidebar");
     const mainContent = document.getElementById("mainContent");
 
-    sidebarToggle.addEventListener("click", () => {
+    sidebarToggle.addEventListener("click", (e) => {
+      e.stopPropagation(); // prevent event bubbling to document
       const isVisible = sidebar.classList.contains("visible");
       if (isVisible) {
         sidebar.classList.remove("visible");
@@ -344,8 +323,9 @@
       }
     });
 
-    // Close sidebar if click outside on small screens
+    // Click outside sidebar to hide it
     document.addEventListener("click", (e) => {
+      // only if sidebar is visible and click outside sidebar and toggle button
       if (
         sidebar.classList.contains("visible") &&
         !sidebar.contains(e.target) &&
