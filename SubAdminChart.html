@@ -117,7 +117,7 @@
 
     <label for="dateRangeSelect">Date Range:</label>
     <select id="dateRangeSelect" onchange="onDateRangeChange()">
-      <option value="thisMonth">This Month</option>
+      <option value="thisMonth" selected>This Month</option>
       <option value="prevMonth">Previous Month</option>
       <option value="custom">Custom Range</option>
     </select>
@@ -156,6 +156,7 @@
       appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
     };
 
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
@@ -163,13 +164,13 @@
     let filteredTasks = [];
     const charts = {};
 
-    // Color palette - distinct colors for charts
+    // Color palette for charts
     const colors = [
       '#1abc9c', '#3498db', '#e67e22', '#9b59b6',
       '#e74c3c', '#f1c40f', '#34495e', '#2ecc71'
     ];
 
-    // Utility to convert hex to rgba with alpha
+    // Utility function to convert hex to rgba with alpha
     function rgba(hex, alpha = 1) {
       const bigint = parseInt(hex.slice(1), 16);
       const r = (bigint >> 16) & 255;
@@ -178,12 +179,12 @@
       return `rgba(${r},${g},${b},${alpha})`;
     }
 
-    // Initialize date inputs max to today
+    // Initialize date inputs max attribute to today
     const todayStr = new Date().toISOString().slice(0, 10);
     document.getElementById('startDate').max = todayStr;
     document.getElementById('endDate').max = todayStr;
 
-    // Show/hide custom date inputs based on dropdown
+    // Show or hide custom date inputs based on selection
     function onDateRangeChange() {
       const val = document.getElementById('dateRangeSelect').value;
       const showCustom = val === 'custom';
@@ -194,17 +195,16 @@
       document.getElementById('endDateLabel').style.display = showCustom ? 'inline-block' : 'none';
 
       if (!showCustom) {
-        // Clear custom dates on change to non-custom
+        // Clear custom dates
         document.getElementById('startDate').value = '';
         document.getElementById('endDate').value = '';
 
-        // Auto-update charts immediately for non-custom range changes
+        // Automatically reload charts on change
         loadFilteredData();
       }
-      // For custom range, user must click Load button to update charts
     }
 
-    // Parse Firestore timestamp or ISO date string
+    // Parse Firestore timestamp or ISO date string to JS Date
     function parseDate(value) {
       if (!value) return null;
       if (value.seconds) {
@@ -214,7 +214,7 @@
       return isNaN(d) ? null : d;
     }
 
-    // Filter tasks by date range and owner filter
+    // Filter tasks by date range and owner
     function filterTasks() {
       const dateRange = document.getElementById('dateRangeSelect').value;
       let startDate, endDate;
@@ -236,14 +236,13 @@
         }
         startDate = new Date(s);
         endDate = new Date(e);
-        endDate.setHours(23,59,59,999);
+        endDate.setHours(23, 59, 59, 999);
         if (endDate < startDate) {
           alert("End date cannot be before start date.");
           return null;
         }
       }
 
-      // Owner filter
       const owner = document.getElementById('ownerFilter').value;
 
       return allTasks.filter(task => {
@@ -256,7 +255,7 @@
       });
     }
 
-    // Count tasks by field (for pie/bar charts)
+    // Count tasks by a specific field for pie/bar charts
     function countByField(tasks, field) {
       return tasks.reduce((acc, t) => {
         const val = t[field] || 'Unknown';
@@ -265,7 +264,7 @@
       }, {});
     }
 
-    // Group tasks by month label (MMM YYYY)
+    // Group tasks by month label (e.g. "Sep 2025")
     function groupTasksByMonth(tasks) {
       const monthMap = {};
       tasks.forEach(task => {
@@ -274,208 +273,66 @@
         const key = d.toLocaleString('default', { month: 'short', year: 'numeric' });
         monthMap[key] = (monthMap[key] || 0) + 1;
       });
-      // Sort keys chronologically
       const sortedKeys = Object.keys(monthMap).sort((a,b) => new Date(a) - new Date(b));
       const data = sortedKeys.map(k => monthMap[k]);
-      return { labels: sortedKeys, datasets: [{ label: 'Tasks Started', data, backgroundColor: rgba(colors[1], 0.6), borderColor: colors[1], borderWidth: 1, fill: false, tension: 0.3 }]};
-    }
-
-    // Average duration by company in days
-    function avgDurationByCompany(tasks) {
-      const durMap = {};
-      const countMap = {};
-      tasks.forEach(t => {
-        const s = parseDate(t.startDate);
-        const e = parseDate(t.endDate);
-        if (!s || !e || e < s) return;
-        const dur = (e - s) / (1000*60*60*24);
-        const comp = t.company || 'Unknown';
-        durMap[comp] = (durMap[comp] || 0) + dur;
-        countMap[comp] = (countMap[comp] || 0) + 1;
-      });
-      const labels = Object.keys(durMap);
-      const data = labels.map(l => +(durMap[l]/countMap[l]).toFixed(1));
-
       return {
-        labels,
+        labels: sortedKeys,
         datasets: [{
-          label: 'Avg Duration (Days)',
+          label: 'Tasks Started',
           data,
-          backgroundColor: labels.map((_,i) => rgba(colors[i % colors.length], 0.7)),
-          borderColor: labels.map((_,i) => colors[i % colors.length]),
-          borderWidth: 1
+          backgroundColor: rgba(colors[1], 0.6),
+          borderColor: colors[1],
+          borderWidth: 1,
+          fill: false,
+          tension: 0.4,
+          type: 'bar'
         }]
       };
     }
 
-    // Tasks by month AND company (for multi-line)
-    function tasksByMonthAndCompany(tasks) {
-      const companies = [...new Set(tasks.map(t => t.company || 'Unknown'))];
-      const monthSet = new Set();
-      const dataMap = {};
+    // Calculate average duration per company in hours
+    function avgDurationByCompany(tasks) {
+      const durations = {};
+      const counts = {};
 
       tasks.forEach(t => {
-        const d = parseDate(t.startDate);
-        if (!d) return;
-        const monthKey = d.toLocaleString('default', { month: 'short', year: 'numeric' });
-        monthSet.add(monthKey);
-      });
-
-      const months = Array.from(monthSet).sort((a,b) => new Date(a) - new Date(b));
-
-      companies.forEach(comp => {
-        dataMap[comp] = months.map(() => 0);
-      });
-
-      tasks.forEach(t => {
-        const d = parseDate(t.startDate);
-        if (!d) return;
-        const monthKey = d.toLocaleString('default', { month: 'short', year: 'numeric' });
         const comp = t.company || 'Unknown';
-        const mIndex = months.indexOf(monthKey);
-        if (mIndex >= 0) {
-          dataMap[comp][mIndex]++;
+        if (t.endDate && t.startDate) {
+          const start = parseDate(t.startDate);
+          const end = parseDate(t.endDate);
+          if (start && end && end > start) {
+            const diffHrs = (end - start) / (1000 * 60 * 60);
+            durations[comp] = (durations[comp] || 0) + diffHrs;
+            counts[comp] = (counts[comp] || 0) + 1;
+          }
         }
       });
 
-      const datasets = companies.map((comp,i) => ({
-        label: comp,
-        data: dataMap[comp],
-        borderColor: colors[i % colors.length],
-        backgroundColor: rgba(colors[i % colors.length], 0.3),
-        fill: false,
-        tension: 0.3,
-        borderWidth: 2,
-        pointRadius: 3,
-      }));
+      const labels = Object.keys(durations);
+      const data = labels.map(comp => counts[comp] ? durations[comp] / counts[comp] : 0);
 
-      return {
-        labels: months,
-        datasets
-      };
+      return { labels, data };
     }
 
-    // Update or create a chart by id
-    function updateOrCreateChart(id, title, dataObj, type='bar') {
-      const ctx = document.getElementById(id).getContext('2d');
-
-      let labels, datasets;
-
-      if (dataObj.labels && dataObj.datasets) {
-        labels = dataObj.labels;
-        datasets = dataObj.datasets;
-      } else {
-        // dataObj is a plain object (e.g. from countByField)
-        labels = Object.keys(dataObj);
-        datasets = [{
-          label: title,
-          data: labels.map(k => dataObj[k]),
-          backgroundColor: labels.map((_,i) => rgba(colors[i % colors.length], 0.7)),
-          borderColor: labels.map((_,i) => colors[i % colors.length]),
-          borderWidth: 1
-        }];
-      }
-
-      // Destroy previous chart if exists
+    // Create / update Chart instances safely
+    function createOrUpdateChart(id, config) {
       if (charts[id]) {
-        charts[id].destroy();
+        charts[id].data = config.data;
+        charts[id].options = config.options;
+        charts[id].update();
+      } else {
+        const ctx = document.getElementById(id).getContext('2d');
+        charts[id] = new Chart(ctx, config);
       }
-
-      charts[id] = new Chart(ctx, {
-        type,
-        data: {
-          labels,
-          datasets
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: title,
-              font: { size: 18, weight: '600' }
-            },
-            legend: { position: 'top' }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { precision: 0 }
-            }
-          }
-        }
-      });
     }
 
-    // Specifically update Monthly Company Line Chart
-    function updateMonthlyCompanyChart() {
-      const data = tasksByMonthAndCompany(filteredTasks);
-      const ctx = document.getElementById('monthlyCompanyChart').getContext('2d');
-
-      if (charts.monthlyCompanyChart) {
-        charts.monthlyCompanyChart.destroy();
-      }
-
-      charts.monthlyCompanyChart = new Chart(ctx, {
-        type: 'line',
-        data,
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: 'Tasks Started Per Month by Company',
-              font: { size: 18, weight: '600' }
-            },
-            legend: { position: 'top' }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { precision: 0 }
-            }
-          }
-        }
-      });
-    }
-
-    // Update all charts
-    function updateCharts() {
-      if (!filteredTasks || filteredTasks.length === 0) {
-        document.getElementById('loading').textContent = 'No tasks found for selected filters.';
-        document.getElementById('chartsContainer').style.display = 'none';
-        return;
-      }
-
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('chartsContainer').style.display = 'grid';
-
-      const statusCount = countByField(filteredTasks, 'status');
-      const companyCount = countByField(filteredTasks, 'company');
-      const avgDurationData = avgDurationByCompany(filteredTasks);
-
-      updateOrCreateChart('statusChart', 'Tasks by Status', statusCount, 'pie');
-      updateOrCreateChart('companyChart', 'Tasks by Company', companyCount, 'bar');
-      updateMonthlyCompanyChart();
-      updateOrCreateChart('avgDurationChart', 'Average Task Duration by Company', avgDurationData, 'bar');
-    }
-
-    // Load data and update charts
-    async function loadFilteredData() {
-      filteredTasks = filterTasks();
-      if (filteredTasks === null) {
-        // Filtering failed (alerts already shown)
-        return;
-      }
-      updateCharts();
-    }
-
-    // Populate owner filter dropdown from distinct owners in tasks
-    function populateOwners(tasks) {
+    // Populate Owner filter dropdown based on allTasks
+    function populateOwnerFilter() {
       const ownerSelect = document.getElementById('ownerFilter');
-      const owners = Array.from(new Set(tasks.map(t => t.owner).filter(Boolean))).sort();
+      const owners = new Set(allTasks.map(t => t.owner).filter(Boolean));
+      // Clear previous options except 'all'
       ownerSelect.innerHTML = '<option value="all">All Owners</option>';
-      owners.forEach(owner => {
+      [...owners].sort().forEach(owner => {
         const opt = document.createElement('option');
         opt.value = owner;
         opt.textContent = owner;
@@ -483,12 +340,12 @@
       });
     }
 
-    // Load all tasks from Firestore on page load
-    async function loadAllTasks() {
-      document.getElementById('loading').textContent = 'Loading tasks...';
-      document.getElementById('chartsContainer').style.display = 'none';
-
+    // Load tasks from Firestore
+    async function loadTasks() {
       try {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('chartsContainer').style.display = 'none';
+
         const snapshot = await db.collection('tasks').get();
         allTasks = snapshot.docs.map(doc => doc.data());
 
@@ -497,31 +354,109 @@
           return;
         }
 
-        populateOwners(allTasks);
-
-        // Load initial charts for default filters
+        populateOwnerFilter();
         loadFilteredData();
-
       } catch (error) {
-        console.error("Error fetching tasks:", error);
-        document.getElementById('loading').textContent = 'Error loading tasks.';
+        console.error("Error loading tasks:", error);
+        document.getElementById('loading').textContent = 'Failed to load tasks.';
       }
     }
 
-    // On owner or date dropdown change, reload charts automatically except custom range
-    document.getElementById('ownerFilter').addEventListener('change', () => {
-      const dateRange = document.getElementById('dateRangeSelect').value;
-      if (dateRange !== 'custom') loadFilteredData();
-    });
+    // Load filtered data and update charts
+    function loadFilteredData() {
+      const filtered = filterTasks();
+      if (filtered === null) return; // Validation failed
 
-    document.getElementById('dateRangeSelect').addEventListener('change', onDateRangeChange);
+      filteredTasks = filtered;
 
-    // On custom date inputs change, do not auto-update; wait for Load button
+      if (filteredTasks.length === 0) {
+        document.getElementById('loading').textContent = 'No tasks match the selected filters.';
+        document.getElementById('chartsContainer').style.display = 'none';
+        return;
+      }
 
-    // Initialize page
-    loadAllTasks();
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('chartsContainer').style.display = 'grid';
 
+      // Status Chart (Pie)
+      const statusCounts = countByField(filteredTasks, 'status');
+      createOrUpdateChart('statusChart', {
+        type: 'pie',
+        data: {
+          labels: Object.keys(statusCounts),
+          datasets: [{
+            data: Object.values(statusCounts),
+            backgroundColor: Object.keys(statusCounts).map((_, i) => colors[i % colors.length]),
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Task Status Distribution' } }
+        }
+      });
+
+      // Company Chart (Bar)
+      const companyCounts = countByField(filteredTasks, 'company');
+      createOrUpdateChart('companyChart', {
+        type: 'bar',
+        data: {
+          labels: Object.keys(companyCounts),
+          datasets: [{
+            label: 'Number of Tasks',
+            data: Object.values(companyCounts),
+            backgroundColor: Object.keys(companyCounts).map((_, i) => rgba(colors[i % colors.length], 0.7)),
+            borderColor: Object.keys(companyCounts).map((_, i) => colors[i % colors.length]),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false }, title: { display: true, text: 'Tasks per Company' } },
+          scales: {
+            y: { beginAtZero: true, precision: 0 }
+          }
+        }
+      });
+
+      // Monthly Company Chart (Bar)
+      const monthlyData = groupTasksByMonth(filteredTasks);
+      createOrUpdateChart('monthlyCompanyChart', {
+        type: 'bar',
+        data: monthlyData,
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false }, title: { display: true, text: 'Tasks Started per Month' } },
+          scales: { y: { beginAtZero: true, precision: 0 } }
+        }
+      });
+
+      // Avg Duration Chart (Bar)
+      const avgDurData = avgDurationByCompany(filteredTasks);
+      createOrUpdateChart('avgDurationChart', {
+        type: 'bar',
+        data: {
+          labels: avgDurData.labels,
+          datasets: [{
+            label: 'Avg Duration (hrs)',
+            data: avgDurData.data,
+            backgroundColor: avgDurData.labels.map((_, i) => rgba(colors[i % colors.length], 0.7)),
+            borderColor: avgDurData.labels.map((_, i) => colors[i % colors.length]),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false }, title: { display: true, text: 'Average Task Duration by Company' } },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    // Initialize on page load
+    window.onload = () => {
+      onDateRangeChange(); // Initialize date input display
+      loadTasks();
+    };
   </script>
-
 </body>
 </html>
