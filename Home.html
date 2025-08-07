@@ -11,6 +11,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 
   <style>
+    /* Reset & basics */
     * { box-sizing: border-box; }
     body, html {
       margin: 0; padding: 0; height: 100%;
@@ -25,6 +26,7 @@
     }
     a:hover { text-decoration: none; }
 
+    /* Topbar */
     .topbar {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -37,7 +39,97 @@
       box-shadow: 0 2px 5px rgb(255, 255, 255);
       z-index: 10;
     }
-    #dateTime { font-weight: bold; font-size: 16px; color: #fff; }
+
+    #dateTime { font-weight: bold; font-size: 16px; color: hsl(0, 0%, 98%); }
+
+    /* Right-side top controls: bell + profile */
+    .top-right-controls { display: flex; align-items: center; gap: 20px; position: relative; }
+
+    .bell-icon {
+      position: relative;
+      width: 35px !important;
+      height: 29px !important;
+      color: gold !important;
+      filter: drop-shadow(0 0 5px gold) !important;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .bell-icon:hover, .bell-icon:focus {
+      transform: scale(1.3) !important; 
+      filter: drop-shadow(0 0 12px gold) !important;
+      outline: none;
+    }
+
+    .badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 12px;
+      height: 12px;
+      background: #e74c3c;
+      border-radius: 50%;
+      box-shadow: 0 0 6px #b33a3a;
+      pointer-events: none;
+      display: none;
+    }
+
+    .profile {
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+    }
+    .profile img {
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      margin-right: 8px;
+    }
+    .profile span {
+      font-weight: bold;
+      color: #2c3e50;
+      margin-right: 5px;
+    }
+    .profile svg {
+      width: 12px;
+      height: 12px;
+      fill: #2c3e50;
+      transition: transform 0.3s ease;
+    }
+    .profile.open svg {
+      transform: rotate(180deg);
+    }
+
+    #profileDropdown {
+      display: none;
+      position: absolute;
+      top: 50px;
+      right: 0;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      min-width: 140px;
+      z-index: 20;
+    }
+    #profileDropdown a, #profileDropdown button {
+      display: block;
+      width: 100%;
+      padding: 10px 15px;
+      text-align: left;
+      border: none;
+      background: none;
+      color: #333;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #profileDropdown a:hover, #profileDropdown button:hover {
+      background: #f0f0f0;
+    }
+    #profileDropdown button {
+      color: #e74c3c;
+    }
 
     .container {
       display: flex;
@@ -59,6 +151,7 @@
       box-shadow: inset 0 0 8px rgba(255,255,255,0.1), 5px 0 20px rgba(0,0,0,0.3);
       transition: left 0.3s ease;
       z-index: 15;
+      perspective: 800px;
     }
     .sidebar.open {
       left: 0;
@@ -69,14 +162,19 @@
       font-weight: 700;
       text-shadow: 0 1px 3px rgba(0,0,0,0.4);
     }
-
     .menu {
       list-style: none;
       padding-left: 0;
-      margin: 0 0 20px 0;
+      margin: 0;
     }
     .menu-item {
       margin-bottom: 14px;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #34495e, #2c3e50);
+      box-shadow: 3px 3px 6px #22303f, -3px -3px 6px #3d5369;
+      transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+      cursor: pointer;
+      transform-style: preserve-3d;
     }
     .menu-item a {
       color: #ecf0f1;
@@ -84,15 +182,19 @@
       padding: 12px 20px;
       display: block;
       border-radius: 10px;
-      background: #34495e;
-      transition: background 0.3s ease;
+      user-select: none;
+      transition: color 0.3s ease;
     }
-    .menu-item a:hover {
-      background: #3a506e;
+    .menu-item:hover {
+      transform: translateZ(10px) translateY(-4px) rotateX(5deg);
+      box-shadow: 5px 8px 15px rgba(0,0,0,0.4), inset 0 0 10px rgba(255,255,255,0.2);
+      background: linear-gradient(145deg, #4a6a91, #3a506e);
+    }
+    .menu-item:hover a {
       color: #ffd700;
     }
 
-    /* To-Do Panel */
+    /* To-do section */
     .todo-panel {
       margin-top: 20px;
       padding-top: 10px;
@@ -127,89 +229,188 @@
       padding: 80px 30px 30px 30px;
       margin-left: 0;
       width: 100%;
+      background: #f9f9f9;
       min-height: calc(100vh - 60px);
+      overflow-y: auto;
+      border-top-left-radius: 20px;
+      position: relative;
       transition: margin-left 0.3s ease, width 0.3s ease;
     }
-
     .sidebar.open ~ .main-content {
       margin-left: 250px;
       width: calc(100% - 250px);
     }
-
     .menu-btn {
       font-size: 24px;
       background: none;
       border: none;
       cursor: pointer;
-      color: white;
+      position: absolute;
+      top: 70px;
+      left: 20px;
+      z-index: 25;
+      color: #2c3e50;
+      transition: transform 0.2s;
+    }
+    .menu-btn:hover {
+      transform: scale(1.2);
     }
   </style>
 
   <script defer>
     document.addEventListener("DOMContentLoaded", () => {
       const sidebar = document.getElementById("sidebar");
-      const toggleBtn = document.getElementById("toggleSidebar");
-      const dateTime = document.getElementById("dateTime");
+      const profileDiv = document.querySelector(".profile");
+      const profileDropdownId = "profileDropdown";
 
-      // Date and time
+      const dateTime = document.getElementById("dateTime");
       setInterval(() => {
         const now = new Date();
         dateTime.textContent = now.toLocaleString();
       }, 1000);
 
-      // Toggle sidebar
-      toggleBtn.addEventListener("click", () => {
-        sidebar.classList.toggle("open");
+      const username = sessionStorage.getItem("username") || "Guest User";
+
+      profileDiv.innerHTML = `
+        <div class="top-right-controls">
+          <svg tabindex="0" role="button" aria-label="Notifications" title="Notifications" class="bell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" >
+            <path fill="currentColor" d="M12 24c1.104 0 2-.896 2-2h-4c0 1.104.896 2 2 2zm6-6v-5c0-3.072-1.63-5.64-4.5-6.32V6c0-.828-.672-1.5-1.5-1.5S10.5 5.172 10.5 6v.68C7.63 7.36 6 9.928 6 13v5l-2 2v1h16v-1l-2-2z"/>
+          </svg>
+          <span class="badge" aria-label="New notifications"></span>
+
+          <div id="profileToggle" style="display:flex; align-items:center; cursor:pointer;" tabindex="0">
+            <img src="https://i.pravatar.cc/40" alt="User" />
+            <span>${username}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </div>
+        </div>
+        <div id="${profileDropdownId}">
+          <a href="Change Password.html" id="settingsLink">Settings</a>
+          <button id="logoutBtn">Logout</button>
+        </div>
+      `;
+
+      const profileToggle = document.getElementById("profileToggle");
+      const profileDropdown = document.getElementById(profileDropdownId);
+      const logoutBtn = document.getElementById("logoutBtn");
+      const bellIcon = profileDiv.querySelector(".bell-icon");
+      const notificationBadge = profileDiv.querySelector(".badge");
+
+      function updateNotificationBadge() {
+        const hasNew = localStorage.getItem('hasNewNotifications') === 'true';
+        notificationBadge.style.display = hasNew ? 'block' : 'none';
+      }
+      updateNotificationBadge();
+
+      profileToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const isOpen = profileDropdown.style.display === "block";
+        profileDropdown.style.display = isOpen ? "none" : "block";
+        profileDiv.classList.toggle("open", !isOpen);
+        sidebar.classList.remove("open");
       });
 
-      // Save todo task checkbox status (optional)
-      document.querySelectorAll('#todoList input[type="checkbox"]').forEach((checkbox, index) => {
-        const saved = localStorage.getItem(`todo_${index}`);
-        checkbox.checked = saved === 'true';
+      function openNotifications() {
+        window.open("notification.html", "_blank");
+        localStorage.setItem('hasNewNotifications', 'false');
+        updateNotificationBadge();
+      }
+      bellIcon.addEventListener("click", openNotifications);
+      bellIcon.addEventListener("keydown", (e) => {
+        if (["Enter", " ", "Spacebar"].includes(e.key)) {
+          e.preventDefault();
+          openNotifications();
+        }
+      });
 
-        checkbox.addEventListener('change', () => {
-          localStorage.setItem(`todo_${index}`, checkbox.checked);
+      logoutBtn.addEventListener("click", () => {
+        sessionStorage.clear();
+        window.location.href = "index.html";
+      });
+
+      function bindToggleSidebar() {
+        const toggleBtn = document.getElementById("toggleSidebar");
+        if (toggleBtn) {
+          toggleBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle("open");
+            profileDropdown.style.display = "none";
+            profileDiv.classList.remove("open");
+          });
+        }
+      }
+      bindToggleSidebar();
+
+      document.addEventListener("click", (e) => {
+        if (!sidebar.contains(e.target)) sidebar.classList.remove("open");
+        if (!profileDiv.contains(e.target)) {
+          profileDropdown.style.display = "none";
+          profileDiv.classList.remove("open");
+        }
+      });
+
+      document.getElementById("homeLink").addEventListener("click", () => {
+        sidebar.classList.remove("open");
+        profileDropdown.style.display = "none";
+        profileDiv.classList.remove("open");
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          sidebar.classList.remove("open");
+          profileDropdown.style.display = "none";
+          profileDiv.classList.remove("open");
+        }
+      });
+
+      // === TODO CHECKBOX LOGIC ===
+      const checkboxes = document.querySelectorAll('#todoList input[type="checkbox"]');
+      checkboxes.forEach(cb => {
+        const stored = localStorage.getItem(cb.id);
+        if (stored) cb.checked = stored === 'true';
+        cb.addEventListener('change', () => {
+          localStorage.setItem(cb.id, cb.checked);
         });
       });
     });
   </script>
 </head>
-
 <body>
-  <div class="topbar">
-    <button id="toggleSidebar" class="menu-btn">&#9776;</button>
-    <div id="dateTime">Loading date/time...</div>
-  </div>
+<div class="topbar">
+  <button id="toggleSidebar" aria-label="Toggle Sidebar" class="menu-btn">&#9776;</button>
+  <div id="dateTime">Loading date/time...</div>
+  <div class="profile"></div>
+</div>
 
-  <div class="container">
-    <aside class="sidebar" id="sidebar">
-      <h2>Menu</h2>
-      <ul class="menu">
-        <li class="menu-item"><a href="Home.html">Dashboard</a></li>
-        <li class="menu-item"><a href="Users.html">Users</a></li>
-        <li class="menu-item"><a href="tasks.html">All Task</a></li>
-        <li class="menu-item"><a href="Chart.html">Chart View</a></li>
-        <li class="menu-item"><a href="AssignTask.html">Assign Task</a></li>
-        <li class="menu-item"><a href="Genrate Report.html">Report</a></li>
+<div class="container">
+  <aside class="sidebar" id="sidebar" aria-label="Sidebar Navigation">
+    <h2>Menu</h2>
+    <ul class="menu">
+      <li class="menu-item"><a href="Home.html">Dashboard</a></li>
+      <li class="menu-item"><a href="Users.html">Users</a></li>
+      <li class="menu-item"><a href="tasks.html">All Task</a></li>
+      <li class="menu-item"><a href="Chart.html">Chart View</a></li>
+      <li class="menu-item"><a href="AssignTask.html">Assign Task</a></li>
+      <li class="menu-item"><a href="Genrate Report.html">Report</a></li>
+    </ul>
+
+    <!-- To-do list section -->
+    <div class="todo-panel">
+      <h3>To-Do Tasks</h3>
+      <ul id="todoList">
+        <li><input type="checkbox" id="task1" /> Update user list</li>
+        <li><input type="checkbox" id="task2" /> Review new tasks</li>
+        <li><input type="checkbox" id="task3" /> Send daily report</li>
+        <li><input type="checkbox" id="task4" /> Check notifications</li>
       </ul>
+    </div>
+  </aside>
 
-      <!-- To-Do Tasks -->
-      <div class="todo-panel">
-        <h3>To-Do Tasks</h3>
-        <ul id="todoList">
-          <li><input type="checkbox"> Complete login UI</li>
-          <li><input type="checkbox"> Review user feedback</li>
-          <li><input type="checkbox"> Schedule meeting</li>
-          <li><input type="checkbox"> Update report</li>
-        </ul>
-      </div>
-    </aside>
-
-    <main class="main-content" id="main">
-      <h1>Welcome to the Task Manager</h1>
-      <p>Your productivity dashboard.</p>
-      <a href="Home.html" id="homeLink">Home</a>
-    </main>
-  </div>
+  <main class="main-content" id="main" tabindex="0">
+    <h1>Welcome to the Task Manager</h1>
+    <p>Your productivity dashboard.</p>
+    <a href="Home.html" id="homeLink">Home</a>
+  </main>
+</div>
 </body>
 </html>
