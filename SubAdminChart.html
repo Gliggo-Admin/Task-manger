@@ -7,7 +7,8 @@
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-  <!-- Firebase SDKs -->
+  <!-- Chart.js & Firebase SDKs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -55,34 +56,34 @@
       outline: none;
       min-width: 180px;
     }
-    #taskList {
-      margin-top: 30px;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 20px;
-    }
-    #taskList table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    #taskList th, #taskList td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-    #taskList th {
-      background-color: #3498db;
-      color: white;
-    }
     #loading {
       text-align: center;
       margin-top: 50px;
       font-size: 18px;
       color: #666;
+    }
+    .chart-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .chart-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      width: calc(50% - 24px);
+      max-width: 600px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    @media (max-width: 900px) {
+      .chart-card {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -102,51 +103,61 @@
 
   <div id="loading">Loading tasks...</div>
 
-  <div id="taskList" style="display:none;">
-    <table>
-      <thead>
-        <tr>
-          <th>Task Name</th>
-          <th>Status</th>
-          <th>Owner</th>
-          <th>Company</th>
-          <th>Type</th>
-          <th>Assigned By</th>
-          <th>Start Date</th>
-          <th>End Date</th>
-        </tr>
-      </thead>
-      <tbody id="taskTableBody">
-        <!-- Tasks will be populated here -->
-      </tbody>
-    </table>
+  <div class="chart-grid" id="chartsContainer" style="display:none;">
+    <div class="chart-card"><canvas id="statusChart"></canvas></div>
+    <div class="chart-card"><canvas id="companyChart"></canvas></div>
+    <div class="chart-card"><canvas id="ownerChart"></canvas></div>
+    <div class="chart-card"><canvas id="typeChart"></canvas></div>
+    <div class="chart-card"><canvas id="assignedByChart"></canvas></div>
+    <div class="chart-card"><canvas id="monthlyChart"></canvas></div>
+    <div class="chart-card"><canvas id="avgDurationChart"></canvas></div>
+    <div class="chart-card"><canvas id="monthlyCompanyChart"></canvas></div> <!-- New chart -->
   </div>
 
   <script>
     // Your Firebase configuration - REPLACE with your actual config!
-  const firebaseConfig = {
-    apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-    authDomain: "task-manager-602da.firebaseapp.com",
-    projectId: "task-manager-602da",
-    storageBucket: "task-manager-602da.appspot.com",
-    messagingSenderId: "438978699329",
-    appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+      authDomain: "task-manager-602da.firebaseapp.com",
+      projectId: "task-manager-602da",
+      storageBucket: "task-manager-602da.appspot.com",
+      messagingSenderId: "438978699329",
+      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+    };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     let allTasks = [];
+    let filteredTasks = [];
+    const charts = {};
+
+    // Helper: Convert hex to rgba for opacity
+    function getColor(index, alpha = 1) {
+      const colors = [
+        '#3498db', '#e74c3c', '#2ecc71', '#9b59b6',
+        '#f1c40f', '#e67e22', '#1abc9c', '#34495e',
+        '#8e44ad', '#d35400', '#16a085', '#27ae60'
+      ];
+      const c = colors[index % colors.length];
+      if (alpha === 1) return c;
+      const bigint = parseInt(c.slice(1), 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `rgba(${r},${g},${b},${alpha})`;
+    }
 
     // Fetch all tasks from Firestore
     async function fetchTasks() {
       try {
         const snapshot = await db.collection('tasks').get();
         allTasks = snapshot.docs.map(doc => doc.data());
+        filteredTasks = allTasks;
         populateCompanyFilter();
-        displayTasks(allTasks);
+        updateCharts();
         document.getElementById('loading').style.display = 'none';
-        document.getElementById('taskList').style.display = 'block';
+        document.getElementById('chartsContainer').style.display = 'flex';
       } catch (error) {
         document.getElementById('loading').textContent = 'Error loading tasks: ' + error.message;
         console.error("Error fetching tasks:", error);
@@ -170,59 +181,209 @@
     function filterTasksByCompany() {
       const selectedCompany = document.getElementById('companyFilter').value;
       if (selectedCompany === 'all') {
-        displayTasks(allTasks);
+        filteredTasks = allTasks;
       } else {
-        const filtered = allTasks.filter(task => task.company === selectedCompany);
-        displayTasks(filtered);
+        filteredTasks = allTasks.filter(task => task.company === selectedCompany);
       }
+      updateCharts();
     }
 
-    // Display tasks in the table
-    function displayTasks(tasks) {
-      const tbody = document.getElementById('taskTableBody');
-      tbody.innerHTML = '';
+    // Count tasks grouped by a field
+    function countByField(tasks, field) {
+      const counts = {};
+      tasks.forEach(task => {
+        const key = task[field] || 'Unknown';
+        counts[key] = (counts[key] || 0) + 1;
+      });
+      return counts;
+    }
 
-      if (tasks.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">No tasks found</td></tr>`;
-        return;
+    // Parse date helper (handle Firestore timestamp or string)
+    function parseDate(value) {
+      if (!value) return null;
+      if (value.seconds) {
+        return new Date(value.seconds * 1000);
       }
+      const d = new Date(value);
+      return isNaN(d) ? null : d;
+    }
+
+    // Tasks count by month (YYYY-MM)
+    function tasksByMonth(tasks) {
+      const counts = {};
+      tasks.forEach(task => {
+        const date = parseDate(task.startDate);
+        if (!date) return;
+        const key = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+        counts[key] = (counts[key] || 0) + 1;
+      });
+      const labels = Object.keys(counts).sort();
+      return {
+        labels,
+        datasets: [{
+          label: 'Tasks Started',
+          data: labels.map(l => counts[l]),
+          borderColor: getColor(0),
+          backgroundColor: getColor(0, 0.3),
+          fill: true,
+          tension: 0.3,
+        }]
+      };
+    }
+
+    // Average task duration (days) by company
+    function avgDurationByCompany(tasks) {
+      const durations = {};
+      const counts = {};
+      tasks.forEach(task => {
+        const start = parseDate(task.startDate);
+        const end = parseDate(task.endDate);
+        if (!start || !end) return;
+        const diffDays = (end - start) / (1000 * 3600 * 24);
+        const company = task.company || 'Unknown';
+        durations[company] = (durations[company] || 0) + diffDays;
+        counts[company] = (counts[company] || 0) + 1;
+      });
+      const companies = Object.keys(durations);
+      const averages = companies.map(c => counts[c] ? durations[c] / counts[c] : 0);
+
+      return {
+        labels: companies,
+        datasets: [{
+          label: 'Avg Duration (days)',
+          data: averages,
+          backgroundColor: companies.map((_, i) => getColor(i)),
+        }]
+      };
+    }
+
+    // NEW: Tasks grouped by Month AND Company
+    function tasksByMonthAndCompany(tasks) {
+      const monthlyCompanyCounts = {};
 
       tasks.forEach(task => {
-        const tr = document.createElement('tr');
+        const date = parseDate(task.startDate);
+        if (!date) return;
+        const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+        const company = task.company || 'Unknown';
 
-        tr.innerHTML = `
-          <td>${task.taskName || '-'}</td>
-          <td>${task.status || '-'}</td>
-          <td>${task.owner || '-'}</td>
-          <td>${task.company || '-'}</td>
-          <td>${task.type || '-'}</td>
-          <td>${task.assignedBy || '-'}</td>
-          <td>${formatDate(task.startDate)}</td>
-          <td>${formatDate(task.endDate)}</td>
-        `;
-
-        tbody.appendChild(tr);
+        if (!monthlyCompanyCounts[monthKey]) {
+          monthlyCompanyCounts[monthKey] = {};
+        }
+        monthlyCompanyCounts[monthKey][company] = (monthlyCompanyCounts[monthKey][company] || 0) + 1;
       });
+
+      const months = Object.keys(monthlyCompanyCounts).sort();
+      const companiesSet = new Set();
+      months.forEach(month => {
+        Object.keys(monthlyCompanyCounts[month]).forEach(c => companiesSet.add(c));
+      });
+      const companies = Array.from(companiesSet);
+
+      const datasets = companies.map((company, idx) => ({
+        label: company,
+        data: months.map(month => monthlyCompanyCounts[month][company] || 0),
+        borderColor: getColor(idx),
+        backgroundColor: getColor(idx, 0.3),
+        fill: false,
+        tension: 0.3,
+      }));
+
+      return { labels: months, datasets };
     }
 
-    // Format Firestore timestamp or date string nicely
-    function formatDate(dateValue) {
-      if (!dateValue) return '-';
-      let dateObj;
+    // Generic Chart.js updater or creator
+    function updateOrCreateChart(id, title, dataObj, type='bar') {
+      const ctx = document.getElementById(id).getContext('2d');
 
-      // If it's a Firestore timestamp object
-      if (dateValue.seconds) {
-        dateObj = new Date(dateValue.seconds * 1000);
+      // Transform dataObj if it is a count object
+      let data, labels;
+      if (dataObj.labels && dataObj.datasets) {
+        labels = dataObj.labels;
+        data = dataObj.datasets;
       } else {
-        dateObj = new Date(dateValue);
+        labels = Object.keys(dataObj);
+        data = [{
+          label: title,
+          data: labels.map(l => dataObj[l]),
+          backgroundColor: labels.map((_, i) => getColor(i)),
+          borderColor: labels.map((_, i) => getColor(i)),
+          borderWidth: 1,
+          fill: type === 'line' ? false : true,
+          tension: 0.3,
+        }];
       }
 
-      if (isNaN(dateObj)) return '-';
-
-      return dateObj.toLocaleDateString();
+      if (charts[id]) {
+        charts[id].data.labels = labels;
+        charts[id].data.datasets = data;
+        charts[id].options.plugins.title.text = title;
+        charts[id].update();
+      } else {
+        charts[id] = new Chart(ctx, {
+          type,
+          data: { labels, datasets: data },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'bottom' },
+              title: { display: true, text: title },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                precision: 0,
+              },
+            },
+          },
+        });
+      }
     }
 
-    // Initial fetch on page load
+    // NEW: Update Monthly Tasks by Company chart
+    function updateMonthlyCompanyChart() {
+      const ctx = document.getElementById('monthlyCompanyChart').getContext('2d');
+      const chartData = tasksByMonthAndCompany(filteredTasks);
+
+      const config = {
+        type: 'line',
+        data: {
+          labels: chartData.labels,
+          datasets: chartData.datasets,
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            title: { display: true, text: 'Monthly Tasks by Company' },
+          },
+          scales: {
+            y: { beginAtZero: true, precision: 0 },
+          },
+        }
+      };
+
+      if (charts.monthlyCompanyChart) {
+        charts.monthlyCompanyChart.destroy();
+      }
+      charts.monthlyCompanyChart = new Chart(ctx, config);
+    }
+
+    // Update all charts
+    function updateCharts() {
+      updateOrCreateChart('statusChart', 'Task Status Distribution', countByField(filteredTasks, 'status'), 'pie');
+      updateOrCreateChart('companyChart', 'Tasks by Company', countByField(filteredTasks, 'company'), 'bar');
+      updateOrCreateChart('ownerChart', 'Tasks by Owner', countByField(filteredTasks, 'owner'), 'bar');
+      updateOrCreateChart('typeChart', 'Task Types Distribution', countByField(filteredTasks, 'type'), 'pie');
+      updateOrCreateChart('assignedByChart', 'Tasks Assigned By', countByField(filteredTasks, 'assignedBy'), 'bar');
+
+      updateOrCreateChart('monthlyChart', 'Tasks Started by Month', tasksByMonth(filteredTasks), 'line');
+      updateOrCreateChart('avgDurationChart', 'Avg Task Duration (Days) by Company', avgDurationByCompany(filteredTasks), 'bar');
+
+      updateMonthlyCompanyChart();  // <-- Your new chart here
+    }
+
+    // Initial fetch
     fetchTasks();
   </script>
 
