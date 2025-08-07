@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login – Task Manager</title>
   <style>
     /* Base & styling (reuse your neumorphic inputs etc.) */
@@ -48,26 +48,15 @@
     <div id="login-section">
       <div class="input-group">
         <label for="loginUsername">Username</label>
-        <input type="text" id="loginUsername" placeholder="Enter username">
+        <input type="text" id="loginUsername" placeholder="Enter username" />
       </div>
       <div class="input-group">
         <label for="loginPassword">Password</label>
-        <input type="password" id="loginPassword" placeholder="Enter password">
+        <input type="password" id="loginPassword" placeholder="Enter password" />
       </div>
       <button onclick="tryLogin()">Login</button>
       <div class="forgot">
-        <a href="#" onclick="showForgot()">Forgot password?</a>
-      </div>
-    </div>
-
-    <div id="forgot-section" style="display:none;">
-      <div class="input-group">
-        <label for="recoverId">Enter Username or Email</label>
-        <input type="text" id="recoverId" placeholder="Username or Email">
-      </div>
-      <button onclick="sendResetCode()">Send Reset Code</button>
-      <div class="forgot">
-        <a href="#" onclick="backToLogin()">← Back to Login</a>
+        <a href="Change Password.html">Forgot password?</a>
       </div>
     </div>
   </div>
@@ -77,135 +66,82 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
-   // Firebase config (same as before)
-const firebaseConfig = {
-  apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-  authDomain: "task-manager-602da.firebaseapp.com",
-  projectId: "task-manager-602da",
-  storageBucket: "task-manager-602da.appspot.com",
-  messagingSenderId: "438978699329",
-  appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+    // Firebase config (same as before)
+    const firebaseConfig = {
+      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+      authDomain: "task-manager-602da.firebaseapp.com",
+      projectId: "task-manager-602da",
+      storageBucket: "task-manager-602da.appspot.com",
+      messagingSenderId: "438978699329",
+      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-// Show the Forgot Password section
-function showForgot() {
-  document.getElementById("login-section").style.display = "none";
-  document.getElementById("forgot-section").style.display = "block";
-}
+    // Allow Enter key to submit login
+    document.getElementById("loginUsername").addEventListener("keypress", function(e) {
+      if (e.key === "Enter") tryLogin();
+    });
+    document.getElementById("loginPassword").addEventListener("keypress", function(e) {
+      if (e.key === "Enter") tryLogin();
+    });
 
-// Back to login form from Forgot Password
-function backToLogin() {
-  document.getElementById("forgot-section").style.display = "none";
-  document.getElementById("login-section").style.display = "block";
-}
-
-// Handle sending reset code for forgotten password
-async function sendResetCode() {
-  const v = document.getElementById("recoverId").value.trim();
-  if (!v) return alert("Please enter your username or email.");
-
-  // Try to find user by username
-  const users = await db.collection("users")
-    .where("username", "==", v).get();
-
-  if (users.empty) {
-    // If not found, try to find by email
-    const users2 = await db.collection("users")
-      .where("email", "==", v).get();
-    if (users2.empty) return alert("No user found with that username/email.");
-    processForgot(users2.docs[0]);
-  } else {
-    processForgot(users.docs[0]);
-  }
-}
-
-// Process the forgot password request
-function processForgot(doc) {
-  const user = doc.data();
-  const email = user.email;
-
-  const resetCode = Math.floor(100000 + Math.random() * 900000); // 6-digit code
-
-  // Save code in Firestore (optional)
-  db.collection("resetCodes").doc(doc.id).set({
-    code: resetCode,
-    timestamp: Date.now()
-  });
-
-  // TODO: Replace with actual email sending via your backend/email API
-  console.log(`🔑 Send code ${resetCode} to ${email}`);
-  alert(`A reset code has been sent to ${email} (in demo via console).`);
-
-  backToLogin();
-}
-
-// Try login and save username to sessionStorage
-function tryLogin() {
-  const u = document.getElementById("loginUsername").value.trim();
-  const p = document.getElementById("loginPassword").value.trim();
-  if (!u || !p) {
-    alert("Please fill both username and password.");
-    return;
-  }
-
-  // Query Firestore for user with matching username and password
-  db.collection("users")
-    .where("username", "==", u)
-    .where("password", "==", p)
-    .get()
-    .then(querySnapshot => {
-      if (querySnapshot.empty) {
-        alert("Invalid username or password.");
+    // Try login and save username to sessionStorage
+    function tryLogin() {
+      const u = document.getElementById("loginUsername").value.trim();
+      const p = document.getElementById("loginPassword").value.trim();
+      if (!u || !p) {
+        alert("Please fill both username and password.");
         return;
       }
 
-      // Get the first matching user document
-      const userDoc = querySnapshot.docs[0];
-      const userData = userDoc.data();
+      // Query Firestore for user with matching username and password
+      db.collection("users")
+        .where("username", "==", u)
+        .where("password", "==", p)
+        .get()
+        .then(querySnapshot => {
+          if (querySnapshot.empty) {
+            alert("Invalid username or password.");
+            return;
+          }
 
-      // Save username to sessionStorage for later use
-sessionStorage.setItem("username", userData.username);
-if (userData.fullName) {
-  sessionStorage.setItem("fullName", userData.fullName);
-}
+          // Get the first matching user document
+          const userDoc = querySnapshot.docs[0];
+          const userData = userDoc.data();
 
+          // Save username to sessionStorage for later use
+          sessionStorage.setItem("username", userData.username);
+          if (userData.fullName) {
+            sessionStorage.setItem("fullName", userData.fullName);
+          }
 
-      // Get the user's role, normalized to lowercase
-      const role = userData.role ? userData.role.trim().toLowerCase() : "";
+          // Get the user's role, normalized to lowercase
+          const role = userData.role ? userData.role.trim().toLowerCase() : "";
 
-      // Redirect based on role
-  // Redirect based on role
-if (role === "admin") {
-  window.location.href = "Home.html"; // Admin dashboard
-} else if (role === "sub admin") {
-  window.location.href = "Sub Admin Dashboard.html"; // Sub Admin dashboard
-} else if (role === "user") {
-  window.location.href = "UserDashboard.html"; // Regular User dashboard
-} else {
-  alert("User role not recognized: " + userData.role);
-}
+          // Redirect based on role
+          if (role === "admin") {
+            window.location.href = "Home.html"; // Admin dashboard
+          } else if (role === "sub admin") {
+            window.location.href = "Sub Admin Dashboard.html"; // Sub Admin dashboard
+          } else if (role === "user") {
+            window.location.href = "UserDashboard.html"; // Regular User dashboard
+          } else {
+            alert("User role not recognized: " + userData.role);
+          }
+        })
+        .catch(error => {
+          console.error("Login error:", error);
+          alert("An error occurred during login. Please try again.");
+        });
+    }
 
-    })
-    .catch(error => {
-      console.error("Login error:", error);
-      alert("An error occurred during login. Please try again.");
-    });
-}
-
-
-  const sessionUser = sessionStorage.getItem("username");
-  if (sessionUser) {
-    console.log("✅ Logged in as:", sessionUser);
-  } else {
-    console.log("❌ No user is logged in.");
-  }
-</script>
-
-
-
-</script>
+    const sessionUser = sessionStorage.getItem("username");
+    if (sessionUser) {
+      console.log("✅ Logged in as:", sessionUser);
+    } else {
+      console.log("❌ No user is logged in.");
+    }
   </script>
 </body>
 </html>
