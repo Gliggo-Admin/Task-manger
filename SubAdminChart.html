@@ -9,17 +9,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: 'Inter', sans-serif;
-      background: #f0f4f8;
+      font-family: 'Arial', sans-serif;
+      background: #f4f6f8;
       margin: 0;
       padding: 20px;
       color: #333;
@@ -28,137 +21,139 @@
     h1 {
       text-align: center;
       margin-bottom: 10px;
-      color: #2c3e50;
     }
 
-    #dateTimeBox {
-      text-align: center;
-      font-size: 18px;
-      font-weight: 600;
-      margin-top: 5px;
-      margin-bottom: 20px;
-      color: #34495e;
-    }
-
-    #homeButton {
+    .home-btn {
       display: block;
+      width: 200px;
       margin: 0 auto 30px auto;
-      padding: 10px 20px;
-      font-size: 16px;
-      font-weight: 600;
-      color: #fff;
+      padding: 12px 24px;
       background-color: #3498db;
+      color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
+      font-size: 16px;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      transition: background-color 0.3s;
+      text-align: center;
+      text-decoration: none;
     }
 
-    #homeButton:hover {
+    .home-btn:hover {
       background-color: #1c5980;
     }
 
     .chart-container {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 40px;
-      padding: 0 20px;
-      max-width: 100%;
-    }
-
-    .chart-row {
-      display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 40px;
-      width: 100%;
+      gap: 20px;
     }
 
-  .chart-card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 0 8px rgba(0,0,0,0.1);
-  width: 48%;
-  height: 550px; /* Give fixed height */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
+    .chart-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 45%;
+      min-height: 400px;
+    }
 
-canvas {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 3px 12px rgb(0 0 0 / 0.12);
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
-}
-
+    canvas {
+      width: 100% !important;
+      height: 350px !important;
+    }
 
     @media (max-width: 768px) {
       .chart-card {
         width: 90%;
-        min-height: 450px;
-      }
-
-      canvas {
-        height: 360px !important;
       }
     }
   </style>
 </head>
 <body>
 
-  <h1>
-    <img src="https://cdn-icons-png.flaticon.com/512/3645/3645709.png" style="height: 30px; vertical-align: middle;" />
-    Task Dashboard Charts
-  </h1>
+  <h1>Task Dashboard Charts</h1>
 
-  <!-- Date & Time -->
-  <div id="dateTimeBox"></div>
+  <!-- ✅ Home Button -->
+  <a href="Sub Admin Dashboard.html" class="home-btn">🏠 Home</a>
 
-  <!-- Home Button -->
-  <button id="homeButton" onclick="window.location.href='Sub Admin Dashboard.html'">
-    Home
-  </button>
-
-  <!-- Chart Layout -->
+  <!-- Charts -->
   <div class="chart-container">
-    <div class="chart-row">
-      <div class="chart-card"><canvas id="statusChart"></canvas></div>
-      <div class="chart-card"><canvas id="ownerChart"></canvas></div>
-    </div>
-    <div class="chart-row">
-      <div class="chart-card"><canvas id="typeChart"></canvas></div>
-      <div class="chart-card"><canvas id="assignedByChart"></canvas></div>
-    </div>
-    <div class="chart-row">
-      <div class="chart-card"><canvas id="monthlyChart"></canvas></div>
-      <div class="chart-card"><canvas id="avgWorkChart"></canvas></div>
-    </div>
-    <div class="chart-row">
-      <div class="chart-card"><canvas id="avgPauseChart"></canvas></div>
-      <div class="chart-card"><canvas id="completeTimelineChart"></canvas></div>
-    </div>
+    <div class="chart-card"><canvas id="statusChart"></canvas></div>
+    <div class="chart-card"><canvas id="ownerChart"></canvas></div>
   </div>
 
-  <!-- Date & Time Script -->
   <script>
-    function updateDateTime() {
-      const now = new Date();
-      const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
-      const dateStr = now.toLocaleDateString(undefined, options);
-      const timeStr = now.toLocaleTimeString();
-      document.getElementById('dateTimeBox').textContent = `${dateStr} | ${timeStr}`;
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+      authDomain: "task-manager-602da.firebaseapp.com",
+      projectId: "task-manager-602da",
+      storageBucket: "task-manager-602da.appspot.com",
+      messagingSenderId: "438978699329",
+      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function countByField(tasks, field) {
+      const counts = {};
+      tasks.forEach(t => {
+        const val = t[field] || 'Unknown';
+        counts[val] = (counts[val] || 0) + 1;
+      });
+      return counts;
     }
 
-    setInterval(updateDateTime, 1000);
-    updateDateTime();
+    function formatPie(obj) {
+      const labels = Object.keys(obj);
+      const data = Object.values(obj);
+      return {
+        labels,
+        datasets: [{
+          label: 'Count',
+          data,
+          backgroundColor: labels.map((_, i) =>
+            `hsl(${(i * 360) / labels.length}, 70%, 60%)`)
+        }]
+      };
+    }
+
+    function createChart(ctxId, type, data, title) {
+      const ctx = document.getElementById(ctxId).getContext('2d');
+      new Chart(ctx, {
+        type,
+        data,
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: title
+            }
+          }
+        }
+      });
+    }
+
+    function loadTasks() {
+      db.collection('tasks').get()
+        .then(snapshot => {
+          const tasks = snapshot.docs.map(doc => doc.data());
+
+          const statusCounts = countByField(tasks, 'Status');
+          const ownerCounts = countByField(tasks, 'Owner');
+
+          createChart('statusChart', 'pie', formatPie(statusCounts), 'Task Status');
+          createChart('ownerChart', 'pie', formatPie(ownerCounts), 'Task Owner');
+        })
+        .catch(err => {
+          console.error("Error loading tasks:", err);
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", loadTasks);
   </script>
 
-  <!-- Chart JS Logic -->
-  <script src="chart.js"></script>
 </body>
 </html>
