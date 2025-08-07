@@ -2,13 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Task Dashboard Charts</title>
+  <title>Task Dashboard Charts - SubAdminChart</title>
 
   <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-  <!-- Chart.js & Firebase -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -20,26 +19,20 @@
       padding: 20px;
       color: #333;
     }
-
-    /* Header */
     h1 {
       text-align: center;
       color: #2c3e50;
       margin-bottom: 10px;
     }
-
     h1 img {
       vertical-align: middle;
       height: 30px;
       margin-right: 8px;
     }
-
-    /* Buttons & Filter */
     .button-container {
       text-align: center;
       margin-bottom: 20px;
     }
-
     .home-button {
       padding: 12px 24px;
       background-color: #3498db;
@@ -51,87 +44,187 @@
       transition: background-color 0.3s;
       margin-right: 10px;
     }
-
     .home-button:hover {
       background-color: #1c5980;
     }
-
     .filter-select {
       padding: 10px 16px;
       font-size: 16px;
       border-radius: 8px;
       border: 1px solid #ccc;
       outline: none;
+      min-width: 180px;
     }
-
-    /* Chart Grid */
-    .chart-grid {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 24px;
-    }
-
-    .chart-card {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      width: calc(50% - 24px);
-      max-width: 600px;
+    #taskList {
+      margin-top: 30px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       padding: 20px;
-      display: flex;
-      flex-direction: column;
     }
-
-    .chart-card canvas {
-      flex-grow: 1;
+    #taskList table {
+      width: 100%;
+      border-collapse: collapse;
     }
-
-    @media (max-width: 900px) {
-      .chart-card {
-        width: 100%;
-      }
+    #taskList th, #taskList td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    #taskList th {
+      background-color: #3498db;
+      color: white;
+    }
+    #loading {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 18px;
+      color: #666;
     }
   </style>
 </head>
 <body>
 
   <h1>
-    <img src="https://cdn-icons-png.flaticon.com/512/3645/3645709.png" alt="icon">
+    <img src="https://cdn-icons-png.flaticon.com/512/3645/3645709.png" alt="icon" />
     Task Dashboard Charts
   </h1>
 
   <div class="button-container">
-    <button class="home-button" onclick="window.location.href='Sub Admin Dashboard.html'">
-      🏠 Home
-    </button>
-
-    <!-- Company Filter Dropdown -->
-    <select id="companyFilter" class="filter-select" onchange="filterByCompany()">
+    <button class="home-button" onclick="window.location.href='Sub Admin Dashboard.html'">🏠 Home</button>
+    <select id="companyFilter" class="filter-select" onchange="filterTasksByCompany()">
       <option value="all">All Companies</option>
-      <!-- Options will be populated by JavaScript -->
     </select>
   </div>
 
-  <!-- Chart Grid Layout -->
-  <div class="chart-grid">
-    <div class="chart-card"><canvas id="statusChart"></canvas></div>
-    <div class="chart-card"><canvas id="ownerChart"></canvas></div>
-    <div class="chart-card"><canvas id="typeChart"></canvas></div>
-    <div class="chart-card"><canvas id="assignedByChart"></canvas></div>
-    <div class="chart-card"><canvas id="monthlyChart"></canvas></div>
-    <div class="chart-card"><canvas id="avgWorkChart"></canvas></div>
-    <div class="chart-card"><canvas id="avgPauseChart"></canvas></div>
-    <div class="chart-card"><canvas id="completeTimelineChart"></canvas></div>
-    <div class="chart-card"><canvas id="companyChart"></canvas></div>
-    <div class="chart-card"><canvas id="avgDurationChart"></canvas></div>
-    <div class="chart-card"><canvas id="avgDurationOwnerChart"></canvas></div>
-    <div class="chart-card"><canvas id="radarChart"></canvas></div>
-    <div class="chart-card"><canvas id="bubbleChart"></canvas></div>
+  <div id="loading">Loading tasks...</div>
+
+  <div id="taskList" style="display:none;">
+    <table>
+      <thead>
+        <tr>
+          <th>Task Name</th>
+          <th>Status</th>
+          <th>Owner</th>
+          <th>Company</th>
+          <th>Type</th>
+          <th>Assigned By</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+        </tr>
+      </thead>
+      <tbody id="taskTableBody">
+        <!-- Tasks will be populated here -->
+      </tbody>
+    </table>
   </div>
 
-  <!-- Chart logic -->
-  <script src="chart.js"></script>
+  <script>
+    // Your Firebase configuration - REPLACE with your actual config!
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let allTasks = [];
+
+    // Fetch all tasks from Firestore
+    async function fetchTasks() {
+      try {
+        const snapshot = await db.collection('tasks').get();
+        allTasks = snapshot.docs.map(doc => doc.data());
+        populateCompanyFilter();
+        displayTasks(allTasks);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('taskList').style.display = 'block';
+      } catch (error) {
+        document.getElementById('loading').textContent = 'Error loading tasks: ' + error.message;
+        console.error("Error fetching tasks:", error);
+      }
+    }
+
+    // Populate company filter dropdown with unique companies
+    function populateCompanyFilter() {
+      const companySet = new Set(allTasks.map(task => task.company).filter(c => c));
+      const select = document.getElementById('companyFilter');
+
+      companySet.forEach(company => {
+        const option = document.createElement('option');
+        option.value = company;
+        option.textContent = company;
+        select.appendChild(option);
+      });
+    }
+
+    // Filter tasks by company dropdown selection
+    function filterTasksByCompany() {
+      const selectedCompany = document.getElementById('companyFilter').value;
+      if (selectedCompany === 'all') {
+        displayTasks(allTasks);
+      } else {
+        const filtered = allTasks.filter(task => task.company === selectedCompany);
+        displayTasks(filtered);
+      }
+    }
+
+    // Display tasks in the table
+    function displayTasks(tasks) {
+      const tbody = document.getElementById('taskTableBody');
+      tbody.innerHTML = '';
+
+      if (tasks.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;">No tasks found</td></tr>`;
+        return;
+      }
+
+      tasks.forEach(task => {
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+          <td>${task.taskName || '-'}</td>
+          <td>${task.status || '-'}</td>
+          <td>${task.owner || '-'}</td>
+          <td>${task.company || '-'}</td>
+          <td>${task.type || '-'}</td>
+          <td>${task.assignedBy || '-'}</td>
+          <td>${formatDate(task.startDate)}</td>
+          <td>${formatDate(task.endDate)}</td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Format Firestore timestamp or date string nicely
+    function formatDate(dateValue) {
+      if (!dateValue) return '-';
+      let dateObj;
+
+      // If it's a Firestore timestamp object
+      if (dateValue.seconds) {
+        dateObj = new Date(dateValue.seconds * 1000);
+      } else {
+        dateObj = new Date(dateValue);
+      }
+
+      if (isNaN(dateObj)) return '-';
+
+      return dateObj.toLocaleDateString();
+    }
+
+    // Initial fetch on page load
+    fetchTasks();
+  </script>
 
 </body>
 </html>
