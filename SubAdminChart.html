@@ -2,461 +2,51 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Task Dashboard Charts - SubAdminChart</title>
+  <title>Sub Admin Task Charts</title>
 
-  <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <!-- External CSS -->
+  <link rel="stylesheet" href="Chart.css" />
 
-  <!-- Chart.js & Firebase SDKs -->
+  <!-- Firebase & Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #f0f4f8;
-      margin: 0;
-      padding: 20px;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      color: #2c3e50;
-      margin-bottom: 10px;
-    }
-    h1 img {
-      vertical-align: middle;
-      height: 30px;
-      margin-right: 8px;
-    }
-    .button-container {
-      text-align: center;
-      margin-bottom: 20px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 12px;
-      align-items: center;
-    }
-    .home-button {
-      padding: 12px 24px;
-      background-color: #3498db;
-      color: #fff;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    .home-button:hover {
-      background-color: #1c5980;
-    }
-    select, input[type=date] {
-      padding: 10px 14px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      outline: none;
-      min-width: 140px;
-    }
-    button.load-btn {
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: none;
-      background-color: #27ae60;
-      color: white;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    button.load-btn:hover {
-      background-color: #1e8449;
-    }
-    #loading {
-      text-align: center;
-      margin-top: 50px;
-      font-size: 18px;
-      color: #666;
-    }
-    .chart-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(450px,1fr));
-      gap: 30px;
-      max-width: 960px;
-      margin: 0 auto 40px;
-    }
-    .chart-card {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-    }
-    @media (max-width: 480px) {
-      .chart-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-    label {
-      font-weight: 600;
-      margin-right: 8px;
-    }
-  </style>
 </head>
 <body>
 
-  <h1>
-    <img src="https://cdn-icons-png.flaticon.com/512/3645/3645709.png" alt="icon" />
-    Task Dashboard Charts
+  <h1 style="text-align:center; margin-top: 20px;">
+    <img src="https://cdn-icons-png.flaticon.com/512/3645/3645709.png" style="height: 30px; vertical-align: middle;" />
+    Sub Admin Task Dashboard Charts
   </h1>
 
-  <div class="button-container">
-    <button class="home-button" onclick="window.location.href='Sub Admin Dashboard.html'">🏠 Home</button>
-
-    <label for="dateRangeSelect">Date Range:</label>
-    <select id="dateRangeSelect" onchange="onDateRangeChange()">
-      <option value="thisMonth" selected>This Month</option>
-      <option value="prevMonth">Previous Month</option>
-      <option value="custom">Custom Range</option>
-    </select>
-
-    <label for="startDate" id="startDateLabel" style="display:none;">From:</label>
-    <input type="date" id="startDate" style="display:none;" max="" />
-
-    <label for="endDate" id="endDateLabel" style="display:none;">To:</label>
-    <input type="date" id="endDate" style="display:none;" max="" />
-
-    <label for="ownerFilter">Owner:</label>
-    <select id="ownerFilter">
-      <option value="all">All Owners</option>
-    </select>
-
-    <button class="load-btn" onclick="loadFilteredData()">Load</button>
+  <div style="text-align:center; margin: 10px 0;">
+    <button onclick="window.location.href='Sub Admin Dashboard.html'" 
+            style="padding: 8px 16px; font-size: 16px; cursor: pointer;">
+      Home
+    </button>
   </div>
 
-  <div id="loading">Loading tasks...</div>
+  <!-- Filter Section (This will be injected by JS) -->
 
-  <div class="chart-grid" id="chartsContainer" style="display:none;">
+  <!-- Chart Grid -->
+  <div class="chart-grid">
     <div class="chart-card"><canvas id="statusChart"></canvas></div>
+    <div class="chart-card"><canvas id="ownerChart"></canvas></div>
+    <div class="chart-card"><canvas id="typeChart"></canvas></div>
+    <div class="chart-card"><canvas id="assignedByChart"></canvas></div>
+    <div class="chart-card"><canvas id="monthlyChart"></canvas></div>
+    <div class="chart-card"><canvas id="avgWorkChart"></canvas></div>
+    <div class="chart-card"><canvas id="avgPauseChart"></canvas></div>
+    <div class="chart-card"><canvas id="completeTimelineChart"></canvas></div>
     <div class="chart-card"><canvas id="companyChart"></canvas></div>
-    <div class="chart-card"><canvas id="monthlyCompanyChart"></canvas></div>
     <div class="chart-card"><canvas id="avgDurationChart"></canvas></div>
+    <div class="chart-card"><canvas id="avgDurationOwnerChart"></canvas></div>
+    <div class="chart-card"><canvas id="radarChart"></canvas></div>
+    <div class="chart-card"><canvas id="bubbleChart"></canvas></div>
   </div>
 
-  <script>
-    // Firebase config - replace with your own if needed
-    const firebaseConfig = {
-      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-      authDomain: "task-manager-602da.firebaseapp.com",
-      projectId: "task-manager-602da",
-      storageBucket: "task-manager-602da.appspot.com",
-      messagingSenderId: "438978699329",
-      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
-    };
+  <!-- JavaScript File -->
+  <script src="chart.js"></script>
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    let allTasks = [];
-    let filteredTasks = [];
-    const charts = {};
-
-    // Color palette for charts
-    const colors = [
-      '#1abc9c', '#3498db', '#e67e22', '#9b59b6',
-      '#e74c3c', '#f1c40f', '#34495e', '#2ecc71'
-    ];
-
-    // Utility function to convert hex to rgba with alpha
-    function rgba(hex, alpha = 1) {
-      const bigint = parseInt(hex.slice(1), 16);
-      const r = (bigint >> 16) & 255;
-      const g = (bigint >> 8) & 255;
-      const b = bigint & 255;
-      return `rgba(${r},${g},${b},${alpha})`;
-    }
-
-    // Initialize date inputs max attribute to today
-    const todayStr = new Date().toISOString().slice(0, 10);
-    document.getElementById('startDate').max = todayStr;
-    document.getElementById('endDate').max = todayStr;
-
-    // Show or hide custom date inputs based on selection
-    function onDateRangeChange() {
-      const val = document.getElementById('dateRangeSelect').value;
-      const showCustom = val === 'custom';
-
-      document.getElementById('startDate').style.display = showCustom ? 'inline-block' : 'none';
-      document.getElementById('endDate').style.display = showCustom ? 'inline-block' : 'none';
-      document.getElementById('startDateLabel').style.display = showCustom ? 'inline-block' : 'none';
-      document.getElementById('endDateLabel').style.display = showCustom ? 'inline-block' : 'none';
-
-      if (!showCustom) {
-        // Clear custom dates
-        document.getElementById('startDate').value = '';
-        document.getElementById('endDate').value = '';
-
-        // Automatically reload charts on change
-        loadFilteredData();
-      }
-    }
-
-    // Parse Firestore timestamp or ISO date string to JS Date
-    function parseDate(value) {
-      if (!value) return null;
-      if (value.seconds) {
-        return new Date(value.seconds * 1000);
-      }
-      const d = new Date(value);
-      return isNaN(d) ? null : d;
-    }
-
-    // Filter tasks by date range and owner
-    function filterTasks() {
-      const dateRange = document.getElementById('dateRangeSelect').value;
-      let startDate, endDate;
-
-      if (dateRange === 'thisMonth') {
-        const now = new Date();
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
-      } else if (dateRange === 'prevMonth') {
-        const now = new Date();
-        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        endDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
-      } else if (dateRange === 'custom') {
-        const s = document.getElementById('startDate').value;
-        const e = document.getElementById('endDate').value;
-        if (!s || !e) {
-          alert("Please select both start and end dates for custom range.");
-          return null;
-        }
-        startDate = new Date(s);
-        endDate = new Date(e);
-        endDate.setHours(23, 59, 59, 999);
-        if (endDate < startDate) {
-          alert("End date cannot be before start date.");
-          return null;
-        }
-      }
-
-      const owner = document.getElementById('ownerFilter').value;
-
-      return allTasks.filter(task => {
-        const d = parseDate(task.startDate);
-        if (!d) return false;
-        if (d < startDate || d > endDate) return false;
-
-        if (owner !== 'all' && task.owner !== owner) return false;
-        return true;
-      });
-    }
-
-    // Count tasks by a specific field for pie/bar charts
-    function countByField(tasks, field) {
-      return tasks.reduce((acc, t) => {
-        const val = t[field] || 'Unknown';
-        acc[val] = (acc[val] || 0) + 1;
-        return acc;
-      }, {});
-    }
-
-    // Group tasks by month label (e.g. "Sep 2025")
-    function groupTasksByMonth(tasks) {
-      const monthMap = {};
-      tasks.forEach(task => {
-        const d = parseDate(task.startDate);
-        if (!d) return;
-        const key = d.toLocaleString('default', { month: 'short', year: 'numeric' });
-        monthMap[key] = (monthMap[key] || 0) + 1;
-      });
-      const sortedKeys = Object.keys(monthMap).sort((a,b) => new Date(a) - new Date(b));
-      const data = sortedKeys.map(k => monthMap[k]);
-      return {
-        labels: sortedKeys,
-        datasets: [{
-          label: 'Tasks Started',
-          data,
-          backgroundColor: rgba(colors[1], 0.6),
-          borderColor: colors[1],
-          borderWidth: 1,
-          fill: false,
-          tension: 0.4,
-          type: 'bar'
-        }]
-      };
-    }
-
-    // Calculate average duration per company in hours
-    function avgDurationByCompany(tasks) {
-      const durations = {};
-      const counts = {};
-
-      tasks.forEach(t => {
-        const comp = t.company || 'Unknown';
-        if (t.endDate && t.startDate) {
-          const start = parseDate(t.startDate);
-          const end = parseDate(t.endDate);
-          if (start && end && end > start) {
-            const diffHrs = (end - start) / (1000 * 60 * 60);
-            durations[comp] = (durations[comp] || 0) + diffHrs;
-            counts[comp] = (counts[comp] || 0) + 1;
-          }
-        }
-      });
-
-      const labels = Object.keys(durations);
-      const data = labels.map(comp => counts[comp] ? durations[comp] / counts[comp] : 0);
-
-      return { labels, data };
-    }
-
-    // Create / update Chart instances safely
-    function createOrUpdateChart(id, config) {
-      if (charts[id]) {
-        charts[id].data = config.data;
-        charts[id].options = config.options;
-        charts[id].update();
-      } else {
-        const ctx = document.getElementById(id).getContext('2d');
-        charts[id] = new Chart(ctx, config);
-      }
-    }
-
-    // Populate Owner filter dropdown based on allTasks
-    function populateOwnerFilter() {
-      const ownerSelect = document.getElementById('ownerFilter');
-      const owners = new Set(allTasks.map(t => t.owner).filter(Boolean));
-      // Clear previous options except 'all'
-      ownerSelect.innerHTML = '<option value="all">All Owners</option>';
-      [...owners].sort().forEach(owner => {
-        const opt = document.createElement('option');
-        opt.value = owner;
-        opt.textContent = owner;
-        ownerSelect.appendChild(opt);
-      });
-    }
-
-    // Load tasks from Firestore
-    async function loadTasks() {
-      try {
-        document.getElementById('loading').style.display = 'block';
-        document.getElementById('chartsContainer').style.display = 'none';
-
-        const snapshot = await db.collection('tasks').get();
-        allTasks = snapshot.docs.map(doc => doc.data());
-
-        if (allTasks.length === 0) {
-          document.getElementById('loading').textContent = 'No tasks found in database.';
-          return;
-        }
-
-        populateOwnerFilter();
-        loadFilteredData();
-      } catch (error) {
-        console.error("Error loading tasks:", error);
-        document.getElementById('loading').textContent = 'Failed to load tasks.';
-      }
-    }
-
-    // Load filtered data and update charts
-    function loadFilteredData() {
-      const filtered = filterTasks();
-      if (filtered === null) return; // Validation failed
-
-      filteredTasks = filtered;
-
-      if (filteredTasks.length === 0) {
-        document.getElementById('loading').textContent = 'No tasks match the selected filters.';
-        document.getElementById('chartsContainer').style.display = 'none';
-        return;
-      }
-
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('chartsContainer').style.display = 'grid';
-
-      // Status Chart (Pie)
-      const statusCounts = countByField(filteredTasks, 'status');
-      createOrUpdateChart('statusChart', {
-        type: 'pie',
-        data: {
-          labels: Object.keys(statusCounts),
-          datasets: [{
-            data: Object.values(statusCounts),
-            backgroundColor: Object.keys(statusCounts).map((_, i) => colors[i % colors.length]),
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Task Status Distribution' } }
-        }
-      });
-
-      // Company Chart (Bar)
-      const companyCounts = countByField(filteredTasks, 'company');
-      createOrUpdateChart('companyChart', {
-        type: 'bar',
-        data: {
-          labels: Object.keys(companyCounts),
-          datasets: [{
-            label: 'Number of Tasks',
-            data: Object.values(companyCounts),
-            backgroundColor: Object.keys(companyCounts).map((_, i) => rgba(colors[i % colors.length], 0.7)),
-            borderColor: Object.keys(companyCounts).map((_, i) => colors[i % colors.length]),
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false }, title: { display: true, text: 'Tasks per Company' } },
-          scales: {
-            y: { beginAtZero: true, precision: 0 }
-          }
-        }
-      });
-
-      // Monthly Company Chart (Bar)
-      const monthlyData = groupTasksByMonth(filteredTasks);
-      createOrUpdateChart('monthlyCompanyChart', {
-        type: 'bar',
-        data: monthlyData,
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false }, title: { display: true, text: 'Tasks Started per Month' } },
-          scales: { y: { beginAtZero: true, precision: 0 } }
-        }
-      });
-
-      // Avg Duration Chart (Bar)
-      const avgDurData = avgDurationByCompany(filteredTasks);
-      createOrUpdateChart('avgDurationChart', {
-        type: 'bar',
-        data: {
-          labels: avgDurData.labels,
-          datasets: [{
-            label: 'Avg Duration (hrs)',
-            data: avgDurData.data,
-            backgroundColor: avgDurData.labels.map((_, i) => rgba(colors[i % colors.length], 0.7)),
-            borderColor: avgDurData.labels.map((_, i) => colors[i % colors.length]),
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false }, title: { display: true, text: 'Average Task Duration by Company' } },
-          scales: { y: { beginAtZero: true } }
-        }
-      });
-    }
-
-    // Initialize on page load
-    window.onload = () => {
-      onDateRangeChange(); // Initialize date input display
-      loadTasks();
-    };
-  </script>
 </body>
 </html>
