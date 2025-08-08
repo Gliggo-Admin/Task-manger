@@ -25,7 +25,6 @@
     }
     #dateTime { font-weight: bold; font-size: 16px; color: #fafafa; display: flex; align-items: center; }
 
-    /* Hamburger toggle button */
     #sidebarToggle {
       font-size: 24px;
       color: #fafafa;
@@ -36,20 +35,12 @@
       display: block;
     }
 
-    /* Profile area - initial letter circle */
     .profile {
       position: relative; cursor: pointer; display: flex; align-items: center;
-      user-select: none;
-      width: 40px;
-      height: 40px;
-      background: #0056b3;
-      border-radius: 50%;
-      color: white;
-      font-weight: bold;
-      font-size: 20px;
-      justify-content: center;
-      text-transform: uppercase;
-      user-select: none;
+      width: 40px; height: 40px;
+      background: #0056b3; border-radius: 50%;
+      color: white; font-weight: bold; font-size: 20px;
+      justify-content: center; text-transform: uppercase;
     }
 
     #profileDropdown {
@@ -65,51 +56,30 @@
     #profileDropdown button { color: #e74c3c; }
     a:hover, button:hover { background: #f0f0f0; }
 
-    /* Sidebar */
     .sidebar {
-      position: fixed;
-      top: 60px;
-      left: 0;
-      width: 220px;
-      height: calc(100% - 60px);
-      background: #2c3e50;
-      color: white;
-      padding: 20px;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      position: fixed; top: 60px; left: 0;
+      width: 220px; height: calc(100% - 60px);
+      background: #2c3e50; color: white;
+      padding: 20px; box-shadow: 2px 0 5px rgba(0,0,0,0.1);
       transform: translateX(-100%);
       transition: transform 0.3s ease;
       z-index: 1000;
     }
-    .sidebar.visible {
-      transform: translateX(0);
-    }
-    .sidebar ul {
-      list-style: none; padding: 0; margin: 0;
-    }
-    .sidebar .menu-item {
-      margin-bottom: 12px;
-    }
+    .sidebar.visible { transform: translateX(0); }
+    .sidebar ul { list-style: none; padding: 0; margin: 0; }
+    .sidebar .menu-item { margin-bottom: 12px; }
     .sidebar .menu-item a {
       color: #ecf0f1; text-decoration: none; font-weight: 600;
       padding: 10px; display: block; border-radius: 6px;
     }
-    .sidebar .menu-item a:hover {
-      background: #34495e;
-    }
+    .sidebar .menu-item a:hover { background: #34495e; }
 
-    /* Main content */
     .main-content {
-      margin-top: 60px;
-      padding: 30px;
-      transition: margin-left 0.3s ease;
-      margin-left: 0;
+      margin-top: 60px; padding: 30px;
+      transition: margin-left 0.3s ease; margin-left: 0;
     }
-    /* When sidebar visible, push main content */
-    .main-content.shifted {
-      margin-left: 220px;
-    }
+    .main-content.shifted { margin-left: 220px; }
 
-    /* Todo panel styles */
     .todo-panel {
       background: white; border-radius: 15px;
       box-shadow: 0 8px 16px rgba(0,0,0,0.1);
@@ -119,8 +89,8 @@
       display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
     }
     .todo-header button {
-      background: #007BFF; color: white; border: none; padding: 6px 12px;
-      border-radius: 6px; cursor: pointer;
+      background: #007BFF; color: white; border: none;
+      padding: 6px 12px; border-radius: 6px; cursor: pointer;
     }
     .add-task {
       display: flex; gap: 8px; margin-bottom: 12px;
@@ -129,7 +99,8 @@
       flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 6px;
     }
     .add-task button {
-      background: #007BFF; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;
+      background: #007BFF; color: white; border: none;
+      padding: 8px 16px; border-radius: 6px; cursor: pointer;
     }
     .todo-list {
       list-style: none; padding: 0; max-height: 300px; overflow-y: auto;
@@ -144,9 +115,10 @@
       margin-left: 8px; flex: 1; cursor: pointer;
     }
     .delete-btn {
-      margin-left: 8px; background: #e74c3c; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;
+      margin-left: 8px; background: #e74c3c;
+      color: white; border: none; padding: 4px 8px;
+      border-radius: 4px; cursor: pointer;
     }
-
   </style>
 </head>
 <body>
@@ -154,7 +126,6 @@
     <button id="sidebarToggle" aria-label="Toggle menu">&#9776;</button>
     <div id="dateTime">Loading date/time...</div>
     <div class="profile" id="profileDiv" tabindex="0" aria-haspopup="true" aria-expanded="false" title="User menu">
-      <!-- Show first letter of username here -->
       <div id="profileInitial" aria-label="User initial" role="img"></div>
       <div id="profileDropdown" role="menu" aria-label="Profile options">
         <a href="Change Password.html" role="menuitem">Settings</a>
@@ -193,7 +164,6 @@
   </main>
 
   <script>
-    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
       authDomain: "task-manager-602da.firebaseapp.com",
@@ -207,20 +177,12 @@
 
     const username = sessionStorage.getItem("username") || "Guest";
     document.getElementById("userGreeting").textContent = username;
+    document.getElementById("profileInitial").textContent = username[0]?.toUpperCase() || "?";
 
-    // Set profile initial letter
-    const profileInitial = document.getElementById("profileInitial");
-    if (username && username.length > 0) {
-      profileInitial.textContent = username[0].toUpperCase();
-    } else {
-      profileInitial.textContent = "?";
-    }
-
-    // Profile dropdown toggle
     const profileDiv = document.getElementById("profileDiv");
     const dropdown = document.getElementById("profileDropdown");
     profileDiv.addEventListener("click", (e) => {
-      e.stopPropagation(); // prevent click bubbling to document
+      e.stopPropagation();
       const isOpen = dropdown.style.display === "block";
       dropdown.style.display = isOpen ? "none" : "block";
       profileDiv.setAttribute('aria-expanded', !isOpen);
@@ -234,15 +196,12 @@
       window.location.href = "index.html";
     });
 
-    // Date/time display
     function updateClock() {
-      const now = new Date();
-      document.getElementById("dateTime").textContent = now.toLocaleString();
+      document.getElementById("dateTime").textContent = new Date().toLocaleString();
     }
     updateClock();
     setInterval(updateClock, 1000);
 
-    // To-Do logic
     const todoListEl = document.getElementById("todoList");
     const todoDateLabel = document.getElementById("todoDateLabel");
     const prevBtn = document.getElementById("prevDayBtn");
@@ -251,7 +210,7 @@
     const addBtn = document.getElementById("addTaskBtn");
 
     let currentDate = new Date();
-    let tasks = [];
+    let currentTasks = [];
 
     function fmt(date) {
       return date.toISOString().split("T")[0];
@@ -267,7 +226,7 @@
       try {
         const snap = await db.collection("userTasks").doc(username).get();
         const data = snap.exists ? snap.data() : {};
-        tasks = (data.tasks && data.tasks[key]) || [];
+        currentTasks = (data.tasks && data.tasks[key]) || [];
         renderTasks();
       } catch {
         todoListEl.innerHTML = "<li>Error loading tasks.</li>";
@@ -275,32 +234,49 @@
     }
 
     function renderTasks() {
-      if (tasks.length === 0) {
+      if (currentTasks.length === 0) {
         todoListEl.innerHTML = "<li>No tasks for this date.</li>";
         return;
       }
       todoListEl.innerHTML = "";
-      tasks.forEach((t, i) => {
+      currentTasks.forEach((task, i) => {
         const li = document.createElement("li");
-        if (t.completed) li.classList.add("completed");
+        if (task.completed) li.classList.add("completed");
+
         const cb = document.createElement("input");
-        cb.type = "checkbox"; cb.checked = t.completed;
-        cb.onchange = () => { t.completed = cb.checked; saveTasks(); };
+        cb.type = "checkbox";
+        cb.checked = task.completed;
+        const id = `task-${i}-${task.text.replace(/\s+/g, '-')}`;
+        cb.id = id;
+
+        cb.addEventListener("change", () => {
+          task.completed = cb.checked;
+          li.classList.toggle("completed", cb.checked);
+          saveTasks();
+        });
+
         const lbl = document.createElement("label");
-        lbl.textContent = t.text; lbl.style.marginLeft = "8px";
+        lbl.textContent = task.text;
+        lbl.htmlFor = id;
+
         const del = document.createElement("button");
-        del.textContent = "Delete"; del.className = "delete-btn";
+        del.textContent = "Delete";
+        del.className = "delete-btn";
         del.onclick = () => {
-          if (confirm("Delete this task?")) { tasks.splice(i, 1); saveTasks(); }
+          if (confirm("Delete this task?")) {
+            currentTasks.splice(i, 1);
+            saveTasks();
+          }
         };
+
         li.append(cb, lbl, del);
-        todoListEl.append(li);
+        todoListEl.appendChild(li);
       });
     }
 
     async function saveTasks() {
       const key = fmt(currentDate);
-      const payload = { tasks: { [key]: tasks } };
+      const payload = { tasks: { [key]: currentTasks } };
       await db.collection("userTasks").doc(username).set(payload, { merge: true });
       renderTasks();
     }
@@ -310,7 +286,7 @@
     addBtn.onclick = () => {
       const txt = input.value.trim();
       if (!txt) return;
-      tasks.push({ text: txt, completed: false });
+      currentTasks.push({ text: txt, completed: false });
       input.value = "";
       saveTasks();
     };
@@ -318,26 +294,18 @@
 
     loadTasks();
 
-    // Sidebar toggle logic
     const sidebarToggle = document.getElementById("sidebarToggle");
     const sidebar = document.getElementById("sidebar");
     const mainContent = document.getElementById("mainContent");
 
     sidebarToggle.addEventListener("click", (e) => {
-      e.stopPropagation(); // prevent event bubbling to document
+      e.stopPropagation();
       const isVisible = sidebar.classList.contains("visible");
-      if (isVisible) {
-        sidebar.classList.remove("visible");
-        mainContent.classList.remove("shifted");
-      } else {
-        sidebar.classList.add("visible");
-        mainContent.classList.add("shifted");
-      }
+      sidebar.classList.toggle("visible");
+      mainContent.classList.toggle("shifted");
     });
 
-    // Click outside sidebar to hide it
     document.addEventListener("click", (e) => {
-      // only if sidebar is visible and click outside sidebar and toggle button
       if (
         sidebar.classList.contains("visible") &&
         !sidebar.contains(e.target) &&
