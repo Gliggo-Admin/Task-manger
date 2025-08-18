@@ -1,45 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF‑8" />
-  <meta name="viewport" content="width=device‑width, initial‑scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Current Task</title>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #ecf0f1; padding: 20px; }
-    .close-btn { background: #e74c3c; color: white; border: none; padding: 8px 14px; font-weight: bold; border-radius: 3px; cursor: pointer; float: right; }
-    h2 { margin-top: 0; }
-    .task-table { width: 100%; border-collapse: collapse; margin-top: 20px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); border-radius: 10px; overflow: hidden; }
-    .task-table th, .task-table td { padding: 12px; text-align: left; }
-    .task-table th { background: #34495e; color: white; }
-    .task-table tr { background: #fdfdfd; cursor: pointer; transition: background-color 0.3s; }
-    .task-table tr:hover { background: #f1f1f1; }
-    td.status { font-weight: bold; color: white; border-radius: 4px; padding: 6px 10px; }
-    .status.not-started { background: #95a5a6; }
-    .status.in-progress { background: #3498db; }
-    .status.pending { background: #f1c40f; color: black; }
-    .combo-box { display: none; animation: fadeIn 0.4s ease-in-out; }
-    .combo-box button { margin: 5px; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; transition: transform 0.3s ease; color: white; font-weight: bold; }
-    .combo-box button:hover { transform: scale(1.05); }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #ecf0f1;
+      padding: 20px;
+    }
+
+    .close-btn {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      font-weight: bold;
+      border-radius: 3px;
+      cursor: pointer;
+      float: right;
+    }
+
+    h2 {
+      margin-top: 0;
+    }
+
+    .task-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .task-table th, .task-table td {
+      padding: 12px;
+      text-align: left;
+    }
+
+    .task-table th {
+      background: #34495e;
+      color: white;
+    }
+
+    .task-table tr {
+      background: #fdfdfd;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .task-table tr:hover {
+      background: #f1f1f1;
+    }
+
+    td.status {
+      font-weight: bold;
+      color: white;
+      border-radius: 4px;
+      padding: 6px 10px;
+    }
+
+    .status.not-started {
+      background: #95a5a6;
+    }
+
+    .status.in-progress {
+      background: #3498db;
+    }
+
+    .status.pending {
+      background: #f1c40f;
+      color: black;
+    }
+
+    .combo-box {
+      display: none;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+
+    .combo-box button {
+      margin: 5px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+      color: white;
+      font-weight: bold;
+    }
+
+    .combo-box button:hover {
+      transform: scale(1.05);
+    }
+
     .btn-start { background: #2980b9; }
     .btn-pending { background: #e67e22; }
     .btn-continue { background: #8e44ad; }
     .btn-complete { background: #27ae60; }
-    .highlight { border: 2px solid #fff; box-shadow: 0 0 8px rgba(255, 255, 255, 0.6); }
-    @keyframes fadeIn { from { opacity:0; transform: scale(0.95); } to { opacity:1; transform: scale(1); } }
-        .tabs { margin-top: 20px; }
-    .tabs button { margin-right: 10px; padding: 8px 16px; cursor: pointer; }
-    .active‑tab { font-weight: bold; text-decoration: underline; }
+
+    .highlight {
+      border: 2px solid #fff;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+    }
+
+    @keyframes fadeIn {
+      from { opacity:0; transform: scale(0.95); }
+      to { opacity:1; transform: scale(1); }
+    }
+
+    .tab-btn {
+      padding: 8px 16px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      background: #bdc3c7;
+      color: #2c3e50;
+    }
+
+    .tab-btn.highlight {
+      background: #3498db;
+      color: white;
+    }
   </style>
 </head>
 <body>
-
- <button class="close-btn" onclick="window.history.back()">Back</button>
+  <button class="close-btn" onclick="window.history.back()">Back</button>
   <h2>Apple Task Details</h2>
 
-  <!-- Tabs for switching views -->
-  <div class="tabs">
-    <button id="tab‑my">My Tasks</button>
-    <button id="tab‑other">Other Tasks</button>
+  <!-- Tabs -->
+  <div style="margin-bottom: 20px;">
+    <button id="myTasksTab" class="tab-btn highlight">My Tasks</button>
+    <button id="leftTasksTab" class="tab-btn">Left Tasks</button>
+    <span id="user-email" style="float:right; font-weight:bold;"></span>
   </div>
 
   <table class="task-table">
@@ -51,13 +148,13 @@
     <tbody id="task-body"></tbody>
   </table>
 
-  <!-- Firebase SDKs (now including Auth) -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <script>
-    // Initialize Firebase (your existing config)
+    // Firebase Config
     firebase.initializeApp({
       apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
       authDomain: "task-manager-602da.firebaseapp.com",
@@ -67,98 +164,233 @@
       appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
     });
 
-    const auth = firebase.auth();     // Added Auth
     const db = firebase.firestore();
-    const taskBody = document.getElementById("task-body");
+    let currentUser = null;
+    let activeTab = 'my';
 
-    // Reuse your existing helpers: formatMs, calcTimeDetails, renderTasks (unchanged)
+    const taskBody = document.getElementById("task-body");
     const statusLabels = {
       "not-started": {label:"Not Started", class:"not-started"},
       "in-progress": {label:"In Progress", class:"in-progress"},
       "pending": {label:"Pending", class:"pending"}
     };
+
     const now = () => firebase.firestore.Timestamp.now();
 
-    function formatMs(ms) { /* unchanged from your original code */ }
-
-    function calcTimeDetails(sessions = []) { /* unchanged */ }
-
-    function getButtonsHTML(statusKey) { /* unchanged */ }
-
-    function toggleComboBox(idx) { /* unchanged */ }
-
-    function renderTasks(tasks) { /* entirely unchanged logic */ }
-
-    function attachActions(tasks) { /* unchanged */ }
-
-    async function loadAllTasks() {
-      const snap = await db.collection("tasks")
-        .where("Status", "in", ["Not Started", "In Progress", "Pending"])
-        .get();
-      const arr = [];
-      snap.forEach(doc => arr.push({ id: doc.id, ...doc.data() }));
-      return arr;
+    function formatMs(ms) {
+      const s = Math.floor(ms / 1000);
+      const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
     }
 
-    let myTasks = [], otherTasks = [];
-
-    // Function to display tasks depending on tab
-    function showTab(tab) {
-      document.getElementById("tab‑my").classList.toggle("active‑tab", tab === 'my');
-      document.getElementById("tab‑other").classList.toggle("active‑tab", tab === 'other');
-      taskBody.innerHTML = '';
-      renderTasks(tab === 'my' ? myTasks : otherTasks);
+    function calcTimeDetails(sessions = []) {
+      let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
+      if (Array.isArray(sessions)) {
+        sessions.forEach(sess => {
+          const startMs = sess.start?.toDate().getTime(), endMs = sess.end?.toDate().getTime();
+          if (startMs && endMs) {
+            totalWorkMs += endMs - startMs;
+            if (lastEnd !== null) {
+              const pause = startMs - lastEnd;
+              if (pause > 0) {
+                totalPauseMs += pause;
+                pauseCount++;
+              }
+            }
+            lastEnd = endMs;
+          }
+        });
+      }
+      const startTime = sessions[0]?.start?.toDate().toLocaleString() || '—';
+      const endTime = sessions.at(-1)?.end?.toDate().toLocaleString() || '—';
+      return { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime };
     }
 
-    auth.onAuthStateChanged(async user => {
-      if (!user) {
-        // If not authenticated, fall back to showing all tasks in "Other Tasks"
-        const all = await loadAllTasks();
-        otherTasks = all;
-        document.getElementById("tab‑my").style.display = 'none';
-        document.getElementById("tab‑other").innerText = 'All Tasks';
-        showTab('other');
-        return;
-      }
+    function getButtonsHTML(statusKey) {
+      return {
+        "not-started": `<button class="btn-start highlight">Start</button>`,
+        "in-progress": `<button class="btn-pending">Pause</button><button class="btn-complete highlight">Complete</button>`,
+        "pending": `<button class="btn-continue highlight">Resume</button>`
+      }[statusKey] || `<em>No actions available</em>`;
+    }
 
-      const uid = user.uid;
+    function toggleComboBox(idx) {
+      document.querySelectorAll(".combo-box").forEach((r, i) => {
+        r.style.display = (idx === i && r.style.display !== "table-row") ? "table-row" : "none";
+      });
+    }
 
-      // Query "My Tasks"
-      const mySnap = await db.collection("tasks")
-        .where("Owner", "==", uid)
-        .where("Status", "in", ["Not Started", "In Progress", "Pending"])
-        .get();
-      myTasks = mySnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    function renderTasks(tasks) {
+      taskBody.innerHTML = "";
+      tasks.forEach((task, idx) => {
+        const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
+        const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
+        const ownerName = task.Owner ? task.Owner : "No Owner";
 
-      // Query "Other Tasks"
-      const otherSnap = await db.collection("tasks")
-        .where("Status", "in", ["Not Started", "In Progress", "Pending"])
-        .get();
-      otherTasks = otherSnap.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .filter(task => task.Owner !== uid);
+        const tr = document.createElement("tr");
+        tr.onclick = () => toggleComboBox(idx);
+        tr.innerHTML = `
+          <td>${task.SINO}</td>
+          <td>${task["Existing Company Name"]}</td>
+          <td>${task["TYPE OF WORK"]}</td>
+          <td>${task["Due date"]}</td>
+          <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
+          <td>${ownerName}</td>
+          <td>${formatMs(totalWorkMs)}</td>
+        `;
+        taskBody.appendChild(tr);
 
-      if (myTasks.length) {
-        document.getElementById("tab‑my").style.display = 'inline-block';
-        document.getElementById("tab‑other").innerText = 'Other Tasks';
-        showTab('my');
-      } else {
-        document.getElementById("tab‑my").style.display = 'none';
-        document.getElementById("tab‑other").innerText = 'All Tasks';
-        otherTasks = otherTasks.concat(myTasks); // if any edge cases
-        showTab('other');
-      }
-    });
+        const cr = document.createElement("tr");
+        cr.className = "combo-box";
+        cr.style.display = "none";
+        cr.innerHTML = `<td colspan="7">
+          <div><strong>Started:</strong> ${startTime}</div>
+          <div><strong>Ended:</strong> ${endTime}</div>
+          <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
+          <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
+          <div><strong>Remarks:</strong> ${pauseCount > 1 ? '-' : (task.Remarks || '')}</div>
+          <hr style="margin:8px 0;">
+          ${getButtonsHTML(sk)}
+        </td>`;
+        taskBody.appendChild(cr);
+      });
+      attachActions(tasks);
+    }
 
-    // Add click events for tabs
-    document.getElementById("tab‑my").onclick = () => showTab('my');
-    document.getElementById("tab‑other").onclick = () => showTab('other');
+    function attachActions(tasks) {
+      document.querySelectorAll(".combo-box").forEach((cr, idx) => {
+        cr.querySelectorAll("button").forEach(btn => {
+          btn.onclick = async e => {
+            e.stopPropagation();
+            const t = tasks[idx], ref = db.collection("tasks").doc(t.id);
+            const ts = now(), sess = t.workSessions || [];
+            try {
+              if (btn.classList.contains("btn-start")) {
+                if (sess.some(s => !s.end)) return alert("Already running");
+                sess.push({ start: ts, end: null });
+                await ref.update({ Status: "In Progress", taskStart: ts, workSessions: sess });
+                alert("Started");
+              }
+              if (btn.classList.contains("btn-pending")) {
+                const i = sess.findIndex(s => !s.end);
+                if (i < 0) return alert("Not running");
+                sess[i].end = ts;
+                await ref.update({ Status: "Pending", workSessions: sess });
+                alert("Paused");
+              }
+              if (btn.classList.contains("btn-continue")) {
+                if (sess.some(s => !s.end)) return alert("Already running");
+                sess.push({ start: ts, end: null });
+                await ref.update({ Status: "In Progress", workSessions: sess });
+                alert("Resumed");
+              }
+              if (btn.classList.contains("btn-complete")) {
+                const i = sess.findIndex(s => !s.end);
+                if (i > -1) sess[i].end = ts;
+                let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
+                sess.forEach(s => {
+                  const startMs = s.start?.toDate?.().getTime();
+                  const endMs = s.end?.toDate?.().getTime();
+                  if (startMs && endMs) {
+                    totalWorkMs += endMs - startMs;
+                    if (lastEnd !== null) {
+                      const pause = startMs - lastEnd;
+                      if (pause > 0) {
+                        totalPauseMs += pause;
+                        pauseCount++;
+                      }
+                    }
+                    lastEnd = endMs;
+                  }
+                });
+                const startTime = sess[0]?.start || ts;
+                const endTime = sess.at(-1)?.end || ts;
+                const userRemarks = prompt("Enter remarks for this task before completing:", t.Remarks || "");
+                if (userRemarks === null) return alert("Task completion cancelled.");
+                await ref.update({
+                  Status: "Complete",
+                  taskStart: startTime,
+                  taskEnd: endTime,
+                  workSessions: sess,
+                  TimeStarted: startTime.toDate().toLocaleString(),
+                  TimeEnd: endTime.toDate().toLocaleString(),
+                  TotalWorkHours: formatMs(totalWorkMs),
+                  TotalPauseHours: formatMs(totalPauseMs),
+                  Remarks: userRemarks.trim() || "-"
+                });
+                alert("Task marked as Complete.");
+              }
+              loadTasks();
+            } catch {
+              alert("Update failed");
+            }
+          };
+        });
+      });
+    }
 
-    // Initial loading state
-    window.onload = () => {
+    // Load Tasks
+    async function loadTasks() {
       taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Loading tasks...</td></tr>`;
-    };
-  </script>
+      try {
+        const snap = await db.collection("tasks")
+          .where("Status", "in", ["Not Started", "In Progress", "Pending"])
+          .get();
 
+        const arr = [];
+        snap.forEach(doc => {
+          const d = doc.data();
+          const isMyTask = d.Owner === currentUser.email;
+          if (
+            (activeTab === 'my' && isMyTask) ||
+            (activeTab === 'left' && (!d.Owner || d.Owner !== currentUser.email))
+          ) {
+            arr.push({ id: doc.id, ...d });
+          }
+        });
+
+        if (arr.length === 0) {
+          taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No tasks found.</td></tr>`;
+        } else {
+          renderTasks(arr);
+        }
+      } catch (err) {
+        console.error("Error loading tasks:", err);
+        taskBody.innerHTML = `<tr><td colspan="7" style="color:red;">Error loading tasks: ${err.message}</td></tr>`;
+      }
+    }
+
+    // Auth + Tabs
+    window.onload = () => {
+      firebase.auth().onAuthStateChanged(user => {
+        if (!user) {
+          alert("You must be logged in to view this page.");
+          return;
+        }
+        currentUser = user;
+        document.getElementById("user-email").textContent = `Logged in: ${user.email}`;
+
+        document.getElementById("myTasksTab").onclick = () => {
+          activeTab = 'my';
+          updateTabHighlight();
+          loadTasks();
+        };
+
+        document.getElementById("leftTasksTab").onclick = () => {
+          activeTab = 'left';
+          updateTabHighlight();
+          loadTasks();
+        };
+
+        updateTabHighlight();
+        loadTasks();
+      });
+    };
+
+    function updateTabHighlight() {
+      document.getElementById("myTasksTab").classList.toggle('highlight', activeTab === 'my');
+      document.getElementById("leftTasksTab").classList.toggle('highlight', activeTab === 'left');
+    }
+  </script>
 </body>
 </html>
