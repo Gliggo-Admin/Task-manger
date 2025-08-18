@@ -362,30 +362,34 @@
 
     // Auth + Tabs
     window.onload = () => {
-      firebase.auth().onAuthStateChanged(user => {
-        if (!user) {
-          alert("You must be logged in to view this page.");
-          return;
-        }
-        currentUser = user;
-        document.getElementById("user-email").textContent = `Logged in: ${user.email}`;
+firebase.auth().onAuthStateChanged(user => {
+  if (!user) {
+    alert("You must be logged in to view this page.");
+    return;
+  }
+  currentUser = user;
 
-        document.getElementById("myTasksTab").onclick = () => {
-          activeTab = 'my';
-          updateTabHighlight();
-          loadTasks();
-        };
+  // Get username from sessionStorage, fallback to email
+  const username = sessionStorage.getItem("username") || user.email || "User";
+  
+  document.getElementById("user-email").textContent = `Logged in: ${username}`;
 
-        document.getElementById("leftTasksTab").onclick = () => {
-          activeTab = 'left';
-          updateTabHighlight();
-          loadTasks();
-        };
+  document.getElementById("myTasksTab").onclick = () => {
+    activeTab = 'my';
+    updateTabHighlight();
+    loadTasks();
+  };
 
-        updateTabHighlight();
-        loadTasks();
-      });
-    };
+  document.getElementById("leftTasksTab").onclick = () => {
+    activeTab = 'left';
+    updateTabHighlight();
+    loadTasks();
+  };
+
+  updateTabHighlight();
+  loadTasks();
+});
+
 
     function updateTabHighlight() {
       document.getElementById("myTasksTab").classList.toggle('highlight', activeTab === 'my');
