@@ -10,13 +10,24 @@
       margin: 0; padding: 20px;
       background: #ecf0f1;
     }
+    .back-btn {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      font-weight: bold;
+      border-radius: 3px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
     .top-controls {
       margin-bottom: 20px;
       display: flex;
       gap: 10px;
       align-items: center;
     }
-    .top-controls button, .top-controls input {
+    .top-controls button,
+    .top-controls input {
       padding: 8px 12px;
       font-size: 1em;
       border-radius: 4px;
@@ -42,9 +53,7 @@
       cursor: pointer;
       transition: background-color 0.3s;
     }
-    .task-table tr:hover {
-      background: #f1f1f1;
-    }
+    .task-table tr:hover { background: #f1f1f1; }
     td.status {
       font-weight: bold;
       color: white;
@@ -100,6 +109,8 @@
 </head>
 <body>
 
+  <button class="back-btn" onclick="window.history.back()">Back</button>
+
   <div class="top-controls">
     <button id="toggleViewBtn">Switch to Owner‑Grouped View</button>
     <input type="text" id="ownerSearchInput" placeholder="Search by Owner…" />
@@ -120,7 +131,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script>
-    // Initialize
     firebase.initializeApp({
       apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
       authDomain: "task-manager-602da.firebaseapp.com",
@@ -144,9 +154,9 @@
 
     function formatMs(ms) {
       const s = Math.floor(ms/1000),
-        h = Math.floor(s/3600),
-        m = Math.floor((s%3600)/60),
-        sec = s%60;
+            h = Math.floor(s/3600),
+            m = Math.floor((s%3600)/60),
+            sec = s%60;
       return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
     }
 
@@ -161,7 +171,7 @@
             const pause = startMs - lastEnd;
             if (pause>0) { totalPauseMs+=pause; pauseCount++; }
           }
-          lastEnd=endMs;
+          lastEnd = endMs;
         }
       });
       const startTime = sessions[0]?.start?.toDate().toLocaleString() || '—';
@@ -179,7 +189,7 @@
 
     function toggleComboBox(idx) {
       document.querySelectorAll(".combo-box")
-        .forEach((r,i) => r.style.display = (idx===i && r.style.display!=="table-row") ? "table-row" : "none");
+        .forEach((r,i) => r.style.display = idx===i && r.style.display!=="table-row" ? "table-row" : "none");
     }
 
     function attachActions(tasks) {
@@ -225,7 +235,8 @@
                     lastEnd = endMs;
                   }
                 });
-                const startTime = sess[0]?.start || ts, endTime = sess.at(-1)?.end || ts;
+                const startTime = sess[0]?.start || ts;
+                const endTime = sess.at(-1)?.end || ts;
                 const userRemarks = prompt("Enter remarks:", t.Remarks||"");
                 if (userRemarks===null) return alert("Cancelled");
                 await ref.update({
@@ -250,11 +261,15 @@
       );
     }
 
-    let allTasks = [], groupedMode = false;
+    let allTasks = [],
+        groupedMode = false,
+        globalIndex = 0;  // <-- global index counter
 
     function renderFlatView(tasks) {
       taskBody.innerHTML = "";
-      tasks.forEach((task, idx) => {
+      globalIndex = 0;
+      tasks.forEach((task) => {
+        const idx = globalIndex++;
         const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
         const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
         const ownerName = task.Owner || "No Owner";
@@ -288,6 +303,7 @@
 
     function renderGroupedView(tasks) {
       tasksContainer.innerHTML = "";
+      globalIndex = 0;
       const grouped = tasks.reduce((acc, task) => {
         const owner = (task.Owner || "NO OWNER").trim().toUpperCase();
         if (!acc[owner]) acc[owner] = [];
@@ -296,9 +312,9 @@
       }, {});
 
       Object.entries(grouped).forEach(([owner, ownerTasks]) => {
-        const section = document.createElement("div"); section.className="owner-section";
-        const header = document.createElement("div"); header.className="owner-title"; header.textContent=owner;
-        const table = document.createElement("table"); table.className="task-table";
+        const section = document.createElement("div"); section.className = "owner-section";
+        const header = document.createElement("div"); header.className = "owner-title"; header.textContent = owner;
+        const table = document.createElement("table"); table.className = "task-table";
         table.innerHTML = `
           <thead>
             <tr>
@@ -307,10 +323,12 @@
           </thead>`;
         const tbody = document.createElement("tbody");
 
-        ownerTasks.forEach((task, idx) => {
-          const sk = (task.Status||"").toLowerCase().replace(/\s+/g,"-");
+        ownerTasks.forEach((task) => {
+          const idx = globalIndex++;
+          const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
           const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
           const ownerName = task.Owner || "No Owner";
+
           const tr = document.createElement("tr");
           tr.onclick = () => toggleComboBox(idx);
           tr.innerHTML = `
@@ -324,7 +342,7 @@
           tbody.appendChild(tr);
 
           const cr = document.createElement("tr");
-          cr.className="combo-box"; cr.style.display="none";
+          cr.className = "combo-box"; cr.style.display = "none";
           cr.innerHTML = `
             <td colspan="7">
               <div><strong>Started:</strong> ${startTime}</div>
@@ -354,20 +372,25 @@
           allTasks = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           applyView();
         })
-        .catch(err => taskBody.innerHTML = `<tr><td colspan="7" style="color:red">${err.message}</td></tr>`);
+        .catch(err => {
+          taskBody.innerHTML = `<tr><td colspan="7" style="color:red;">${err.message}</td></tr>`;
+        });
     }
 
     function applyView() {
-      const filtered = allTasks.filter(t => {
-        const owner = (t.Owner || "").toLowerCase();
-        return owner.includes(searchInput.value.toLowerCase());
-      });
+      const filtered = allTasks.filter(t => (t.Owner||"").toLowerCase().includes(searchInput.value.toLowerCase()));
       if (groupedMode) {
         renderGroupedView(filtered);
       } else {
-        tasksContainer.innerHTML = `<table class="task-table"><thead>
-          <tr><th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th></tr>
-        </thead><tbody id="task-body"></tbody></table>`;
+        tasksContainer.innerHTML = `
+          <table class="task-table">
+            <thead>
+              <tr>
+                <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
+              </tr>
+            </thead>
+            <tbody id="task-body"></tbody>
+          </table>`;
         renderFlatView(filtered);
       }
     }
@@ -378,12 +401,13 @@
       applyView();
     };
 
-    searchInput.addEventListener("input", () => applyView());
+    searchInput.addEventListener("input", applyView);
 
     window.onload = () => {
-      taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center">Loading tasks…</td></tr>`;
+      taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Loading tasks…</td></tr>`;
       loadTasks();
     };
+
   </script>
 </body>
 </html>
