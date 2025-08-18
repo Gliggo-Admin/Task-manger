@@ -557,22 +557,25 @@
     }
 
     // Load tasks from Firestore where company = 'Apple'
-    function loadTasks() {
-      db.collection("tasks")
-        .where("Existing Company Name", "==", "Apple")
-        .get()
-        .then(snapshot => {
-          allTasks = [];
-          snapshot.forEach(doc => {
-            allTasks.push({...doc.data(), id: doc.id});
-          });
-          renderCurrentView();
-        })
-        .catch(e => {
-          alert("Error loading tasks: " + e.message);
-          console.error(e);
-        });
-    }
+function loadTasks() {
+  db.collection("tasks")
+    .where("Existing Company Name", "==", "Apple")
+    .get()
+    .then(snapshot => {
+      console.log("Loaded tasks count:", snapshot.size);
+      allTasks = [];
+      snapshot.forEach(doc => {
+        console.log("Task doc:", doc.id, doc.data());
+        allTasks.push({...doc.data(), id: doc.id});
+      });
+      renderCurrentView();
+    })
+    .catch(e => {
+      alert("Error loading tasks: " + e.message);
+      console.error(e);
+    });
+}
+
 
     // Switch views display
     function switchView(view) {
