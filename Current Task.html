@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Current Task</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Apple Task Details - Table & Kanban</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
       background: #ecf0f1;
       padding: 20px;
@@ -24,7 +24,7 @@
     h2 {
       margin-top: 0;
     }
-    /* Table styles (unchanged for Not Started and In Progress) */
+    /* Table styles */
     .task-table {
       width: 100%;
       border-collapse: collapse;
@@ -36,24 +36,27 @@
     .task-table th, .task-table td {
       padding: 12px;
       text-align: left;
+      border-bottom: 1px solid #ddd;
     }
     .task-table th {
       background: #34495e;
       color: white;
+      user-select: none;
     }
-    .task-table tr {
-      background: #fdfdfd;
-      cursor: pointer;
-      transition: background-color 0.3s;
+    .task-table tr:nth-child(even) {
+      background: #f8f9fa;
     }
     .task-table tr:hover {
-      background: #f1f1f1;
+      background: #d1ecf1;
     }
     td.status {
       font-weight: bold;
       color: white;
       border-radius: 4px;
       padding: 6px 10px;
+      width: 110px;
+      text-align: center;
+      user-select: none;
     }
     .status.not-started {
       background: #95a5a6;
@@ -65,151 +68,147 @@
       background: #f1c40f;
       color: black;
     }
-    .combo-box {
-      display: none;
-      animation: fadeIn 0.4s ease-in-out;
-    }
-    .combo-box button {
-      margin: 5px;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: transform 0.3s ease;
-      color: white;
-      font-weight: bold;
-    }
-    .combo-box button:hover {
-      transform: scale(1.05);
-    }
-    .btn-start {
-      background: #2980b9;
-    }
-    .btn-pending {
-      background: #e67e22;
-    }
-    .btn-continue {
-      background: #8e44ad;
-    }
-    .btn-complete {
+    .status.complete {
       background: #27ae60;
     }
-    .highlight {
-      border: 2px solid #fff;
-      box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
-    }
-    @keyframes fadeIn {
-      from {
-        opacity:0;
-        transform: scale(0.95);
-      }
-      to {
-        opacity:1;
-        transform: scale(1);
-      }
-    }
-
-    /* --- New Kanban styles for Pending tasks --- */
-    .kanban-container {
+    /* Kanban container */
+    #kanban {
       margin-top: 40px;
     }
-    .kanban-title {
-      font-size: 1.5em;
+    #kanban h3 {
       margin-bottom: 12px;
-      color: #f1c40f;
     }
-    .kanban-board {
+    .kanban-wrapper {
       display: flex;
-      flex-wrap: wrap;
       gap: 16px;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      padding-bottom: 10px;
+    }
+    .kanban-column {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      min-width: 280px;
+      padding: 12px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    .kanban-column h4 {
+      margin: 0 0 10px 0;
+      padding-bottom: 6px;
+      border-bottom: 2px solid #34495e;
+      font-weight: 700;
+      font-size: 1.2em;
+      color: #34495e;
+      text-align: center;
+      user-select: none;
     }
     .kanban-card {
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      width: 250px;
-      padding: 16px;
+      background: #fff8c4;
+      border: 1px solid #f1c40f;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      transition: box-shadow 0.2s;
       cursor: pointer;
-      transition: box-shadow 0.3s ease;
-      position: relative;
+      user-select: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
     .kanban-card:hover {
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2);
     }
-    .kanban-card .status {
+    .kanban-card strong {
+      font-size: 1.1em;
+      color: #2c3e50;
+    }
+    .kanban-card .status-label {
       display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
+      padding: 4px 8px;
+      border-radius: 5px;
       font-weight: bold;
-      margin-bottom: 10px;
+      color: black;
+      width: fit-content;
     }
-    .kanban-card .not-started {
+    .status-label.not-started {
       background: #95a5a6;
       color: white;
     }
-    .kanban-card .in-progress {
+    .status-label.in-progress {
       background: #3498db;
       color: white;
     }
-    .kanban-card .pending {
+    .status-label.pending {
       background: #f1c40f;
       color: black;
     }
-    .kanban-details {
-      margin-bottom: 12px;
-      font-size: 0.9em;
-      color: #333;
+    .status-label.complete {
+      background: #27ae60;
+      color: white;
     }
-    .kanban-actions button {
-      margin-right: 8px;
+    /* Buttons inside cards */
+    .kanban-card button {
+      margin-top: 8px;
       padding: 6px 12px;
       border: none;
-      border-radius: 6px;
-      cursor: pointer;
+      border-radius: 5px;
       font-weight: bold;
+      cursor: pointer;
       color: white;
-      transition: transform 0.3s ease;
+      transition: transform 0.2s ease;
+      align-self: flex-start;
     }
-    .kanban-actions button:hover {
-      transform: scale(1.05);
-    }
-    .btn-start {
-      background: #2980b9;
-    }
-    .btn-pending {
+    .btn-pause {
       background: #e67e22;
-      color: black;
-    }
-    .btn-continue {
-      background: #8e44ad;
     }
     .btn-complete {
       background: #27ae60;
     }
-
+    .kanban-card button:hover {
+      transform: scale(1.1);
+    }
   </style>
 </head>
 <body>
   <button class="close-btn" onclick="window.history.back()">Back</button>
   <h2>Apple Task Details</h2>
-  <table class="task-table" id="task-table">
+
+  <!-- Table with all tasks -->
+  <table class="task-table" aria-label="All Apple Tasks">
     <thead>
       <tr>
-        <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
+        <th>SINO</th>
+        <th>Company</th>
+        <th>Task</th>
+        <th>Due Date</th>
+        <th>Status</th>
+        <th>Owner</th>
+        <th>Work Hours</th>
       </tr>
     </thead>
-    <tbody id="task-body"></tbody>
+    <tbody id="task-body">
+      <!-- Filled dynamically -->
+    </tbody>
   </table>
 
-  <!-- Kanban container for Pending tasks -->
-  <div class="kanban-container" id="kanban-container" style="display:none;">
-    <div class="kanban-title">Pending Tasks (Kanban View)</div>
-    <div class="kanban-board" id="kanban-board"></div>
+  <!-- Kanban view grouped by status -->
+  <div id="kanban">
+    <h3>Kanban View - Grouped by Status</h3>
+    <div class="kanban-wrapper" id="kanban-wrapper" role="list">
+      <!-- Status columns here -->
+    </div>
   </div>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
   <script>
     // Initialize Firebase
     firebase.initializeApp({
@@ -221,259 +220,231 @@
       appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
     });
     const db = firebase.firestore();
-    const taskBody = document.getElementById("task-body");
-    const kanbanContainer = document.getElementById("kanban-container");
-    const kanbanBoard = document.getElementById("kanban-board");
 
-    const statusLabels = {
-      "not-started": {label:"Not Started", class:"not-started"},
-      "in-progress": {label:"In Progress", class:"in-progress"},
-      "pending": {label:"Pending", class:"pending"}
+    const taskBody = document.getElementById("task-body");
+    const kanbanWrapper = document.getElementById("kanban-wrapper");
+
+    // Mapping of statuses & classes for styles
+    const statusMap = {
+      "not started": {label: "Not Started", class: "not-started"},
+      "not-started": {label: "Not Started", class: "not-started"},
+      "in progress": {label: "In Progress", class: "in-progress"},
+      "in-progress": {label: "In Progress", class: "in-progress"},
+      "pending": {label: "Pending", class: "pending"},
+      "complete": {label: "Complete", class: "complete"},
+      "completed": {label: "Complete", class: "complete"}
     };
 
-    const now = () => firebase.firestore.Timestamp.now();
-
+    // Convert ms to HH:MM:SS format
     function formatMs(ms) {
+      if (!ms || ms < 0) return "00:00:00";
       const s = Math.floor(ms / 1000);
       const h = Math.floor(s / 3600),
             m = Math.floor((s % 3600) / 60),
             sec = s % 60;
-      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+      return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
     }
 
+    // Calculate work and pause times from sessions array
     function calcTimeDetails(sessions = []) {
       let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
-      if (Array.isArray(sessions)) {
-        sessions.forEach(sess => {
-          const startMs = sess.start?.toDate().getTime(),
-                endMs = sess.end?.toDate().getTime();
-          if (startMs && endMs) {
-            totalWorkMs += endMs - startMs;
-            if (lastEnd !== null) {
-              const pause = startMs - lastEnd;
-              if (pause > 0) {
-                totalPauseMs += pause;
-                pauseCount++;
-              }
+      if (!Array.isArray(sessions)) return { totalWorkMs: 0, totalPauseMs: 0, pauseCount: 0 };
+      sessions.forEach(sess => {
+        const startMs = sess.start?.toDate?.().getTime();
+        const endMs = sess.end?.toDate?.().getTime();
+        if (startMs && endMs) {
+          totalWorkMs += endMs - startMs;
+          if (lastEnd !== null) {
+            const pause = startMs - lastEnd;
+            if (pause > 0) {
+              totalPauseMs += pause;
+              pauseCount++;
             }
-            lastEnd = endMs;
           }
-        });
-      }
-      const startTime = sessions[0]?.start?.toDate().toLocaleString() || '—';
-      const endTime = sessions.at(-1)?.end?.toDate().toLocaleString() || '—';
-      return { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime };
-    }
-
-    // Buttons HTML for table rows (Not Started & In Progress)
-    function getButtonsHTML(statusKey) {
-      return {
-        "not-started": `<button class="btn-start highlight">Start</button>`,
-        "in-progress": `<button class="btn-pending">Pause</button><button class="btn-complete highlight">Complete</button>`,
-        "pending": `<button class="btn-continue highlight">Resume</button>`
-      }[statusKey] || `<em>No actions available</em>`;
-    }
-
-    // Buttons HTML for kanban cards (only for Pending)
-    function getKanbanButtonsHTML() {
-      return `<button class="btn-continue highlight">Resume</button>`;
-    }
-
-    // Toggle combo box for table rows (Not Started & In Progress)
-    function toggleComboBox(idx) {
-      document.querySelectorAll(".combo-box").forEach((r, i) => {
-        r.style.display = (idx === i && r.style.display !== "table-row") ? "table-row" : "none";
+          lastEnd = endMs;
+        }
       });
+      return { totalWorkMs, totalPauseMs, pauseCount };
     }
 
-    function renderTasks(tasks) {
-      // Clear existing content
+    // Render tasks in the top table
+    function renderTableTasks(tasks) {
       taskBody.innerHTML = "";
-      kanbanBoard.innerHTML = "";
-
-      // Separate tasks by status
-      const tableTasks = tasks.filter(t => {
-        const sk = (t.Status || "").toLowerCase().replace(/\s+/g, "-");
-        return sk === "not-started" || sk === "in-progress";
-      });
-
-      const pendingTasks = tasks.filter(t => {
-        const sk = (t.Status || "").toLowerCase().replace(/\s+/g, "-");
-        return sk === "pending";
-      });
-
-      // Show/hide kanban container
-      if (pendingTasks.length > 0) {
-        kanbanContainer.style.display = "block";
-      } else {
-        kanbanContainer.style.display = "none";
+      if (tasks.length === 0) {
+        taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No tasks found.</td></tr>`;
+        return;
       }
-
-      // Render table rows for Not Started & In Progress
-      tableTasks.forEach((task, idx) => {
-        const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
-        const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
-        const ownerName = task.Owner ? task.Owner : "No Owner";
+      tasks.forEach(task => {
+        const st = (task.Status || "").toLowerCase();
+        const sInfo = statusMap[st] || {label: task.Status || "-", class: ""};
+        const { totalWorkMs } = calcTimeDetails(task.workSessions);
         const tr = document.createElement("tr");
-        tr.onclick = () => toggleComboBox(idx);
         tr.innerHTML = `
-          <td>${task.SINO}</td>
-          <td>${task["Existing Company Name"]}</td>
-          <td>${task["TYPE OF WORK"]}</td>
-          <td>${task["Due date"]}</td>
-          <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
-          <td>${ownerName}</td>
+          <td>${task.SINO || '-'}</td>
+          <td>${task["Existing Company Name"] || '-'}</td>
+          <td>${task["TYPE OF WORK"] || '-'}</td>
+          <td>${task["Due date"] || '-'}</td>
+          <td class="status ${sInfo.class}">${sInfo.label}</td>
+          <td>${task.Owner || '-'}</td>
           <td>${formatMs(totalWorkMs)}</td>
         `;
         taskBody.appendChild(tr);
-
-        const cr = document.createElement("tr");
-        cr.className = "combo-box";
-        cr.style.display = "none";
-        cr.innerHTML = `
-          <td colspan="7">
-            <div><strong>Started:</strong> ${startTime}</div>
-            <div><strong>Ended:</strong> ${endTime}</div>
-            <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
-            <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
-            <div><strong>Remarks:</strong> ${pauseCount > 1 ? '-' : (task.Remarks || '')}</div>
-            <hr style="margin:8px 0;">
-            ${getButtonsHTML(sk)}
-          </td>
-        `;
-        taskBody.appendChild(cr);
-      });
-
-      // Render pending tasks as Kanban cards
-      pendingTasks.forEach((task, idx) => {
-        const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
-        const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
-        const ownerName = task.Owner ? task.Owner : "No Owner";
-
-        const card = document.createElement("div");
-        card.className = "kanban-card";
-        card.dataset.idx = idx;
-
-        card.innerHTML = `
-          <div class="status pending">${statusLabels[sk]?.label}</div>
-          <div class="kanban-details"><strong>SINO:</strong> ${task.SINO}</div>
-          <div class="kanban-details"><strong>Company:</strong> ${task["Existing Company Name"]}</div>
-          <div class="kanban-details"><strong>Task:</strong> ${task["TYPE OF WORK"]}</div>
-          <div class="kanban-details"><strong>Due Date:</strong> ${task["Due date"]}</div>
-          <div class="kanban-details"><strong>Owner:</strong> ${ownerName}</div>
-          <div class="kanban-details"><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
-          <div class="kanban-details"><strong>Started:</strong> ${startTime}</div>
-          <div class="kanban-details"><strong>Ended:</strong> ${endTime}</div>
-          <div class="kanban-details"><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
-          <div class="kanban-details"><strong>Remarks:</strong> ${pauseCount > 1 ? '-' : (task.Remarks || '')}</div>
-          <div class="kanban-actions">
-            ${getKanbanButtonsHTML()}
-          </div>
-        `;
-        kanbanBoard.appendChild(card);
-      });
-
-      // Attach event handlers for table buttons and Kanban buttons
-      attachActions(tasks);
-    }
-
-    function attachActions(tasks) {
-      // Table combo-box buttons
-      document.querySelectorAll(".combo-box").forEach((cr, idx) => {
-        cr.querySelectorAll("button").forEach(btn => {
-          btn.onclick = async e => {
-            e.stopPropagation();
-            await handleButtonClick(btn, tasks[idx]);
-          };
-        });
-      });
-
-      // Kanban card buttons
-      document.querySelectorAll(".kanban-card").forEach((card, idx) => {
-        card.querySelectorAll("button").forEach(btn => {
-          btn.onclick = async e => {
-            e.stopPropagation();
-            // For Kanban tasks, find correct task index in all tasks array filtered by Pending
-            const pendingTasks = tasks.filter(t => (t.Status || "").toLowerCase().replace(/\s+/g, "-") === "pending");
-            await handleButtonClick(btn, pendingTasks[idx]);
-          };
-        });
       });
     }
 
-    async function handleButtonClick(btn, task) {
-      const ref = db.collection("tasks").doc(task.id);
-      const ts = now();
-      const sess = task.workSessions || [];
-      try {
-        if (btn.classList.contains("btn-start")) {
-          if (sess.some(s => !s.end)) return alert("Already running");
-          sess.push({ start: ts, end: null });
-          await ref.update({ Status: "In Progress", taskStart: ts, workSessions: sess });
-          alert("Started");
-        }
-        if (btn.classList.contains("btn-pending")) {
-          const i = sess.findIndex(s => !s.end);
-          if (i < 0) return alert("Not running");
-          sess[i].end = ts;
-          await ref.update({ Status: "Pending", workSessions: sess });
-          alert("Paused");
-        }
-        if (btn.classList.contains("btn-continue")) {
-          if (sess.some(s => !s.end)) return alert("Already running");
-          sess.push({ start: ts, end: null });
-          await ref.update({ Status: "In Progress", workSessions: sess });
-          alert("Resumed");
-        }
-        if (btn.classList.contains("btn-complete")) {
-          const i = sess.findIndex(s => !s.end);
-          if (i > -1) sess[i].end = ts;
-          let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
-          sess.forEach(s => {
-            const startMs = s.start?.toDate?.().getTime();
-            const endMs = s.end?.toDate?.().getTime();
-            if (startMs && endMs) {
-              totalWorkMs += endMs - startMs;
-              if (lastEnd !== null) {
-                const pause = startMs - lastEnd;
-                if (pause > 0) {
-                  totalPauseMs += pause;
-                  pauseCount++;
-                }
-              }
-              lastEnd = endMs;
+    // Create a Kanban card for a task
+    function createKanbanCard(task) {
+      const st = (task.Status || "").toLowerCase();
+      const sInfo = statusMap[st] || {label: task.Status || "-", class: ""};
+      const { totalWorkMs } = calcTimeDetails(task.workSessions);
+
+      const card = document.createElement("div");
+      card.className = "kanban-card";
+      card.setAttribute("role", "listitem");
+      card.innerHTML = `
+        <strong>Task: ${task["TYPE OF WORK"] || '-'}</strong>
+        <div><strong>SINO:</strong> ${task.SINO || '-'}</div>
+        <div><strong>Due Date:</strong> ${task["Due date"] || '-'}</div>
+        <div><span class="status-label ${sInfo.class}">${sInfo.label}</span></div>
+        <div><strong>Owner:</strong> ${task.Owner || '-'}</div>
+        <div><strong>Work Hours:</strong> ${formatMs(totalWorkMs)}</div>
+      `;
+
+      // Buttons only for some statuses (e.g. Pending, In Progress, Not Started)
+      if (st === "pending" || st === "in-progress" || st === "in progress" || st === "not started" || st === "not-started") {
+        // Pause button
+        const btnPause = document.createElement("button");
+        btnPause.className = "btn-pause";
+        btnPause.textContent = "Pause";
+
+        btnPause.onclick = async e => {
+          e.stopPropagation();
+          try {
+            if (!task.workSessions) task.workSessions = [];
+            // Find running session (no end)
+            const runningIndex = task.workSessions.findIndex(s => !s.end);
+            if (runningIndex < 0) {
+              alert("Task is not running");
+              return;
             }
-          });
-          const startTime = sess[0]?.start || ts;
-          const endTime = sess.at(-1)?.end || ts;
+            task.workSessions[runningIndex].end = firebase.firestore.Timestamp.now();
+            await db.collection("tasks").doc(task.id).update({
+              Status: "Pending",
+              workSessions: task.workSessions
+            });
+            alert("Task Paused");
+            loadTasks();
+          } catch (err) {
+            alert("Error pausing task: " + err.message);
+          }
+        };
+        card.appendChild(btnPause);
 
-          const userRemarks = prompt("Enter remarks for this task before completing:", task.Remarks || "") || "";
-          await ref.update({
-            Status: "Completed",
-            workSessions: sess,
-            taskEnd: endTime,
-            totalWorkHours: totalWorkMs,
-            totalPauseHours: totalPauseMs,
-            remarks: userRemarks
-          });
-          alert("Task Completed");
-        }
-        loadTasks(); // Refresh after update
-      } catch (err) {
-        alert("Error: " + err.message);
+        // Complete button
+        const btnComplete = document.createElement("button");
+        btnComplete.className = "btn-complete";
+        btnComplete.textContent = "Complete";
+
+        btnComplete.onclick = async e => {
+          e.stopPropagation();
+          try {
+            if (!task.workSessions) task.workSessions = [];
+            const runningIndex = task.workSessions.findIndex(s => !s.end);
+            if (runningIndex > -1) {
+              task.workSessions[runningIndex].end = firebase.firestore.Timestamp.now();
+            }
+
+            // Calculate total work and pause time for logging
+            let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
+            task.workSessions.forEach(s => {
+              const startMs = s.start?.toDate?.().getTime();
+              const endMs = s.end?.toDate?.().getTime();
+              if (startMs && endMs) {
+                totalWorkMs += endMs - startMs;
+                if (lastEnd !== null) {
+                  const pause = startMs - lastEnd;
+                  if (pause > 0) {
+                    totalPauseMs += pause;
+                    pauseCount++;
+                  }
+                }
+                lastEnd = endMs;
+              }
+            });
+
+            const userRemarks = prompt("Enter remarks before completing:", task.Remarks || "") || "";
+
+            await db.collection("tasks").doc(task.id).update({
+              Status: "Complete",
+              taskEnd: firebase.firestore.Timestamp.now(),
+              workSessions: task.workSessions,
+              Remarks: userRemarks,
+              TotalWorkHours: formatMs(totalWorkMs),
+              TotalPauseHours: formatMs(totalPauseMs)
+            });
+            alert("Task Completed");
+            loadTasks();
+          } catch (err) {
+            alert("Error completing task: " + err.message);
+          }
+        };
+        card.appendChild(btnComplete);
+      }
+      return card;
+    }
+
+    // Render Kanban grouped by status
+    function renderKanban(tasks) {
+      kanbanWrapper.innerHTML = "";
+      // Group tasks by status key normalized
+      const grouped = {};
+      tasks.forEach(task => {
+        const st = (task.Status || "").toLowerCase();
+        const key = Object.keys(statusMap).includes(st) ? st : "other";
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(task);
+      });
+
+      // Sort keys in display order
+      const order = ["not-started", "in-progress", "pending", "complete", "other"];
+
+      order.forEach(statusKey => {
+        if (!grouped[statusKey]) return;
+        const col = document.createElement("div");
+        col.className = "kanban-column";
+        col.setAttribute("aria-label", statusMap[statusKey]?.label || "Other Tasks");
+        col.innerHTML = `<h4>${statusMap[statusKey]?.label || "Other"}</h4>`;
+
+        grouped[statusKey].forEach(task => {
+          col.appendChild(createKanbanCard(task));
+        });
+
+        kanbanWrapper.appendChild(col);
+      });
+    }
+
+    // Load tasks from Firestore and render
+    async function loadTasks() {
+      try {
+        const snapshot = await db.collection("tasks")
+          .where("Existing Company Name", "==", "Apple")
+          .orderBy("Due date")
+          .get();
+
+        const tasks = snapshot.docs.map(doc => {
+          return { id: doc.id, ...doc.data() };
+        });
+
+        renderTableTasks(tasks);
+        renderKanban(tasks);
+      } catch (error) {
+        alert("Error loading tasks: " + error.message);
       }
     }
 
-    async function loadTasks() {
-      const snapshot = await db.collection("tasks")
-        .where("Company", "==", "Apple")
-        .get();
-
-      const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      renderTasks(tasks);
-    }
-
+    // Initial load
     loadTasks();
+
   </script>
 </body>
 </html>
