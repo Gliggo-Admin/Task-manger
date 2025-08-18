@@ -5,106 +5,30 @@
   <meta name="viewport" content="width=device‑width, initial‑scale=1.0"/>
   <title>Current Task</title>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      margin: 0; padding: 20px;
-      background: #ecf0f1;
-    }
-    .back-btn {
-      background: #e74c3c;
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      font-weight: bold;
-      border-radius: 3px;
-      cursor: pointer;
-      margin-bottom: 10px;
-    }
-    .top-controls {
-      margin-bottom: 20px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    .top-controls button,
-    .top-controls input {
-      padding: 8px 12px;
-      font-size: 1em;
-      border-radius: 4px;
-      border: 1px solid #ccc;
-    }
-    .task-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    .task-table th, .task-table td {
-      padding: 12px;
-      text-align: left;
-    }
-    .task-table th {
-      background: #34495e; color: white;
-    }
-    .task-table tr {
-      background: #fdfdfd;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    .task-table tr:hover { background: #f1f1f1; }
-    td.status {
-      font-weight: bold;
-      color: white;
-      border-radius: 4px;
-      padding: 6px 10px;
-      white-space: nowrap;
-    }
-    .status.not‑started { background: #95a5a6; }
-    .status.in‑progress { background: #3498db; }
-    .status.pending { background: #f1c40f; color: black; }
-
-    .combo-box {
-      display: none;
-      animation: fadeIn 0.4s ease-in-out;
-    }
-    .combo-box button {
-      margin: 5px;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: transform 0.3s ease;
-      color: white;
-      font-weight: bold;
-    }
-    .combo-box button:hover { transform: scale(1.05); }
-
-    .btn-start { background: #2980b9; }
-    .btn-pending { background: #e67e22; }
-    .btn-continue { background: #8e44ad; }
-    .btn-complete { background: #27ae60; }
-    .highlight { border: 2px solid #fff; box-shadow: 0 0 8px rgba(255,255,255,0.6); }
-
-    .owner-section {
-      margin-bottom: 40px;
-    }
-    .owner-title {
-      background: #34495e;
-      color: white;
-      padding: 10px 15px;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 1.2em;
-      margin-bottom: 10px;
-      user-select: none;
-    }
-
-    @keyframes fadeIn {
-      from { opacity:0; transform: scale(0.95); }
-      to   { opacity:1; transform: scale(1); }
-    }
+    body { font-family:'Segoe UI', sans-serif; margin:0; padding:20px; background:#ecf0f1; }
+    .back-btn { background:#e74c3c;color:white;border:none;padding:8px 14px;font-weight:bold;border-radius:3px;cursor:pointer;margin-bottom:10px; }
+    .top-controls { margin-bottom:20px; display:flex; gap:10px; align-items:center; }
+    .top-controls select, .top-controls input { padding:8px 12px; font-size:1em; border-radius:4px; border:1px solid #ccc; }
+    .task-table { width:100%; border-collapse:collapse; box-shadow:0 2px 10px rgba(0,0,0,0.1); border-radius:10px; overflow:hidden; margin-bottom:20px; }
+    .task-table th, .task-table td { padding:12px; text-align:left; }
+    .task-table th { background:#34495e; color:white; }
+    .task-table tr { background:#fdfdfd; cursor:pointer; transition:background-color 0.3s; }
+    .task-table tr:hover { background:#f1f1f1; }
+    td.status { font-weight:bold; color:white; border-radius:4px; padding:6px 10px; white-space:nowrap; }
+    .status.not-started { background:#95a5a6; }
+    .status.in-progress { background:#3498db; }
+    .status.pending { background:#f1c40f; color:black; }
+    .combo-box { display:none; animation:fadeIn 0.4s ease-in-out; }
+    .combo-box button { margin:5px; padding:8px 16px; border:none; border-radius:6px; cursor:pointer; transition:transform 0.3s ease; color:white; font-weight:bold; }
+    .combo-box button:hover { transform:scale(1.05); }
+    .btn-start { background:#2980b9; }
+    .btn-pending { background:#e67e22; }
+    .btn-continue { background:#8e44ad; }
+    .btn-complete { background:#27ae60; }
+    .highlight { border:2px solid #fff; box-shadow:0 0 8px rgba(255,255,255,0.6); }
+    .owner-section, .status-section { margin-bottom:40px; }
+    .group-title { background:#34495e; color:white; padding:10px 15px; border-radius:8px; font-weight:bold; font-size:1.2em; margin-bottom:10px; user-select:none;}
+    @keyframes fadeIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); }}
   </style>
 </head>
 <body>
@@ -112,12 +36,18 @@
   <button class="back-btn" onclick="window.history.back()">Back</button>
 
   <div class="top-controls">
-    <button id="toggleViewBtn">Switch to Owner‑Grouped View</button>
-    <input type="text" id="ownerSearchInput" placeholder="Search by Owner…" />
+    <select id="viewSelect">
+      <option value="flat">Flat View</option>
+      <option value="owner">Group by Owner</option>
+      <option value="status">Group by Status</option>
+      <option value="due">Sort by Due Date</option>
+    </select>
+    <input type="text" id="ownerSearchInput" placeholder="Filter Owner..." />
   </div>
 
   <div id="tasks-container">
-    <table class="task-table" id="mainTaskTable">
+    <!-- Always have consistent table structure -->
+    <table class="task-table">
       <thead>
         <tr>
           <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
@@ -127,152 +57,202 @@
     </table>
   </div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script>
-    firebase.initializeApp({
-      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-      authDomain: "task-manager-602da.firebaseapp.com",
-      projectId: "task-manager-602da",
-      storageBucket: "task-manager-602da.appspot.com",
-      messagingSenderId: "438978699329",
-      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
-    });
-    const db = firebase.firestore();
-    const tasksContainer = document.getElementById("tasks-container");
-    const taskBody = document.getElementById("task-body");
-    const toggleBtn = document.getElementById("toggleViewBtn");
-    const searchInput = document.getElementById("ownerSearchInput");
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+  // Firebase init
+  firebase.initializeApp({
+    apiKey: "...", authDomain:"...", projectId:"...", storageBucket:"...", messagingSenderId:"...", appId:"..."
+  });
+  const db = firebase.firestore();
 
-    const statusLabels = {
-      "not-started": {label:"Not Started", class:"not-started"},
-      "in-progress": {label:"In Progress", class:"in-progress"},
-      "pending": {label:"Pending", class:"pending"}
-    };
-    const now = () => firebase.firestore.Timestamp.now();
+  const tasksContainer = document.getElementById("tasks-container");
+  const taskBody = document.getElementById("task-body");
+  const viewSelect = document.getElementById("viewSelect");
+  const searchInput = document.getElementById("ownerSearchInput");
 
-    function formatMs(ms) {
-      const s = Math.floor(ms/1000),
-            h = Math.floor(s/3600),
-            m = Math.floor((s%3600)/60),
-            sec = s%60;
-      return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
-    }
+  const statusLabels = {
+    "not-started": {label:"Not Started", class:"not-started"},
+    "in-progress": {label:"In Progress", class:"in-progress"},
+    "pending": {label:"Pending", class:"pending"}
+  };
 
-    function calcTimeDetails(sessions=[]) {
-      let totalWorkMs=0, totalPauseMs=0, pauseCount=0, lastEnd=null;
-      if (Array.isArray(sessions)) sessions.forEach(sess => {
-        const startMs = sess.start?.toDate().getTime(),
-              endMs   = sess.end?.toDate().getTime();
-        if (startMs && endMs) {
-          totalWorkMs += endMs - startMs;
-          if (lastEnd!==null) {
-            const pause = startMs - lastEnd;
-            if (pause>0) { totalPauseMs+=pause; pauseCount++; }
-          }
-          lastEnd = endMs;
+  const now = () => firebase.firestore.Timestamp.now();
+
+  function formatMs(ms) {
+    const s = Math.floor(ms/1000),
+      h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+    return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+  }
+
+  function calcTimeDetails(sessions=[]) {
+    let totalWorkMs=0, totalPauseMs=0, pauseCount=0, lastEnd=null;
+    if (Array.isArray(sessions)) sessions.forEach(sess => {
+      const startMs = sess.start?.toDate()?.getTime(),
+            endMs = sess.end?.toDate()?.getTime();
+      if(startMs && endMs){
+        totalWorkMs += endMs - startMs;
+        if(lastEnd !== null){
+          const pause = startMs - lastEnd;
+          if(pause>0) { totalPauseMs += pause; pauseCount++; }
         }
-      });
-      const startTime = sessions[0]?.start?.toDate().toLocaleString() || '—';
-      const endTime   = sessions.at(-1)?.end?.toDate().toLocaleString() || '—';
-      return { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime };
-    }
+        lastEnd = endMs;
+      }
+    });
+    const startTime = sessions[0]?.start?.toDate()?.toLocaleString() || '—';
+    const endTime = sessions.at(-1)?.end?.toDate()?.toLocaleString() || '—';
+    return { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime };
+  }
 
-    function getButtonsHTML(sk) {
-      return {
-        "not-started": `<button class="btn-start highlight">Start</button>`,
-        "in-progress": `<button class="btn-pending">Pause</button><button class="btn-complete highlight">Complete</button>`,
-        "pending": `<button class="btn-continue highlight">Resume</button>`
-      }[sk] || `<em>No actions</em>`;
-    }
+  function getButtonsHTML(sk) {
+    return {
+      "not-started": `<button class="btn-start highlight">Start</button>`,
+      "in-progress": `<button class="btn-pending">Pause</button><button class="btn-complete highlight">Complete</button>`,
+      "pending": `<button class="btn-continue highlight">Resume</button>`
+    }[sk] || `<em>No actions</em>`;
+  }
 
-    function toggleComboBox(idx) {
-      document.querySelectorAll(".combo-box")
-        .forEach((r,i) => r.style.display = idx===i && r.style.display!=="table-row" ? "table-row" : "none");
-    }
+  let allTasks = [];
+  let groupedMode = 'flat';
+  let globalIndex = 0;
 
-    function attachActions(tasks) {
-      document.querySelectorAll(".combo-box").forEach((cr, idx) =>
-        cr.querySelectorAll("button").forEach(btn =>
-          btn.onclick = async e => {
-            e.stopPropagation();
-            const t = tasks[idx], ref = db.collection("tasks").doc(t.id);
-            const ts = now(), sess = t.workSessions || [];
-            try {
-              if (btn.classList.contains("btn-start")) {
-                if (sess.some(s=>!s.end)) return alert("Already running");
-                sess.push({ start: ts, end: null });
-                await ref.update({ Status:"In Progress", taskStart:ts, workSessions:sess });
-                alert("Started");
-              }
-              if (btn.classList.contains("btn-pending")) {
-                const i = sess.findIndex(s=>!s.end);
-                if (i<0) return alert("Not running");
-                sess[i].end = ts;
-                await ref.update({ Status:"Pending", workSessions:sess });
-                alert("Paused");
-              }
-              if (btn.classList.contains("btn-continue")) {
-                if (sess.some(s=>!s.end)) return alert("Already running");
-                sess.push({ start: ts, end: null });
-                await ref.update({ Status:"In Progress", workSessions:sess });
-                alert("Resumed");
-              }
-              if (btn.classList.contains("btn-complete")) {
-                const i = sess.findIndex(s=>!s.end);
-                if (i>-1) sess[i].end = ts;
-                let totalWorkMs=0, totalPauseMs=0, pauseCount=0, lastEnd=null;
-                sess.forEach(s => {
-                  const startMs = s.start?.toDate().getTime(),
-                        endMs   = s.end?.toDate().getTime();
-                  if (startMs && endMs) {
-                    totalWorkMs += endMs - startMs;
-                    if (lastEnd!==null) {
-                      const pause = startMs - lastEnd;
-                      if (pause>0) { totalPauseMs+=pause; pauseCount++; }
-                    }
-                    lastEnd = endMs;
-                  }
-                });
-                const startTime = sess[0]?.start || ts;
-                const endTime = sess.at(-1)?.end || ts;
-                const userRemarks = prompt("Enter remarks:", t.Remarks||"");
-                if (userRemarks===null) return alert("Cancelled");
-                await ref.update({
-                  Status: "Complete",
-                  taskStart: startTime,
-                  taskEnd: endTime,
-                  workSessions: sess,
-                  TimeStarted: startTime.toDate().toLocaleString(),
-                  TimeEnd: endTime.toDate().toLocaleString(),
-                  TotalWorkHours: formatMs(totalWorkMs),
-                  TotalPauseHours: formatMs(totalPauseMs),
-                  Remarks: userRemarks.trim()||"-"
-                });
-                alert("Completed");
-              }
-              loadTasks();
-            } catch {
-              alert("Update failed");
-            }
+  function toggleComboBox(idx) {
+    document.querySelectorAll(".combo-box").forEach((r,i) =>
+      r.style.display = (i === idx && r.style.display !== "table-row") ? "table-row" : "none"
+    );
+  }
+
+  function attachActions(tasks) {
+    document.querySelectorAll(".combo-box").forEach((cr, idx) =>
+      cr.querySelectorAll("button").forEach(btn => btn.onclick = async e => {
+        e.stopPropagation();
+        const t = tasks[idx], ref = db.collection("tasks").doc(t.id);
+        const ts = now(), sess = t.workSessions || [];
+        try {
+          if (btn.classList.contains("btn-start")) {
+            if (sess.some(s=>!s.end)) return alert("Already running");
+            sess.push({start:ts,end:null});
+            await ref.update({Status:"In Progress", taskStart:ts, workSessions:sess});
+            alert("Started");
           }
-        )
-      );
-    }
+          if (btn.classList.contains("btn-pending")) {
+            const i = sess.findIndex(s=>!s.end); if (i<0) return alert("Not running");
+            sess[i].end = ts;
+            await ref.update({Status:"Pending", workSessions:sess});
+            alert("Paused");
+          }
+          if (btn.classList.contains("btn-continue")) {
+            if (sess.some(s=>!s.end)) return alert("Already running");
+            sess.push({start:ts,end:null});
+            await ref.update({Status:"In Progress", workSessions:sess});
+            alert("Resumed");
+          }
+          if (btn.classList.contains("btn-complete")) {
+            const i = sess.findIndex(s=>!s.end); if (i>-1) sess[i].end = ts;
+            let totalWorkMs=0, totalPauseMs=0, pauseCount=0, lastEnd=null;
+            sess.forEach(s => {
+              const startMs = s.start?.toDate().getTime();
+              const endMs = s.end?.toDate().getTime();
+              if(startMs && endMs){
+                totalWorkMs += endMs - startMs;
+                if(lastEnd !== null){
+                  const pause = startMs - lastEnd;
+                  if(pause>0){ totalPauseMs += pause; pauseCount++; }
+                }
+                lastEnd = endMs;
+              }
+            });
+            const startTime = sess[0]?.start || ts, endTime = sess.at(-1)?.end || ts;
+            const userRemarks = prompt("Enter remarks:", t.Remarks||""); if (userRemarks===null) return alert("Cancelled");
+            await ref.update({
+              Status:"Complete",
+              taskStart:startTime,
+              taskEnd:endTime,
+              workSessions:sess,
+              TimeStarted:startTime.toDate().toLocaleString(),
+              TimeEnd:endTime.toDate().toLocaleString(),
+              TotalWorkHours:formatMs(totalWorkMs),
+              TotalPauseHours:formatMs(totalPauseMs),
+              Remarks:userRemarks.trim()||"-"
+            });
+            alert("Completed");
+          }
+          loadTasks();
+        } catch {
+          alert("Update failed");
+        }
+      })
+    );
+  }
 
-    let allTasks = [],
-        groupedMode = false,
-        globalIndex = 0;  // <-- global index counter
+  function renderFlatView(tasks) {
+    taskBody.innerHTML = "";
+    globalIndex = 0;
+    tasks.forEach(task => {
+      const idx = globalIndex++;
+      const sk = (task.Status||"").toLowerCase().replace(/\s+/g,"-");
+      const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
+      const ownerName = task.Owner || "No Owner";
 
-    function renderFlatView(tasks) {
-      taskBody.innerHTML = "";
-      globalIndex = 0;
-      tasks.forEach((task) => {
+      const tr = document.createElement("tr");
+      tr.onclick = () => toggleComboBox(idx);
+      tr.innerHTML = `
+        <td>${task.SINO}</td>
+        <td>${task["Existing Company Name"]}</td>
+        <td>${task["TYPE OF WORK"]}</td>
+        <td>${task["Due date"]}</td>
+        <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
+        <td>${ownerName}</td>
+        <td>${formatMs(totalWorkMs)}</td>`;
+      taskBody.appendChild(tr);
+
+      const cr = document.createElement("tr");
+      cr.className = "combo-box"; cr.style.display = "none";
+      cr.innerHTML = `
+        <td colspan="7">
+          <div><strong>Started:</strong> ${startTime}</div>
+          <div><strong>Ended:</strong> ${endTime}</div>
+          <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
+          <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
+          <div><strong>Remarks:</strong> ${pauseCount>1 ? '-' : (task.Remarks||"")}</div>
+          <hr style="margin:8px 0;">${getButtonsHTML(sk)}
+        </td>`;
+      taskBody.appendChild(cr);
+    });
+    attachActions(tasks);
+  }
+
+  function renderGrouped(ownerOrStatusKey, tasks) {
+    tasksContainer.innerHTML = "";
+    globalIndex = 0;
+
+    const groups = tasks.reduce((acc, t) => {
+      const key =
+        ownerOrStatusKey === "owner" ? (t.Owner||"NO OWNER").trim().toUpperCase() :
+        (t.Status||"UNKNOWN").toLowerCase();
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(t);
+      return acc;
+    }, {});
+
+    Object.entries(groups).forEach(([group, groupTasks]) => {
+      const section = document.createElement("div"); section.className = ownerOrStatusKey+"-section";
+      const header = document.createElement("div"); header.className = "group-title"; header.textContent = group;
+      const table = document.createElement("table"); table.className = "task-table";
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
+          </tr>
+        </thead>`;
+      const tbody = document.createElement("tbody");
+
+      groupTasks.forEach(task => {
         const idx = globalIndex++;
-        const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
+        const sk = (task.Status||"").toLowerCase().replace(/\s+/g,"-");
         const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
         const ownerName = task.Owner || "No Owner";
+
         const tr = document.createElement("tr");
         tr.onclick = () => toggleComboBox(idx);
         tr.innerHTML = `
@@ -283,7 +263,7 @@
           <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
           <td>${ownerName}</td>
           <td>${formatMs(totalWorkMs)}</td>`;
-        taskBody.appendChild(tr);
+        tbody.appendChild(tr);
 
         const cr = document.createElement("tr");
         cr.className = "combo-box"; cr.style.display = "none";
@@ -296,118 +276,79 @@
             <div><strong>Remarks:</strong> ${pauseCount>1 ? '-' : (task.Remarks||"")}</div>
             <hr style="margin:8px 0;">${getButtonsHTML(sk)}
           </td>`;
-        taskBody.appendChild(cr);
+        tbody.appendChild(cr);
       });
-      attachActions(tasks);
-    }
 
-    function renderGroupedView(tasks) {
-      tasksContainer.innerHTML = "";
-      globalIndex = 0;
-      const grouped = tasks.reduce((acc, task) => {
-        const owner = (task.Owner || "NO OWNER").trim().toUpperCase();
-        if (!acc[owner]) acc[owner] = [];
-        acc[owner].push(task);
-        return acc;
-      }, {});
+      table.appendChild(tbody);
+      section.appendChild(header);
+      section.appendChild(table);
+      tasksContainer.appendChild(section);
+    });
 
-      Object.entries(grouped).forEach(([owner, ownerTasks]) => {
-        const section = document.createElement("div"); section.className = "owner-section";
-        const header = document.createElement("div"); header.className = "owner-title"; header.textContent = owner;
-        const table = document.createElement("table"); table.className = "task-table";
-        table.innerHTML = `
+    attachActions(tasks);
+  }
+
+  function renderDueSorted(tasks) {
+    tasks.sort((a,b) => new Date(a["Due date"]) - new Date(b["Due date"]));
+    tasksContainer.innerHTML = `
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
+          </tr>
+        </thead>
+        <tbody id="task-body"></tbody>
+      </table>`;
+    renderFlatView(tasks);
+  }
+
+  function applyView() {
+    const filterText = searchInput.value.toLowerCase();
+    const filtered = allTasks.filter(t => (t.Owner||"").toLowerCase().includes(filterText));
+
+    if (groupedMode === "flat") {
+      tasksContainer.innerHTML = `
+        <table class="task-table">
           <thead>
             <tr>
               <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
             </tr>
-          </thead>`;
-        const tbody = document.createElement("tbody");
+          </thead>
+          <tbody id="task-body"></tbody>
+        </table>`;
+      renderFlatView(filtered);
+    } else if (groupedMode === "owner") {
+      renderGrouped("owner", filtered);
+    } else if (groupedMode === "status") {
+      renderGrouped("status", filtered);
+    } else if (groupedMode === "due") {
+      renderDueSorted(filtered);
+    }
+  }
 
-        ownerTasks.forEach((task) => {
-          const idx = globalIndex++;
-          const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
-          const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
-          const ownerName = task.Owner || "No Owner";
+  viewSelect.onchange = () => {
+    groupedMode = viewSelect.value;
+    applyView();
+  };
+  searchInput.oninput = applyView;
 
-          const tr = document.createElement("tr");
-          tr.onclick = () => toggleComboBox(idx);
-          tr.innerHTML = `
-            <td>${task.SINO}</td>
-            <td>${task["Existing Company Name"]}</td>
-            <td>${task["TYPE OF WORK"]}</td>
-            <td>${task["Due date"]}</td>
-            <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
-            <td>${ownerName}</td>
-            <td>${formatMs(totalWorkMs)}</td>`;
-          tbody.appendChild(tr);
-
-          const cr = document.createElement("tr");
-          cr.className = "combo-box"; cr.style.display = "none";
-          cr.innerHTML = `
-            <td colspan="7">
-              <div><strong>Started:</strong> ${startTime}</div>
-              <div><strong>Ended:</strong> ${endTime}</div>
-              <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
-              <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
-              <div><strong>Remarks:</strong> ${pauseCount>1 ? '-' : (task.Remarks||"")}</div>
-              <hr style="margin:8px 0;">${getButtonsHTML(sk)}
-            </td>`;
-          tbody.appendChild(cr);
-        });
-
-        table.appendChild(tbody);
-        section.appendChild(header);
-        section.appendChild(table);
-        tasksContainer.appendChild(section);
+  function loadTasks() {
+    db.collection("tasks")
+      .where("Status","in",["Not Started","In Progress","Pending"])
+      .get()
+      .then(snap => {
+        allTasks = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        applyView();
+      })
+      .catch(err => {
+        taskBody.innerHTML = `<tr><td colspan="7" style="color:red">${err.message}</td></tr>`;
       });
+  }
 
-      attachActions(tasks);
-    }
-
-    function loadTasks() {
-      db.collection("tasks")
-        .where("Status","in",["Not Started","In Progress","Pending"])
-        .get()
-        .then(snap => {
-          allTasks = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          applyView();
-        })
-        .catch(err => {
-          taskBody.innerHTML = `<tr><td colspan="7" style="color:red;">${err.message}</td></tr>`;
-        });
-    }
-
-    function applyView() {
-      const filtered = allTasks.filter(t => (t.Owner||"").toLowerCase().includes(searchInput.value.toLowerCase()));
-      if (groupedMode) {
-        renderGroupedView(filtered);
-      } else {
-        tasksContainer.innerHTML = `
-          <table class="task-table">
-            <thead>
-              <tr>
-                <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
-              </tr>
-            </thead>
-            <tbody id="task-body"></tbody>
-          </table>`;
-        renderFlatView(filtered);
-      }
-    }
-
-    toggleBtn.onclick = () => {
-      groupedMode = !groupedMode;
-      toggleBtn.textContent = groupedMode ? "Switch to Flat View" : "Switch to Owner‑Grouped View";
-      applyView();
-    };
-
-    searchInput.addEventListener("input", applyView);
-
-    window.onload = () => {
-      taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Loading tasks…</td></tr>`;
-      loadTasks();
-    };
-
-  </script>
+  window.onload = () => {
+    taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center">Loading...</td></tr>`;
+    loadTasks();
+  };
+</script>
 </body>
 </html>
