@@ -667,24 +667,24 @@
       renderCurrentView();
     }
 
-    function renderCurrentView() {
-      if (currentView === "table") {
-        document.getElementById("table-view").style.display = "table";
-        groupView.style.display = "none";
-        kanbanView.style.display = "none";
-        renderTable(allTasks);
-      } else if (currentView === "group") {
-        document.getElementById("table-view").style.display = "none";
-        groupView.style.display = "flex";
-        kanbanView.style.display = "none";
-        renderGroup(allTasks);
-      } else if (currentView === "kanban") {
-        document.getElementById("table-view").style.display = "none";
-        groupView.style.display = "none";
-        kanbanView.style.display = "flex";
-        renderKanban(allTasks);
-      }
-    }
+function renderCurrentView() {
+  if (currentView === "table") {
+    document.getElementById("table-view").style.display = "table";
+    groupView.style.display = "none";
+    kanbanView.style.display = "none";
+    renderTable(allTasks);
+  } else if (currentView === "group") {
+    document.getElementById("table-view").style.display = "none";
+    groupView.style.display = "flex";
+    kanbanView.style.display = "none";
+    renderGroup(allTasks);
+  } else if (currentView === "kanban") {
+    document.getElementById("table-view").style.display = "none";
+    groupView.style.display = "none";
+    kanbanView.style.display = "flex";
+    renderKanban(allTasks);
+  }
+}
 
     // Initial render
     switchView("table");
