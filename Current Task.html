@@ -594,7 +594,7 @@
     }
 
     function updateTask(docId, updateData) {
-      db.collection("AppleTaskDetails").doc(docId).update(updateData)
+      db.collection("tasks").doc(docId).update(updateData)
         .then(() => {
           alert("Task updated successfully!");
           loadTasks();
@@ -607,7 +607,7 @@
 
     // Load tasks from Firestore and render views
     function loadTasks() {
-      db.collection("AppleTaskDetails")
+      db.collection("tasks")
         .orderBy("SINO")
         .get()
         .then(snapshot => {
