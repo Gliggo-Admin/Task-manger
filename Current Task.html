@@ -1,260 +1,294 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF‑8" />
-  <meta name="viewport" content="width=device‑width, initial‑scale=1.0"/>
-  <title>Current Task</title>
-  <style>
-    body { font-family:'Segoe UI', sans-serif; margin:0; padding:20px; background:#ecf0f1; }
-    .back-btn { background:#e74c3c;color:white;border:none;padding:8px 14px;font-weight:bold;border-radius:3px;cursor:pointer;margin-bottom:10px; }
-    .top-controls { margin-bottom:20px; display:flex; gap:10px; align-items:center; }
-    .top-controls select, .top-controls input { padding:8px 12px; font-size:1em; border-radius:4px; border:1px solid #ccc; }
-    .task-table { width:100%; border-collapse:collapse; box-shadow:0 2px 10px rgba(0,0,0,0.1); border-radius:10px; overflow:hidden; margin-bottom:20px; }
-    .task-table th, .task-table td { padding:12px; text-align:left; }
-    .task-table th { background:#34495e; color:white; }
-    .task-table tr { background:#fdfdfd; cursor:pointer; transition:background-color 0.3s; }
-    .task-table tr:hover { background:#f1f1f1; }
-    td.status { font-weight:bold; color:white; border-radius:4px; padding:6px 10px; white-space:nowrap; }
-    .status.not-started { background:#95a5a6; }
-    .status.in-progress { background:#3498db; }
-    .status.pending { background:#f1c40f; color:black; }
-    .combo-box { display:none; animation:fadeIn 0.4s ease-in-out; }
-    .combo-box button { margin:5px; padding:8px 16px; border:none; border-radius:6px; cursor:pointer; transition:transform 0.3s ease; color:white; font-weight:bold; }
-    .combo-box button:hover { transform:scale(1.05); }
-    .btn-start { background:#2980b9; }
-    .btn-pending { background:#e67e22; }
-    .btn-continue { background:#8e44ad; }
-    .btn-complete { background:#27ae60; }
-    .highlight { border:2px solid #fff; box-shadow:0 0 8px rgba(255,255,255,0.6); }
-    .owner-section, .status-section { margin-bottom:40px; }
-    .group-title { background:#34495e; color:white; padding:10px 15px; border-radius:8px; font-weight:bold; font-size:1.2em; margin-bottom:10px; user-select:none;}
-    @keyframes fadeIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); }}
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Current Task</title>
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    background: #ecf0f1;
+    padding: 20px;
+  }
+  .close-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    font-weight: bold;
+    border-radius: 3px;
+    cursor: pointer;
+    float: right;
+  }
+  h2 {
+    margin-top: 0;
+  }
+  .owner-section {
+    margin-bottom: 40px;
+  }
+  .owner-title {
+    background: #34495e;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+    user-select: none;
+  }
+  table.task-table {
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+  .task-table th,
+  .task-table td {
+    padding: 12px;
+    text-align: left;
+  }
+  .task-table th {
+    background: #34495e;
+    color: white;
+  }
+  .task-table tr {
+    background: #fdfdfd;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  .task-table tr:hover {
+    background: #f1f1f1;
+  }
+  td.status {
+    font-weight: bold;
+    color: white;
+    border-radius: 4px;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+  .status.not-started {
+    background: #95a5a6;
+  }
+  .status.in-progress {
+    background: #3498db;
+  }
+  .status.pending {
+    background: #f1c40f;
+    color: black;
+  }
+  .combo-box {
+    display: none;
+    animation: fadeIn 0.4s ease-in-out;
+  }
+  .combo-box button {
+    margin: 5px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    color: white;
+    font-weight: bold;
+  }
+  .combo-box button:hover {
+    transform: scale(1.05);
+  }
+  .btn-start {
+    background: #2980b9;
+  }
+  .btn-pending {
+    background: #e67e22;
+  }
+  .btn-continue {
+    background: #8e44ad;
+  }
+  .btn-complete {
+    background: #27ae60;
+  }
+  .highlight {
+    border: 2px solid #fff;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+  }
+  /* New styles for view-only combo-box and view button */
+  .combo-box.view-only {
+    background: #f8f9f9;
+    font-style: italic;
+  }
+  .view-button {
+    background: #7f8c8d;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    float: left;
+    margin-bottom: 8px;
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+</style>
 </head>
 <body>
+<button class="close-btn" onclick="window.history.back()">Back</button>
+<h2>Apple Task Details</h2>
+<div id="tasks-container">
+  <!-- Grouped tasks will be inserted here -->
+</div>
 
-  <button class="back-btn" onclick="window.history.back()">Back</button>
-
-  <div class="top-controls">
-    <select id="viewSelect">
-      <option value="flat">Flat View</option>
-      <option value="owner">Group by Owner</option>
-      <option value="status">Group by Status</option>
-      <option value="due">Sort by Due Date</option>
-    </select>
-    <input type="text" id="ownerSearchInput" placeholder="Filter Owner..." />
-  </div>
-
-  <div id="tasks-container">
-    <!-- Always have consistent table structure -->
-    <table class="task-table">
-      <thead>
-        <tr>
-          <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
-        </tr>
-      </thead>
-      <tbody id="task-body"></tbody>
-    </table>
-  </div>
-
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
-  // Firebase init
+  // Initialize Firebase
   firebase.initializeApp({
-    apiKey: "...", authDomain:"...", projectId:"...", storageBucket:"...", messagingSenderId:"...", appId:"..."
+    apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+    authDomain: "task-manager-602da.firebaseapp.com",
+    projectId: "task-manager-602da",
+    storageBucket: "task-manager-602da.appspot.com",
+    messagingSenderId: "438978699329",
+    appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
   });
   const db = firebase.firestore();
-
   const tasksContainer = document.getElementById("tasks-container");
-  const taskBody = document.getElementById("task-body");
-  const viewSelect = document.getElementById("viewSelect");
-  const searchInput = document.getElementById("ownerSearchInput");
-
   const statusLabels = {
-    "not-started": {label:"Not Started", class:"not-started"},
-    "in-progress": {label:"In Progress", class:"in-progress"},
-    "pending": {label:"Pending", class:"pending"}
+    "not-started": { label: "Not Started", class: "not-started" },
+    "in-progress": { label: "In Progress", class: "in-progress" },
+    "pending": { label: "Pending", class: "pending" }
   };
-
   const now = () => firebase.firestore.Timestamp.now();
 
   function formatMs(ms) {
-    const s = Math.floor(ms/1000),
-      h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-    return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+    const s = Math.floor(ms / 1000);
+    const h = Math.floor(s / 3600),
+      m = Math.floor((s % 3600) / 60),
+      sec = s % 60;
+    return `${h.toString().padStart(2, "0")}:${m
+      .toString()
+      .padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
   }
 
-  function calcTimeDetails(sessions=[]) {
-    let totalWorkMs=0, totalPauseMs=0, pauseCount=0, lastEnd=null;
-    if (Array.isArray(sessions)) sessions.forEach(sess => {
-      const startMs = sess.start?.toDate()?.getTime(),
-            endMs = sess.end?.toDate()?.getTime();
-      if(startMs && endMs){
-        totalWorkMs += endMs - startMs;
-        if(lastEnd !== null){
-          const pause = startMs - lastEnd;
-          if(pause>0) { totalPauseMs += pause; pauseCount++; }
+  function calcTimeDetails(sessions = []) {
+    let totalWorkMs = 0,
+      totalPauseMs = 0,
+      pauseCount = 0,
+      lastEnd = null;
+    if (Array.isArray(sessions)) {
+      sessions.forEach((sess) => {
+        const startMs = sess.start?.toDate().getTime(),
+          endMs = sess.end?.toDate().getTime();
+        if (startMs && endMs) {
+          totalWorkMs += endMs - startMs;
+          if (lastEnd !== null) {
+            const pause = startMs - lastEnd;
+            if (pause > 0) {
+              totalPauseMs += pause;
+              pauseCount++;
+            }
+          }
+          lastEnd = endMs;
         }
-        lastEnd = endMs;
-      }
-    });
-    const startTime = sessions[0]?.start?.toDate()?.toLocaleString() || '—';
-    const endTime = sessions.at(-1)?.end?.toDate()?.toLocaleString() || '—';
+      });
+    }
+    const startTime = sessions[0]?.start?.toDate().toLocaleString() || "—";
+    const endTime = sessions.at(-1)?.end?.toDate().toLocaleString() || "—";
     return { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime };
   }
 
-  function getButtonsHTML(sk) {
-    return {
+  function getButtonsHTML(statusKey) {
+    const actions = {
       "not-started": `<button class="btn-start highlight">Start</button>`,
-      "in-progress": `<button class="btn-pending">Pause</button><button class="btn-complete highlight">Complete</button>`,
-      "pending": `<button class="btn-continue highlight">Resume</button>`
-    }[sk] || `<em>No actions</em>`;
-  }
+      "in-progress":
+        `<button class="btn-pending">Pause</button><button class="btn-complete highlight">Complete</button>`,
+      pending: `<button class="btn-continue highlight">Resume</button>`
+    }[statusKey] || `<em>No actions available</em>`;
 
-  let allTasks = [];
-  let groupedMode = 'flat';
-  let globalIndex = 0;
+    // Added view button before action buttons
+    return `<button class="view-button">View</button><br>${actions}`;
+  }
 
   function toggleComboBox(idx) {
-    document.querySelectorAll(".combo-box").forEach((r,i) =>
-      r.style.display = (i === idx && r.style.display !== "table-row") ? "table-row" : "none"
-    );
-  }
-
-  function attachActions(tasks) {
-    document.querySelectorAll(".combo-box").forEach((cr, idx) =>
-      cr.querySelectorAll("button").forEach(btn => btn.onclick = async e => {
-        e.stopPropagation();
-        const t = tasks[idx], ref = db.collection("tasks").doc(t.id);
-        const ts = now(), sess = t.workSessions || [];
-        try {
-          if (btn.classList.contains("btn-start")) {
-            if (sess.some(s=>!s.end)) return alert("Already running");
-            sess.push({start:ts,end:null});
-            await ref.update({Status:"In Progress", taskStart:ts, workSessions:sess});
-            alert("Started");
-          }
-          if (btn.classList.contains("btn-pending")) {
-            const i = sess.findIndex(s=>!s.end); if (i<0) return alert("Not running");
-            sess[i].end = ts;
-            await ref.update({Status:"Pending", workSessions:sess});
-            alert("Paused");
-          }
-          if (btn.classList.contains("btn-continue")) {
-            if (sess.some(s=>!s.end)) return alert("Already running");
-            sess.push({start:ts,end:null});
-            await ref.update({Status:"In Progress", workSessions:sess});
-            alert("Resumed");
-          }
-          if (btn.classList.contains("btn-complete")) {
-            const i = sess.findIndex(s=>!s.end); if (i>-1) sess[i].end = ts;
-            let totalWorkMs=0, totalPauseMs=0, pauseCount=0, lastEnd=null;
-            sess.forEach(s => {
-              const startMs = s.start?.toDate().getTime();
-              const endMs = s.end?.toDate().getTime();
-              if(startMs && endMs){
-                totalWorkMs += endMs - startMs;
-                if(lastEnd !== null){
-                  const pause = startMs - lastEnd;
-                  if(pause>0){ totalPauseMs += pause; pauseCount++; }
-                }
-                lastEnd = endMs;
-              }
-            });
-            const startTime = sess[0]?.start || ts, endTime = sess.at(-1)?.end || ts;
-            const userRemarks = prompt("Enter remarks:", t.Remarks||""); if (userRemarks===null) return alert("Cancelled");
-            await ref.update({
-              Status:"Complete",
-              taskStart:startTime,
-              taskEnd:endTime,
-              workSessions:sess,
-              TimeStarted:startTime.toDate().toLocaleString(),
-              TimeEnd:endTime.toDate().toLocaleString(),
-              TotalWorkHours:formatMs(totalWorkMs),
-              TotalPauseHours:formatMs(totalPauseMs),
-              Remarks:userRemarks.trim()||"-"
-            });
-            alert("Completed");
-          }
-          loadTasks();
-        } catch {
-          alert("Update failed");
-        }
-      })
-    );
-  }
-
-  function renderFlatView(tasks) {
-    taskBody.innerHTML = "";
-    globalIndex = 0;
-    tasks.forEach(task => {
-      const idx = globalIndex++;
-      const sk = (task.Status||"").toLowerCase().replace(/\s+/g,"-");
-      const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
-      const ownerName = task.Owner || "No Owner";
-
-      const tr = document.createElement("tr");
-      tr.onclick = () => toggleComboBox(idx);
-      tr.innerHTML = `
-        <td>${task.SINO}</td>
-        <td>${task["Existing Company Name"]}</td>
-        <td>${task["TYPE OF WORK"]}</td>
-        <td>${task["Due date"]}</td>
-        <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
-        <td>${ownerName}</td>
-        <td>${formatMs(totalWorkMs)}</td>`;
-      taskBody.appendChild(tr);
-
-      const cr = document.createElement("tr");
-      cr.className = "combo-box"; cr.style.display = "none";
-      cr.innerHTML = `
-        <td colspan="7">
-          <div><strong>Started:</strong> ${startTime}</div>
-          <div><strong>Ended:</strong> ${endTime}</div>
-          <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
-          <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
-          <div><strong>Remarks:</strong> ${pauseCount>1 ? '-' : (task.Remarks||"")}</div>
-          <hr style="margin:8px 0;">${getButtonsHTML(sk)}
-        </td>`;
-      taskBody.appendChild(cr);
+    document.querySelectorAll(".combo-box").forEach((r, i) => {
+      r.style.display = idx === i && r.style.display !== "table-row" ? "table-row" : "none";
     });
-    attachActions(tasks);
   }
 
-  function renderGrouped(ownerOrStatusKey, tasks) {
-    tasksContainer.innerHTML = "";
-    globalIndex = 0;
+  // Attach View button handlers
+  function attachViewButtons(tasks) {
+    document.querySelectorAll(".view-button").forEach((btn, i) => {
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        // All view-only rows
+        const viewRows = document.querySelectorAll(".combo-box.view-only");
+        // Toggle display of current view-only row matching index
+        const currentRow = viewRows[i];
+        currentRow.style.display = currentRow.style.display === "table-row" ? "none" : "table-row";
+      };
+    });
+  }
 
-    const groups = tasks.reduce((acc, t) => {
-      const key =
-        ownerOrStatusKey === "owner" ? (t.Owner||"NO OWNER").trim().toUpperCase() :
-        (t.Status||"UNKNOWN").toLowerCase();
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(t);
+  // Renders grouped tasks by Owner
+  function renderTasksGroupedByOwner(tasks) {
+    tasksContainer.innerHTML = "";
+    // Group tasks by Owner
+    const grouped = tasks.reduce((acc, task) => {
+      const owner = task.Owner ? task.Owner.trim().toUpperCase() : "NO OWNER";
+      if (!acc[owner]) acc[owner] = [];
+      acc[owner].push(task);
       return acc;
     }, {});
 
-    Object.entries(groups).forEach(([group, groupTasks]) => {
-      const section = document.createElement("div"); section.className = ownerOrStatusKey+"-section";
-      const header = document.createElement("div"); header.className = "group-title"; header.textContent = group;
-      const table = document.createElement("table"); table.className = "task-table";
+    // For each owner, create a section with header and tasks table
+    Object.entries(grouped).forEach(([owner, ownerTasks]) => {
+      // Create section container
+      const section = document.createElement("div");
+      section.className = "owner-section";
+
+      // Owner title header
+      const header = document.createElement("div");
+      header.className = "owner-title";
+      header.textContent = owner;
+      section.appendChild(header);
+
+      // Create table
+      const table = document.createElement("table");
+      table.className = "task-table";
+
+      // Table head
       table.innerHTML = `
         <thead>
           <tr>
             <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
           </tr>
-        </thead>`;
+        </thead>
+      `;
+
+      // Table body container
       const tbody = document.createElement("tbody");
 
-      groupTasks.forEach(task => {
-        const idx = globalIndex++;
-        const sk = (task.Status||"").toLowerCase().replace(/\s+/g,"-");
-        const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
-        const ownerName = task.Owner || "No Owner";
+      // Render each task row and combo-box detail row for owner
+      ownerTasks.forEach((task, idx) => {
+        const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
+        const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(
+          task.workSessions
+        );
+        const ownerName = task.Owner ? task.Owner : "No Owner";
 
+        // Task main row
         const tr = document.createElement("tr");
-        tr.onclick = () => toggleComboBox(idx);
+        tr.onclick = () => toggleComboBox(idx + tbody.childElementCount / 2); // unique idx for toggle
+
         tr.innerHTML = `
           <td>${task.SINO}</td>
           <td>${task["Existing Company Name"]}</td>
@@ -262,92 +296,163 @@
           <td>${task["Due date"]}</td>
           <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
           <td>${ownerName}</td>
-          <td>${formatMs(totalWorkMs)}</td>`;
+          <td>${formatMs(totalWorkMs)}</td>
+        `;
         tbody.appendChild(tr);
 
+        // View-only row (basic info)
+        const viewRow = document.createElement("tr");
+        viewRow.className = "combo-box view-only";
+        viewRow.style.display = "none";
+        viewRow.innerHTML = `
+          <td colspan="7">
+            <div><strong>View Mode:</strong> Task Details</div>
+            <div><strong>Company:</strong> ${task["Existing Company Name"]}</div>
+            <div><strong>Task:</strong> ${task["TYPE OF WORK"]}</div>
+            <div><strong>Due Date:</strong> ${task["Due date"]}</div>
+            <div><strong>Status:</strong> ${task.Status}</div>
+            <div><strong>Owner:</strong> ${ownerName}</div>
+            <div><strong>Remarks:</strong> ${task.Remarks || "-"}</div>
+          </td>
+        `;
+        tbody.appendChild(viewRow);
+
+        // Combo box detail row (action buttons)
         const cr = document.createElement("tr");
-        cr.className = "combo-box"; cr.style.display = "none";
+        cr.className = "combo-box";
+        cr.style.display = "none";
         cr.innerHTML = `
           <td colspan="7">
             <div><strong>Started:</strong> ${startTime}</div>
             <div><strong>Ended:</strong> ${endTime}</div>
             <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
             <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
-            <div><strong>Remarks:</strong> ${pauseCount>1 ? '-' : (task.Remarks||"")}</div>
-            <hr style="margin:8px 0;">${getButtonsHTML(sk)}
-          </td>`;
+            <div><strong>Remarks:</strong> ${pauseCount > 1 ? "-" : task.Remarks || ""}</div>
+            <hr style="margin:8px 0;">
+            ${getButtonsHTML(sk)}
+          </td>
+        `;
         tbody.appendChild(cr);
       });
 
       table.appendChild(tbody);
-      section.appendChild(header);
       section.appendChild(table);
       tasksContainer.appendChild(section);
     });
 
+    // Attach event handlers to buttons after rendering
     attachActions(tasks);
+    attachViewButtons(tasks);
   }
 
-  function renderDueSorted(tasks) {
-    tasks.sort((a,b) => new Date(a["Due date"]) - new Date(b["Due date"]));
-    tasksContainer.innerHTML = `
-      <table class="task-table">
-        <thead>
-          <tr>
-            <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
-          </tr>
-        </thead>
-        <tbody id="task-body"></tbody>
-      </table>`;
-    renderFlatView(tasks);
-  }
+  // Attach actions to buttons inside combo-boxes
+  function attachActions(tasks) {
+    document.querySelectorAll(".combo-box").forEach((cr, idx) => {
+      cr.querySelectorAll("button").forEach((btn) => {
+        btn.onclick = async (e) => {
+          e.stopPropagation();
+          const t = tasks[idx];
+          const ref = db.collection("tasks").doc(t.id);
+          const ts = now();
+          const sess = t.workSessions || [];
+          try {
+            if (btn.classList.contains("btn-start")) {
+              if (sess.some((s) => !s.end)) return alert("Already running");
+              sess.push({ start: ts, end: null });
+              await ref.update({ Status: "In Progress", taskStart: ts, workSessions: sess });
+              alert("Started");
+            }
+            if (btn.classList.contains("btn-pending")) {
+              const i = sess.findIndex((s) => !s.end);
+              if (i < 0) return alert("Not running");
+              sess[i].end = ts;
+              await ref.update({ Status: "Pending", workSessions: sess });
+              alert("Paused");
+            }
+            if (btn.classList.contains("btn-continue")) {
+              if (sess.some((s) => !s.end)) return alert("Already running");
+              sess.push({ start: ts, end: null });
+              await ref.update({ Status: "In Progress", workSessions: sess });
+              alert("Resumed");
+            }
+            if (btn.classList.contains("btn-complete")) {
+              const i = sess.findIndex((s) => !s.end);
+              if (i > -1) sess[i].end = ts;
 
-  function applyView() {
-    const filterText = searchInput.value.toLowerCase();
-    const filtered = allTasks.filter(t => (t.Owner||"").toLowerCase().includes(filterText));
+              // Recalculate time details
+              let totalWorkMs = 0,
+                totalPauseMs = 0,
+                pauseCount = 0,
+                lastEnd = null;
+              sess.forEach((s) => {
+                const startMs = s.start?.toDate?.().getTime();
+                const endMs = s.end?.toDate?.().getTime();
+                if (startMs && endMs) {
+                  totalWorkMs += endMs - startMs;
+                  if (lastEnd !== null) {
+                    const pause = startMs - lastEnd;
+                    if (pause > 0) {
+                      totalPauseMs += pause;
+                      pauseCount++;
+                    }
+                  }
+                  lastEnd = endMs;
+                }
+              });
+              const startTime = sess[0]?.start || ts;
+              const endTime = sess.at(-1)?.end || ts;
 
-    if (groupedMode === "flat") {
-      tasksContainer.innerHTML = `
-        <table class="task-table">
-          <thead>
-            <tr>
-              <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
-            </tr>
-          </thead>
-          <tbody id="task-body"></tbody>
-        </table>`;
-      renderFlatView(filtered);
-    } else if (groupedMode === "owner") {
-      renderGrouped("owner", filtered);
-    } else if (groupedMode === "status") {
-      renderGrouped("status", filtered);
-    } else if (groupedMode === "due") {
-      renderDueSorted(filtered);
-    }
-  }
+              // Prompt for remarks
+              const userRemarks = prompt(
+                "Enter remarks for this task before completing:",
+                t.Remarks || ""
+              );
+              if (userRemarks === null) return alert("Task completion cancelled.");
 
-  viewSelect.onchange = () => {
-    groupedMode = viewSelect.value;
-    applyView();
-  };
-  searchInput.oninput = applyView;
-
-  function loadTasks() {
-    db.collection("tasks")
-      .where("Status","in",["Not Started","In Progress","Pending"])
-      .get()
-      .then(snap => {
-        allTasks = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        applyView();
-      })
-      .catch(err => {
-        taskBody.innerHTML = `<tr><td colspan="7" style="color:red">${err.message}</td></tr>`;
+              await ref.update({
+                Status: "Complete",
+                taskStart: startTime,
+                taskEnd: endTime,
+                workSessions: sess,
+                TimeStarted: startTime.toDate().toLocaleString(),
+                TimeEnd: endTime.toDate().toLocaleString(),
+                TotalWorkHours: formatMs(totalWorkMs),
+                TotalPauseHours: formatMs(totalPauseMs),
+                Remarks: userRemarks.trim() || "-"
+              });
+              alert("Task marked as Complete.");
+            }
+            loadTasks();
+          } catch {
+            alert("Update failed");
+          }
+        };
       });
+    });
   }
 
-  window.onload = () => {
-    taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center">Loading...</td></tr>`;
-    loadTasks();
+  // On page load, load tasks
+  window.onload = async function loadTasks() {
+    try {
+      const snapshot = await db
+        .collection("tasks")
+        .where("Existing Company Name", "==", "Apple")
+        .orderBy("SINO")
+        .get();
+      if (snapshot.empty) {
+        tasksContainer.innerHTML = "<p>No tasks found.</p>";
+        return;
+      }
+      const tasks = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        data.id = doc.id;
+        tasks.push(data);
+      });
+      renderTasksGroupedByOwner(tasks);
+    } catch {
+      tasksContainer.innerHTML = "<p>Failed to load tasks.</p>";
+    }
   };
 </script>
 </body>
