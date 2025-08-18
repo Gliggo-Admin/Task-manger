@@ -5,22 +5,114 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Current Task</title>
   <style>
-    /* Your existing CSS unchanged */
-    /* ... */
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #ecf0f1;
+      padding: 20px;
+    }
+    .close-btn {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      font-weight: bold;
+      border-radius: 3px;
+      cursor: pointer;
+      float: right;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    .task-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .task-table th, .task-table td {
+      padding: 12px;
+      text-align: left;
+    }
+    .task-table th {
+      background: #34495e;
+      color: white;
+    }
+    .task-table tr {
+      background: #fdfdfd;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .task-table tr:hover {
+      background: #f1f1f1;
+    }
+    td.status {
+      font-weight: bold;
+      color: white;
+      border-radius: 4px;
+      padding: 6px 10px;
+    }
+    .status.not-started {
+      background: #95a5a6;
+    }
+    .status.in-progress {
+      background: #3498db;
+    }
+    .status.pending {
+      background: #f1c40f;
+      color: black;
+    }
+    .combo-box {
+      display: none;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+    .combo-box button {
+      margin: 5px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+      color: white;
+      font-weight: bold;
+    }
+    .combo-box button:hover {
+      transform: scale(1.05);
+    }
+    .btn-start {
+      background: #2980b9;
+    }
+    .btn-pending {
+      background: #e67e22;
+    }
+    .btn-continue {
+      background: #8e44ad;
+    }
+    .btn-complete {
+      background: #27ae60;
+    }
+    .highlight {
+      border: 2px solid #fff;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+    }
+    @keyframes fadeIn {
+      from {
+        opacity:0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity:1;
+        transform: scale(1);
+      }
+    }
   </style>
 </head>
 <body>
   <button class="close-btn" onclick="window.history.back()">Back</button>
   <h2>Apple Task Details</h2>
-
-  <div id="view-buttons">
-    <button id="btn-table" class="active">Table View</button>
-    <button id="btn-kanban">Kanban View</button>
-    <button id="btn-grouped">Grouped View</button>
-  </div>
-
-  <!-- Table View -->
-  <table class="task-table" id="table-view">
+  <table class="task-table">
     <thead>
       <tr>
         <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
@@ -28,12 +120,6 @@
     </thead>
     <tbody id="task-body"></tbody>
   </table>
-
-  <!-- Kanban View -->
-  <div id="kanban-view"></div>
-
-  <!-- Grouped View -->
-  <div id="grouped-view"></div>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -49,29 +135,16 @@
       appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
     });
     const db = firebase.firestore();
-
-    // Elements
     const taskBody = document.getElementById("task-body");
-    const tableView = document.getElementById("table-view");
-    const kanbanView = document.getElementById("kanban-view");
-    const groupedView = document.getElementById("grouped-view");
-    const btnTable = document.getElementById("btn-table");
-    const btnKanban = document.getElementById("btn-kanban");
-    const btnGrouped = document.getElementById("btn-grouped");
 
-    let allTasks = []; // Store all loaded tasks globally
-
-    // Status labels & classes for styles
     const statusLabels = {
       "not-started": {label:"Not Started", class:"not-started"},
       "in-progress": {label:"In Progress", class:"in-progress"},
-      "pending": {label:"Pending", class:"pending"},
-      "complete": {label:"Complete", class:"complete"}
+      "pending": {label:"Pending", class:"pending"}
     };
 
     const now = () => firebase.firestore.Timestamp.now();
 
-    // Format milliseconds to hh:mm:ss
     function formatMs(ms) {
       const s = Math.floor(ms / 1000);
       const h = Math.floor(s / 3600),
@@ -80,7 +153,6 @@
       return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
     }
 
-    // Calculate work/pause durations from sessions
     function calcTimeDetails(sessions = []) {
       let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
       if (Array.isArray(sessions)) {
@@ -105,38 +177,33 @@
       return { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime };
     }
 
-    // Get buttons HTML for each status (for table view)
     function getButtonsHTML(statusKey) {
       return {
         "not-started": `<button class="btn-start highlight">Start</button>`,
         "in-progress": `<button class="btn-pending">Pause</button><button class="btn-complete highlight">Complete</button>`,
-        "pending": `<button class="btn-continue highlight">Resume</button>`,
-        "complete": `<em>Completed</em>`
+        "pending": `<button class="btn-continue highlight">Resume</button>`
       }[statusKey] || `<em>No actions available</em>`;
     }
 
-    // Toggle combo box row in table view
     function toggleComboBox(idx) {
       document.querySelectorAll(".combo-box").forEach((r, i) => {
         r.style.display = (idx === i && r.style.display !== "table-row") ? "table-row" : "none";
       });
     }
 
-    // Render Table View tasks
-    function renderTable(tasks) {
+    function renderTasks(tasks) {
       taskBody.innerHTML = "";
       tasks.forEach((task, idx) => {
         const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
         const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
-        const ownerName = task.Owner || "No Owner";
-
+        const ownerName = task.Owner ? task.Owner : "No Owner";
         const tr = document.createElement("tr");
         tr.onclick = () => toggleComboBox(idx);
         tr.innerHTML = `
           <td>${task.SINO}</td>
           <td>${task["Existing Company Name"]}</td>
           <td>${task["TYPE OF WORK"]}</td>
-          <td>${task["Due date"] || "—"}</td>
+          <td>${task["Due date"]}</td>
           <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
           <td>${ownerName}</td>
           <td>${formatMs(totalWorkMs)}</td>
@@ -159,129 +226,109 @@
         `;
         taskBody.appendChild(cr);
       });
-      attachActions(tasks, "table");
+      attachActions(tasks);
     }
 
-    // Render Kanban view grouped by status
-    function renderKanban(tasks) {
-      kanbanView.innerHTML = "";
-      const groups = {
-        "not-started": [],
-        "in-progress": [],
-        "pending": [],
-        "complete": []
-      };
-      tasks.forEach(t => {
-        const sk = (t.Status || "").toLowerCase().replace(/\s+/g, "-");
-        if (groups[sk]) groups[sk].push(t);
-        else groups["not-started"].push(t); // fallback
-      });
+    function attachActions(tasks) {
+      document.querySelectorAll(".combo-box").forEach((cr, idx) => {
+        cr.querySelectorAll("button").forEach(btn => {
+          btn.onclick = async e => {
+            e.stopPropagation();
+            const t = tasks[idx], ref = db.collection("tasks").doc(t.id);
+            const ts = now(), sess = t.workSessions || [];
+            try {
+              if (btn.classList.contains("btn-start")) {
+                if (sess.some(s => !s.end)) return alert("Already running");
+                sess.push({ start: ts, end: null });
+                await ref.update({ Status: "In Progress", taskStart: ts, workSessions: sess });
+                alert("Started");
+              }
+              if (btn.classList.contains("btn-pending")) {
+                const i = sess.findIndex(s => !s.end);
+                if (i < 0) return alert("Not running");
+                sess[i].end = ts;
+                await ref.update({ Status: "Pending", workSessions: sess });
+                alert("Paused");
+              }
+              if (btn.classList.contains("btn-continue")) {
+                if (sess.some(s => !s.end)) return alert("Already running");
+                sess.push({ start: ts, end: null });
+                await ref.update({ Status: "In Progress", workSessions: sess });
+                alert("Resumed");
+              }
+              if (btn.classList.contains("btn-complete")) {
+                const i = sess.findIndex(s => !s.end);
+                if (i > -1) sess[i].end = ts;
+                let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
+                sess.forEach(s => {
+                  const startMs = s.start?.toDate?.().getTime();
+                  const endMs = s.end?.toDate?.().getTime();
+                  if (startMs && endMs) {
+                    totalWorkMs += endMs - startMs;
+                    if (lastEnd !== null) {
+                      const pause = startMs - lastEnd;
+                      if (pause > 0) {
+                        totalPauseMs += pause;
+                        pauseCount++;
+                      }
+                    }
+                    lastEnd = endMs;
+                  }
+                });
+                const startTime = sess[0]?.start || ts;
+                const endTime = sess.at(-1)?.end || ts;
 
-      for (const statusKey in groups) {
-        const col = document.createElement("div");
-        col.className = "kanban-column";
-        col.innerHTML = `<h3>${statusLabels[statusKey]?.label || statusKey}</h3>`;
-
-        groups[statusKey].forEach(task => {
-          const { totalWorkMs } = calcTimeDetails(task.workSessions);
-          const ownerName = task.Owner || "No Owner";
-          const card = document.createElement("div");
-          card.className = "kanban-card";
-          card.innerHTML = `
-            <strong>${task["TYPE OF WORK"] || "Task"}</strong>
-            <div>Company: ${task["Existing Company Name"] || "-"}</div>
-            <div>Owner: ${ownerName}</div>
-            <div>Work Hours: ${formatMs(totalWorkMs)}</div>
-          `;
-          card.onclick = () => openTaskDetailsPopup(task);
-          col.appendChild(card);
+                const userRemarks = prompt("Enter remarks for this task before completing:", t.Remarks || "");
+                if (userRemarks === null) return alert("Task completion cancelled.");
+                await ref.update({
+                  Status: "Complete",
+                  taskStart: startTime,
+                  taskEnd: endTime,
+                  workSessions: sess,
+                  TimeStarted: startTime.toDate().toLocaleString(),
+                  TimeEnd: endTime.toDate().toLocaleString(),
+                  TotalWorkHours: formatMs(totalWorkMs),
+                  TotalPauseHours: formatMs(totalPauseMs),
+                  Remarks: userRemarks.trim() || "-"
+                });
+                alert("Task marked as Complete.");
+              }
+              loadTasks();
+            } catch {
+              alert("Update failed");
+            }
+          };
         });
-
-        kanbanView.appendChild(col);
-      }
-      attachActions(tasks, "kanban");
-    }
-
-    // Render Grouped view by Owner
-    function renderGrouped(tasks) {
-      groupedView.innerHTML = "";
-      const groups = {};
-      tasks.forEach(t => {
-        const owner = t.Owner || "No Owner";
-        if (!groups[owner]) groups[owner] = [];
-        groups[owner].push(t);
       });
+    }
 
-      for (const owner in groups) {
-        const ownerDiv = document.createElement("div");
-        ownerDiv.className = "group-owner";
-        ownerDiv.innerHTML = `<h3>${owner}</h3>`;
+    // Loading tasks with specific status: Not Started, In Progress, or Pending
+    window.onload = async () => {
+      taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Loading tasks...</td></tr>`;
+      loadTasks();
+    };
 
-        groups[owner].forEach(task => {
-          const { totalWorkMs } = calcTimeDetails(task.workSessions);
-          const card = document.createElement("div");
-          card.className = "task-card";
-          card.innerHTML = `
-            <strong>${task["TYPE OF WORK"]}</strong><br/>
-            Status: ${statusLabels[(task.Status || "").toLowerCase()]?.label || task.Status}<br/>
-            Work Hours: ${formatMs(totalWorkMs)}
-          `;
-          ownerDiv.appendChild(card);
+    // Function to load tasks from Firestore
+    async function loadTasks() {
+      try {
+        const snap = await db.collection("tasks")
+          .where("Status", "in", ["Not Started", "In Progress", "Pending"]) // Exclude 'Complete'
+          .get();
+        const arr = [];
+        snap.forEach(doc => {
+          const d = doc.data();
+          arr.push({ id: doc.id, ...d });
         });
-
-        groupedView.appendChild(ownerDiv);
+        if (arr.length === 0) {
+          taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No tasks found.</td></tr>`;
+        } else {
+          renderTasks(arr);
+        }
+      } catch (err) {
+        console.error("Error loading tasks:", err);
+        taskBody.innerHTML = `<tr><td colspan="7" style="color:red;">Error loading tasks: ${err.message}</td></tr>`;
       }
-      attachActions(tasks, "grouped");
     }
-
-    // Attach actions to buttons (example)
-    function attachActions(tasks, viewType) {
-      // Attach your start/pause/complete button events here if needed
-      // For brevity, left as stub
-    }
-
-    // Open a popup for task details (stub)
-    function openTaskDetailsPopup(task) {
-      alert(`Task Details:\n${task["TYPE OF WORK"]}\nStatus: ${task.Status}`);
-    }
-
-    // Render current view according to selected button
-    let currentView = "table";
-
-    function renderCurrentView() {
-      tableView.style.display = currentView === "table" ? "table" : "none";
-      kanbanView.style.display = currentView === "kanban" ? "flex" : "none";
-      groupedView.style.display = currentView === "grouped" ? "block" : "none";
-
-      if (currentView === "table") renderTable(allTasks);
-      else if (currentView === "kanban") renderKanban(allTasks);
-      else if (currentView === "grouped") renderGrouped(allTasks);
-    }
-
-    // View buttons click handlers
-    btnTable.onclick = () => {
-      currentView = "table";
-      setActiveBtn(btnTable);
-      renderCurrentView();
-    };
-    btnKanban.onclick = () => {
-      currentView = "kanban";
-      setActiveBtn(btnKanban);
-      renderCurrentView();
-    };
-    btnGrouped.onclick = () => {
-      currentView = "grouped";
-      setActiveBtn(btnGrouped);
-      renderCurrentView();
-    };
-
-    function setActiveBtn(btn) {
-      [btnTable, btnKanban, btnGrouped].forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-    }
-
-    // Load tasks initially
-    loadTasks();
   </script>
 </body>
 </html>
