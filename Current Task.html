@@ -371,58 +371,56 @@
       }
     }
 
-    function applyFilterAndRender() {
-      const filterVal = ownerFilter.value.trim().toLowerCase();
-      const filtered = allTasks.filter(t => {
-        if (!filterVal) return true;
-        return (t.Owner || "").toLowerCase().includes(filterVal);
-      });
-      if (currentView === "table") {
-        renderTasks(filtered);
-      } else {
-        renderKanban(filtered);
-      }
-    }
+function applyFilterAndRender() {
+  const filterVal = ownerFilter.value.trim().toLowerCase();
+  const filtered = allTasks.filter(t => {
+    const ownerMatch = !filterVal || (t.Owner || "").toLowerCase().includes(filterVal);
+    const status = (t.Status || "").toLowerCase().replace(/\s+/g, "-");
+    const includeStatus = ["not-started", "in-progress", "pending"].includes(status);
+    return ownerMatch && includeStatus;
+  });
+  if (currentView === "table") {
+    renderTasks(filtered);
+  } else {
+    renderKanban(filtered);
+  }
+}
 
-    // Kanban code
-    const kanbanContainer = document.getElementById("kanbanContainer");
-    const tableContainer = document.getElementById("tableContainer");
-    let currentView = "table";
+function renderKanban(tasks) {
+  tableContainer.style.display = "none";
+  kanbanContainer.style.display = "flex";
+  kanbanContainer.innerHTML = "";
 
-    function renderKanban(tasks) {
-      tableContainer.style.display = "none";
-      kanbanContainer.style.display = "flex";
-      kanbanContainer.innerHTML = "";
+  const statuses = ["not-started", "in-progress", "pending"];
 
-      const statuses = ["not-started", "in-progress", "pending", "completed"];
+  statuses.forEach(statusKey => {
+    const col = document.createElement("div");
+    col.className = "kanban-column";
+    const label = statusLabels[statusKey]?.label || statusKey;
+    col.innerHTML = `<h3>${label}</h3>`;
 
-      statuses.forEach(statusKey => {
-        const col = document.createElement("div");
-        col.className = "kanban-column";
-        const label = statusLabels[statusKey]?.label || statusKey;
-        col.innerHTML = `<h3>${label}</h3>`;
+    tasks.filter(t => {
+      const s = (t.Status || "").toLowerCase().replace(/\s+/g, "-");
+      return s === statusKey;
+    }).forEach(task => {
+      const { totalWorkMs } = calcTimeDetails(task.workSessions);
+      const card = document.createElement("div");
+      card.className = "kanban-card";
+      card.innerHTML = `
+        <div><strong>SINO:</strong> ${task.SINO}</div>
+        <div><strong>Company:</strong> ${task["Existing Company Name"]}</div>
+        <div><strong>Task:</strong> ${task["TYPE OF WORK"]}</div>
+        <div><strong>Due Date:</strong> ${task["Due date"]}</div>
+        <div><strong>Owner:</strong> ${task.Owner || "No Owner"}</div>
+        <div><span class="status ${statusKey}">${label}</span> <small>Work hrs: ${formatMs(totalWorkMs)}</small></div>
+      `;
+      col.appendChild(card);
+    });
 
-        tasks.filter(t => {
-          const s = (t.Status || "").toLowerCase().replace(/\s+/g, "-");
-          return s === statusKey;
-        }).forEach(task => {
-          const { totalWorkMs } = calcTimeDetails(task.workSessions);
-          const card = document.createElement("div");
-          card.className = "kanban-card";
-          card.innerHTML = `
-            <div><strong>SINO:</strong> ${task.SINO}</div>
-            <div><strong>Company:</strong> ${task["Existing Company Name"]}</div>
-            <div><strong>Task:</strong> ${task["TYPE OF WORK"]}</div>
-            <div><strong>Due Date:</strong> ${task["Due date"]}</div>
-            <div><strong>Owner:</strong> ${task.Owner || "No Owner"}</div>
-            <div><span class="status ${statusKey}">${label}</span> <small>Work hrs: ${formatMs(totalWorkMs)}</small></div>
-          `;
-          col.appendChild(card);
-        });
+    kanbanContainer.appendChild(col);
+  });
+}
 
-        kanbanContainer.appendChild(col);
-      });
-    }
 
     // Event listeners for filter
     ownerFilter.addEventListener("input", () => {
