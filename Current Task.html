@@ -109,106 +109,103 @@
     }
 
     #kanbanContainer {
-  display: flex;
-  gap: 20px;
-  justify-content: space-between;
-  margin-top: 20px;
-}
+      display: flex;
+      gap: 20px;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
 
-.kanban-column {
-  background: #fff;
-  border-radius: 8px;
-  padding: 15px;
-  flex: 1;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  max-height: 80vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-}
+    .kanban-column {
+      background: #fff;
+      border-radius: 8px;
+      padding: 15px;
+      flex: 1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-height: 80vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
 
-.kanban-column h3 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  font-weight: bold;
-  border-bottom: 2px solid #34495e;
-  padding-bottom: 5px;
-  color: #34495e;
-  text-align: center;
-}
+    .kanban-column h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-weight: bold;
+      border-bottom: 2px solid #34495e;
+      padding-bottom: 5px;
+      color: #34495e;
+      text-align: center;
+    }
 
-.kanban-card {
-  background: #fdfdfd;
-  border-radius: 6px;
-  padding: 10px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  transition: background-color 0.3s;
-}
+    .kanban-card {
+      background: #fdfdfd;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: background-color 0.3s;
+    }
 
-.kanban-card:hover {
-  background: #f1f1f1;
-}
+    .kanban-card:hover {
+      background: #f1f1f1;
+    }
 
-.kanban-card .status {
-  font-weight: bold;
-  color: white;
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 0.8em;
-  display: inline-block;
-  margin-top: 6px;
-}
+    .kanban-card .status {
+      font-weight: bold;
+      color: white;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.8em;
+      display: inline-block;
+      margin-top: 6px;
+    }
 
-.status.not-started {
-  background: #95a5a6;
-}
+    .status.not-started {
+      background: #95a5a6;
+    }
 
-.status.in-progress {
-  background: #3498db;
-}
+    .status.in-progress {
+      background: #3498db;
+    }
 
-.status.pending {
-  background: #f1c40f;
-  color: black;
-}
+    .status.pending {
+      background: #f1c40f;
+      color: black;
+    }
 
   </style>
 </head>
 <body>
   <button class="close-btn" onclick="window.history.back()">Back</button>
   <div style="margin-bottom: 15px;">
-  <button id="tableViewBtn" style="padding: 8px 16px; font-weight: bold;">Table View</button>
-  <button id="kanbanViewBtn" style="padding: 8px 16px;">Kanban View</button>
-</div>
+    <button id="tableViewBtn" style="padding: 8px 16px; font-weight: bold;">Table View</button>
+    <button id="kanbanViewBtn" style="padding: 8px 16px;">Kanban View</button>
+  </div>
 
-<label for="ownerFilter">Filter by Owner Name:</label>
-<input type="text" id="ownerFilter" placeholder="Type owner name to filter" aria-label="Filter tasks by owner" style="margin-bottom: 10px; padding: 6px; width: 250px;">
-  <h2>Apple Task Details</h2>
   <label for="ownerFilter">Filter by Owner Name:</label>
-<input type="text" id="ownerFilter" placeholder="Type owner name to filter" aria-label="Filter tasks by owner" style="margin-bottom: 10px; padding: 6px; width: 250px;">
-  <table class="task-table">
-    <div id="tableContainer">
-  <table class="task-table">
-    <thead>
-      <tr>
-        <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
-      </tr>
-    </thead>
-    <tbody id="task-body"></tbody>
-  </table>
-</div>
+  <input type="text" id="ownerFilter" placeholder="Type owner name to filter" aria-label="Filter tasks by owner" style="margin-bottom: 10px; padding: 6px; width: 250px;">
 
-<div id="kanbanContainer" style="display:none;"></div>
+  <h2>Apple Task Details</h2>
 
-    <thead>
-      <tr>
-        <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
-      </tr>
-    </thead>
-    <tbody id="task-body"></tbody>
-  </table>
+  <div id="tableContainer">
+    <table class="task-table" aria-label="Task List Table">
+      <thead>
+        <tr>
+          <th>SINO</th>
+          <th>Company</th>
+          <th>Task</th>
+          <th>Due Date</th>
+          <th>Status</th>
+          <th>Owner</th>
+          <th>Work Hours</th>
+        </tr>
+      </thead>
+      <tbody id="task-body"></tbody>
+    </table>
+  </div>
+
+  <div id="kanbanContainer" style="display:none;" aria-label="Kanban Board"></div>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -327,252 +324,132 @@
             const ts = now(), sess = t.workSessions || [];
             try {
               if (btn.classList.contains("btn-start")) {
-                if (sess.some(s => !s.end)) return alert("Already running");
-                sess.push({ start: ts, end: null });
-                await ref.update({ Status: "In Progress", taskStart: ts, workSessions: sess });
-                alert("Started");
-              }
-              if (btn.classList.contains("btn-pending")) {
-                const i = sess.findIndex(s => !s.end);
-                if (i < 0) return alert("Not running");
-                sess[i].end = ts;
-                await ref.update({ Status: "Pending", workSessions: sess });
-                alert("Paused");
-              }
-              if (btn.classList.contains("btn-continue")) {
-                if (sess.some(s => !s.end)) return alert("Already running");
-                sess.push({ start: ts, end: null });
-                await ref.update({ Status: "In Progress", workSessions: sess });
-                alert("Resumed");
-              }
-              if (btn.classList.contains("btn-complete")) {
-                const i = sess.findIndex(s => !s.end);
-                if (i > -1) sess[i].end = ts;
-                let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
-                sess.forEach(s => {
-                  const startMs = s.start?.toDate?.().getTime();
-                  const endMs = s.end?.toDate?.().getTime();
-                  if (startMs && endMs) {
-                    totalWorkMs += endMs - startMs;
-                    if (lastEnd !== null) {
-                      const pause = startMs - lastEnd;
-                      if (pause > 0) {
-                        totalPauseMs += pause;
-                        pauseCount++;
-                      }
-                    }
-                    lastEnd = endMs;
-                  }
+                // Start work
+                await ref.update({ 
+                  Status: "in-progress",
+                  workSessions: [...sess, {start: ts}]
                 });
-                const startTime = sess[0]?.start || ts;
-                const endTime = sess.at(-1)?.end || ts;
-
-                const userRemarks = prompt("Enter remarks for this task before completing:", t.Remarks || "");
-                if (userRemarks === null) return alert("Task completion cancelled.");
-                await ref.update({
-                  Status: "Complete",
-                  taskStart: startTime,
-                  taskEnd: endTime,
-                  workSessions: sess,
-                  TimeStarted: startTime.toDate().toLocaleString(),
-                  TimeEnd: endTime.toDate().toLocaleString(),
-                  TotalWorkHours: formatMs(totalWorkMs),
-                  TotalPauseHours: formatMs(totalPauseMs),
-                  Remarks: userRemarks.trim() || "-"
+              } else if (btn.classList.contains("btn-pending")) {
+                // Pause work
+                if (sess.length > 0 && !sess.at(-1).end) {
+                  sess[sess.length - 1].end = ts;
+                  await ref.update({ Status: "pending", workSessions: sess });
+                }
+              } else if (btn.classList.contains("btn-continue")) {
+                // Resume work
+                await ref.update({ 
+                  Status: "in-progress",
+                  workSessions: [...sess, {start: ts}]
                 });
-                alert("Task marked as Complete.");
+              } else if (btn.classList.contains("btn-complete")) {
+                // Complete work
+                if (sess.length > 0 && !sess.at(-1).end) {
+                  sess[sess.length - 1].end = ts;
+                }
+                await ref.update({ Status: "completed", workSessions: sess });
               }
+              alert("Status updated.");
               loadTasks();
-            } catch {
-              alert("Update failed");
+            } catch(err) {
+              alert("Error updating status: " + err.message);
             }
           };
         });
       });
     }
 
-    // Loading tasks with specific status: Not Started, In Progress, or Pending
-    window.onload = async () => {
-      taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Loading tasks...</td></tr>`;
-      loadTasks();
-    };
+    const ownerFilter = document.getElementById("ownerFilter");
+    let allTasks = [];
 
-    // Function to load tasks from Firestore
     async function loadTasks() {
       try {
-        const snap = await db.collection("tasks")
-          .where("Status", "in", ["Not Started", "In Progress", "Pending"]) // Exclude 'Complete'
-          .get();
-        const arr = [];
-        snap.forEach(doc => {
-          const d = doc.data();
-          arr.push({ id: doc.id, ...d });
-        });
-        if (arr.length === 0) {
-          taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No tasks found.</td></tr>`;
-        } else {
-          renderTasks(arr);
-        }
-      } catch (err) {
-        console.error("Error loading tasks:", err);
-        taskBody.innerHTML = `<tr><td colspan="7" style="color:red;">Error loading tasks: ${err.message}</td></tr>`;
+        const snapshot = await db.collection("tasks").orderBy("SINO").get();
+        allTasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        applyFilterAndRender();
+      } catch (error) {
+        console.error("Error loading tasks:", error);
       }
     }
 
-    let allTasks = []; // store all tasks globally for filtering
-
-async function loadTasks() {
-  try {
-    const snap = await db.collection("tasks")
-      .where("Status", "in", ["Not Started", "In Progress", "Pending"]) // Exclude 'Complete'
-      .get();
-    allTasks = [];
-    snap.forEach(doc => {
-      const d = doc.data();
-      allTasks.push({ id: doc.id, ...d });
-    });
-    if (allTasks.length === 0) {
-      taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No tasks found.</td></tr>`;
-    } else {
-      renderTasks(allTasks);
+    function applyFilterAndRender() {
+      const filterVal = ownerFilter.value.trim().toLowerCase();
+      const filtered = allTasks.filter(t => {
+        if (!filterVal) return true;
+        return (t.Owner || "").toLowerCase().includes(filterVal);
+      });
+      if (currentView === "table") {
+        renderTasks(filtered);
+      } else {
+        renderKanban(filtered);
+      }
     }
-  } catch (err) {
-    console.error("Error loading tasks:", err);
-    taskBody.innerHTML = `<tr><td colspan="7" style="color:red;">Error loading tasks: ${err.message}</td></tr>`;
-  }
-}
-const tableContainer = document.getElementById('tableContainer');
-const kanbanContainer = document.getElementById('kanbanContainer');
-const tableViewBtn = document.getElementById('tableViewBtn');
-const kanbanViewBtn = document.getElementById('kanbanViewBtn');
 
-let currentView = 'table'; // default
+    // Kanban code
+    const kanbanContainer = document.getElementById("kanbanContainer");
+    const tableContainer = document.getElementById("tableContainer");
+    let currentView = "table";
 
-function renderKanban(tasks) {
-  // Clear Kanban container
-  kanbanContainer.innerHTML = '';
+    function renderKanban(tasks) {
+      tableContainer.style.display = "none";
+      kanbanContainer.style.display = "flex";
+      kanbanContainer.innerHTML = "";
 
-  // Group tasks by status
-  const groups = {
-    'Not Started': [],
-    'In Progress': [],
-    'Pending': []
-  };
+      const statuses = ["not-started", "in-progress", "pending", "completed"];
 
-  tasks.forEach(task => {
-    if (groups[task.Status]) {
-      groups[task.Status].push(task);
+      statuses.forEach(statusKey => {
+        const col = document.createElement("div");
+        col.className = "kanban-column";
+        const label = statusLabels[statusKey]?.label || statusKey;
+        col.innerHTML = `<h3>${label}</h3>`;
+
+        tasks.filter(t => {
+          const s = (t.Status || "").toLowerCase().replace(/\s+/g, "-");
+          return s === statusKey;
+        }).forEach(task => {
+          const { totalWorkMs } = calcTimeDetails(task.workSessions);
+          const card = document.createElement("div");
+          card.className = "kanban-card";
+          card.innerHTML = `
+            <div><strong>SINO:</strong> ${task.SINO}</div>
+            <div><strong>Company:</strong> ${task["Existing Company Name"]}</div>
+            <div><strong>Task:</strong> ${task["TYPE OF WORK"]}</div>
+            <div><strong>Due Date:</strong> ${task["Due date"]}</div>
+            <div><strong>Owner:</strong> ${task.Owner || "No Owner"}</div>
+            <div><span class="status ${statusKey}">${label}</span> <small>Work hrs: ${formatMs(totalWorkMs)}</small></div>
+          `;
+          col.appendChild(card);
+        });
+
+        kanbanContainer.appendChild(col);
+      });
     }
-  });
 
-  Object.keys(groups).forEach(status => {
-    const col = document.createElement('div');
-    col.className = 'kanban-column';
-    col.innerHTML = `<h3>${status} (${groups[status].length})</h3>`;
-
-    groups[status].forEach(task => {
-      const card = document.createElement('div');
-      card.className = 'kanban-card';
-      const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
-
-      card.innerHTML = `
-        <strong>${task.SINO}. ${task["Existing Company Name"]}</strong><br>
-        <em>${task["TYPE OF WORK"]}</em><br>
-        Due: ${task["Due date"]}<br>
-        <span class="status ${sk}">${status}</span><br>
-        Owner: ${task.Owner || 'No Owner'}
-      `;
-
-      // Optional: Add click to toggle combo-box details or alert (you can customize)
-      card.onclick = () => alert(`Task Details:\n\nSINO: ${task.SINO}\nCompany: ${task["Existing Company Name"]}\nTask: ${task["TYPE OF WORK"]}\nDue: ${task["Due date"]}\nStatus: ${status}\nOwner: ${task.Owner || 'No Owner'}\nRemarks: ${task.Remarks || '-'}`);
-
-      col.appendChild(card);
+    // Event listeners for filter
+    ownerFilter.addEventListener("input", () => {
+      applyFilterAndRender();
     });
 
-    kanbanContainer.appendChild(col);
-  });
-}
-
-// Toggle views
-tableViewBtn.onclick = () => {
-  currentView = 'table';
-  tableContainer.style.display = 'block';
-  kanbanContainer.style.display = 'none';
-  tableViewBtn.style.fontWeight = 'bold';
-  kanbanViewBtn.style.fontWeight = 'normal';
-  applyFilter();
-};
-
-kanbanViewBtn.onclick = () => {
-  currentView = 'kanban';
-  tableContainer.style.display = 'none';
-  kanbanContainer.style.display = 'flex';
-  tableViewBtn.style.fontWeight = 'normal';
-  kanbanViewBtn.style.fontWeight = 'bold';
-  applyFilter();
-};
-
-// Apply filter and render according to current view
-function applyFilter() {
-  const filterValue = ownerFilterInput.value.trim().toLowerCase();
-  let filteredTasks;
-  if (!filterValue) {
-    filteredTasks = allTasks;
-  } else {
-    filteredTasks = allTasks.filter(task => {
-      const owner = task.Owner ? task.Owner.toLowerCase() : '';
-      return owner.includes(filterValue);
+    // Toggle views
+    document.getElementById("tableViewBtn").addEventListener("click", () => {
+      currentView = "table";
+      kanbanContainer.style.display = "none";
+      tableContainer.style.display = "block";
+      applyFilterAndRender();
+      document.getElementById("tableViewBtn").style.fontWeight = "bold";
+      document.getElementById("kanbanViewBtn").style.fontWeight = "normal";
     });
-  }
 
-  if (currentView === 'table') {
-    renderTasks(filteredTasks);
-  } else {
-    renderKanban(filteredTasks);
-  }
-}
-
-// Update filter input event listener to use applyFilter
-ownerFilterInput.removeEventListener('input', ownerFilterInput._listener);
-ownerFilterInput._listener = () => applyFilter();
-ownerFilterInput.addEventListener('input', ownerFilterInput._listener);
-
-// Modify loadTasks to use applyFilter after loading tasks
-async function loadTasks() {
-  try {
-    const snap = await db.collection("tasks")
-      .where("Status", "in", ["Not Started", "In Progress", "Pending"])
-      .get();
-    allTasks = [];
-    snap.forEach(doc => {
-      const d = doc.data();
-      allTasks.push({ id: doc.id, ...d });
+    document.getElementById("kanbanViewBtn").addEventListener("click", () => {
+      currentView = "kanban";
+      tableContainer.style.display = "none";
+      kanbanContainer.style.display = "flex";
+      applyFilterAndRender();
+      document.getElementById("kanbanViewBtn").style.fontWeight = "bold";
+      document.getElementById("tableViewBtn").style.fontWeight = "normal";
     });
-    if (allTasks.length === 0) {
-      taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No tasks found.</td></tr>`;
-    }
-    applyFilter();
-  } catch (err) {
-    console.error("Error loading tasks:", err);
-    taskBody.innerHTML = `<tr><td colspan="7" style="color:red;">Error loading tasks: ${err.message}</td></tr>`;
-  }
-}
 
-// Filter logic
-const ownerFilterInput = document.getElementById('ownerFilter');
-ownerFilterInput.addEventListener('input', () => {
-  const filterValue = ownerFilterInput.value.trim().toLowerCase();
-  if (!filterValue) {
-    renderTasks(allTasks);
-  } else {
-    const filtered = allTasks.filter(task => {
-      const owner = task.Owner ? task.Owner.toLowerCase() : '';
-      return owner.includes(filterValue);
-    });
-    renderTasks(filtered);
-  }
-});
-
+    // Initial load
+    loadTasks();
   </script>
 </body>
 </html>
