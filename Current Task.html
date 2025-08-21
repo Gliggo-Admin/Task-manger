@@ -112,6 +112,8 @@
 <body>
   <button class="close-btn" onclick="window.history.back()">Back</button>
   <h2>Apple Task Details</h2>
+  <label for="ownerFilter">Filter by Owner Name:</label>
+<input type="text" id="ownerFilter" placeholder="Type owner name to filter" aria-label="Filter tasks by owner" style="margin-bottom: 10px; padding: 6px; width: 250px;">
   <table class="task-table">
     <thead>
       <tr>
@@ -329,6 +331,45 @@
         taskBody.innerHTML = `<tr><td colspan="7" style="color:red;">Error loading tasks: ${err.message}</td></tr>`;
       }
     }
+
+    let allTasks = []; // store all tasks globally for filtering
+
+async function loadTasks() {
+  try {
+    const snap = await db.collection("tasks")
+      .where("Status", "in", ["Not Started", "In Progress", "Pending"]) // Exclude 'Complete'
+      .get();
+    allTasks = [];
+    snap.forEach(doc => {
+      const d = doc.data();
+      allTasks.push({ id: doc.id, ...d });
+    });
+    if (allTasks.length === 0) {
+      taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No tasks found.</td></tr>`;
+    } else {
+      renderTasks(allTasks);
+    }
+  } catch (err) {
+    console.error("Error loading tasks:", err);
+    taskBody.innerHTML = `<tr><td colspan="7" style="color:red;">Error loading tasks: ${err.message}</td></tr>`;
+  }
+}
+
+// Filter logic
+const ownerFilterInput = document.getElementById('ownerFilter');
+ownerFilterInput.addEventListener('input', () => {
+  const filterValue = ownerFilterInput.value.trim().toLowerCase();
+  if (!filterValue) {
+    renderTasks(allTasks);
+  } else {
+    const filtered = allTasks.filter(task => {
+      const owner = task.Owner ? task.Owner.toLowerCase() : '';
+      return owner.includes(filterValue);
+    });
+    renderTasks(filtered);
+  }
+});
+
   </script>
 </body>
 </html>
