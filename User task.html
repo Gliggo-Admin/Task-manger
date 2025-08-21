@@ -390,6 +390,9 @@
 
   <button id="createTaskBtn">+ Create Task</button>
 
+  <label for="searchInput">Search Tasks:</label>
+<input type="text" id="searchInput" placeholder="Search by company or any word..." aria-label="Search tasks">
+<br/><br/>
   <table id="tasksTable" aria-label="Tasks table">
     <thead>
       <tr>
@@ -1015,6 +1018,26 @@ function populateGlobalSuggestions() {
   addUniqueOptions(companyList, companies);
   addUniqueOptions(accountsCardsList, accounts);
 }
+
+    const searchInput = document.getElementById('searchInput');
+
+searchInput.addEventListener('input', () => {
+  const query = searchInput.value.trim().toLowerCase();
+
+  if (!query) {
+    filteredTasks = allTasks;
+  } else {
+    filteredTasks = allTasks.filter(task => {
+      // Convert task object values to strings and join
+      const combined = Object.values(task).join(' ').toLowerCase();
+      return combined.includes(query);
+    });
+  }
+
+  currentPage = 1;
+  renderTablePage(currentPage, filteredTasks);
+  renderPagination(filteredTasks);
+});
 
 window.onload = async () => {
   await loadTasks();
