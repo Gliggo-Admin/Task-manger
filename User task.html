@@ -1171,35 +1171,42 @@
     // Handle WORK FOR dropdown change
     // Handle WORK FOR dropdown change
 // Handle WORK FOR dropdown change to show/hide period input
-document.getElementById('workFor').addEventListener('change', function(e) {
-    const periodInput = document.getElementById('period');
-    const periodLabel = document.querySelector('label[for="period"]');
-    
-    if (e.target.value === 'Custom') {
+    document.getElementById('workFor').addEventListener('change', function(e) {
+      const periodInput = document.getElementById('period');
+      const periodLabel = document.querySelector('label[for="period"]');
+      
+      if (e.target.value === 'Custom') {
         periodInput.style.display = 'block';
         periodLabel.style.display = 'block';
         periodInput.required = true;
-    } else {
+      } else {
         periodInput.style.display = 'none';
         periodLabel.style.display = 'none';
         periodInput.required = false;
         periodInput.value = '';
-    }
-});
+        
+        // Set period value based on selection (optional)
+        const periodValue = e.target.value;
+        if (periodValue) {
+          // You might want to set a hidden field or handle this differently
+          console.log('Selected period:', periodValue);
+        }
+      }
+    });
 
 // Initialize the period field state on page load
-document.addEventListener('DOMContentLoaded', function() {
-    const periodInput = document.getElementById('period');
-    const periodLabel = document.querySelector('label[for="period"]');
-    
-    // Hide period field initially if not "Custom"
-    if (document.getElementById('workFor').value !== 'Custom') {
+    document.addEventListener('DOMContentLoaded', function() {
+      const periodInput = document.getElementById('period');
+      const periodLabel = document.querySelector('label[for="period"]');
+      const workForSelect = document.getElementById('workFor');
+      
+      // Hide period field initially if not "Custom"
+      if (workForSelect.value !== 'Custom') {
         periodInput.style.display = 'none';
         periodLabel.style.display = 'none';
-    }
-});
-    // Initialize the application
-    document.addEventListener('DOMContentLoaded', () => {
+      }
+      
+      // Your other initialization code
       loadTasks();
       loadDropdownOptions();
     });
