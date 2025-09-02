@@ -520,10 +520,12 @@
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-  <script>
-    // Firebase config - replace with yours
+ <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+  import { getFirestore, collection, query, where, orderBy, getDocs } 
+    from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
     const firebaseConfig = {
       apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
       authDomain: "task-manager-602da.firebaseapp.com",
@@ -563,29 +565,24 @@
 
 // Load tasks for current user (Owner)
 async function loadTasks() {
-  const user = JSON.parse(sessionStorage.getItem("user"));
+  const user = sessionStorage.getItem("username");
   if (!user) return;
 
   try {
-    // Query tasks owned by the logged-in user
-    const q = query(
-      collection(db, "tasks"),
-      where("Owner", "==", user.displayName || user.email), // FIX: use "Owner"
-      orderBy("SINO", "asc") // FIX: use "SINO"
-    );
+    const snapshot = await db.collection("tasks")
+      .where("Owner", "==", user)
+      .orderBy("SINO", "asc")
+      .get();
 
-    const querySnapshot = await getDocs(q);
-
-    const tasks = [];
-    querySnapshot.forEach((doc) => {
-      tasks.push({ id: doc.id, ...doc.data() });
-    });
-
-    renderTasks(tasks);
+    allTasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    filteredTasks = allTasks;
+    renderTablePage(currentPage, filteredTasks);
+    renderPagination(filteredTasks);
   } catch (err) {
     console.error("Error loading tasks:", err);
   }
 }
+
 
 
 // ✅ Async global SINO generator using Firestore
