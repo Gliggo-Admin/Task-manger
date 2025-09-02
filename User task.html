@@ -4,29 +4,28 @@
 <meta charset="UTF-8" />
 <title>User Task Manager</title>
   <style>
-
     #topNav {
-  display: flex;
-  justify-content: flex-start;
-  gap: 12px;
-  margin-bottom: 20px;
-}
+      display: flex;
+      justify-content: flex-start;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
 
-#topNav button {
-  background-color: #264653;
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 6px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
+    #topNav button {
+      background-color: #264653;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
 
-#topNav button:hover {
-  background-color: #1b2e34;
-}
+    #topNav button:hover {
+      background-color: #1b2e34;
+    }
 
     /* Basic styling */
     body { 
@@ -129,8 +128,6 @@
       color: #2a9d8f;
     }
 
-    /* Color status using JS instead (safer) */
-
     .edit-btn, .delete-btn {
       padding: 5px 10px;
       margin-right: 5px;
@@ -156,32 +153,31 @@
     }
 
     /* Modal styles */
-#taskModal { 
-  display: none; 
-  position: fixed; 
-  top: 0; 
-  left: 0; 
-  width: 100%; 
-  height: 100%; 
-  background: rgba(0,0,0,0.5); 
-  justify-content: center; 
-  align-items: center; 
-  z-index: 100;
-  overflow-y: auto; /* ✨ Allow scroll on small screens */
-  padding: 20px;
-}
+    #taskModal { 
+      display: none; 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: rgba(0,0,0,0.5); 
+      justify-content: center; 
+      align-items: center; 
+      z-index: 100;
+      overflow-y: auto;
+      padding: 20px;
+    }
 
-#taskModal form {
-  background: white; 
-  padding: 20px; 
-  border-radius: 8px; 
-  width: 100%;
-  max-width: 400px; /* Responsive width */
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  overflow-y: auto; /* ✨ Scroll inside the form */
-  max-height: 90vh; /* Prevent overflowing viewport */
-}
-
+    #taskModal form {
+      background: white; 
+      padding: 20px; 
+      border-radius: 8px; 
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      overflow-y: auto;
+      max-height: 90vh;
+    }
 
     #paginationControls {
       margin-top: 15px;
@@ -207,197 +203,195 @@
       cursor: not-allowed;
     }
 
-.detail-row td {
-  border-top: none;
-  font-style: italic;
-  background-color: #f9f9f9;
-}
-.task-row:hover {
-  cursor: pointer;
-  background-color: #e0f2f1;
-}
+    .detail-row td {
+      border-top: none;
+      font-style: italic;
+      background-color: #f9f9f9;
+    }
+    .task-row:hover {
+      cursor: pointer;
+      background-color: #e0f2f1;
+    }
 
-#taskForm {
-  background: linear-gradient(to bottom right, #f3f4ff, #dde6ff); /* soft lavender/blue */
-  border: none;
-  border-radius: 16px;
-  padding: 30px 25px;
-  width: 400px;
-  margin: 30px auto;
-  color: #264653;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+    #taskForm {
+      background: linear-gradient(to bottom right, #f3f4ff, #dde6ff);
+      border: none;
+      border-radius: 16px;
+      padding: 30px 25px;
+      width: 400px;
+      margin: 30px auto;
+      color: #264653;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-#taskForm h3 {
-  color: #2a9d8f;
-  text-align: center;
-  margin-bottom: 22px;
-  font-weight: bold;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-}
+    #taskForm h3 {
+      color: #2a9d8f;
+      text-align: center;
+      margin-bottom: 22px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
 
-/* Label styling */
-#taskForm label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 6px;
-  color: #1f3a3a;
-  font-size: 14px;
-}
+    /* Label styling */
+    #taskForm label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #1f3a3a;
+      font-size: 14px;
+    }
 
-/* Universal input styling */
-#taskForm input[type="text"],
-#taskForm input[type="date"],
-#taskForm select,
-#taskForm textarea {
-  width: 100%;
-  padding: 12px 15px;
-  border-radius: 12px;
-  margin-top: 5px;
-  margin-bottom: 20px;
-  font-size: 15px;
-  font-weight: 500;
-  box-sizing: border-box;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
-  transition: all 0.3s ease;
-}
+    /* Universal input styling */
+    #taskForm input[type="text"],
+    #taskForm input[type="date"],
+    #taskForm select,
+    #taskForm textarea {
+      width: 100%;
+      padding: 12px 15px;
+      border-radius: 12px;
+      margin-top: 5px;
+      margin-bottom: 20px;
+      font-size: 15px;
+      font-weight: 500;
+      box-sizing: border-box;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
 
-/* Hover & focus */
-#taskForm input:not([readonly]):hover,
-#taskForm select:hover,
-#taskForm textarea:hover {
-  background-color: #f0faff;
-  border-color: #2a9d8f;
-}
+    /* Hover & focus */
+    #taskForm input:not([readonly]):hover,
+    #taskForm select:hover,
+    #taskForm textarea:hover {
+      background-color: #f0faff;
+      border-color: #2a9d8f;
+    }
 
-#taskForm input:not([readonly]):focus,
-#taskForm select:focus,
-#taskForm textarea:focus {
-  outline: none;
-  border-color: #2a9d8f;
-  box-shadow: 0 0 5px rgba(42, 157, 143, 0.3);
-}
+    #taskForm input:not([readonly]):focus,
+    #taskForm select:focus,
+    #taskForm textarea:focus {
+      outline: none;
+      border-color: #2a9d8f;
+      box-shadow: 0 0 5px rgba(42, 157, 143, 0.3);
+    }
 
-/* Read-only fields (SINO, Task, Owner) */
-#taskForm input[readonly] {
-  background-color: #e3f3f5;
-  color: #657e83;
-  border: 1px dashed #b4d7db;
-  cursor: not-allowed;
-  font-style: italic;
-  box-shadow: none;
-}
+    /* Read-only fields (SINO, Task, Owner) */
+    #taskForm input[readonly] {
+      background-color: #e3f3f5;
+      color: #657e83;
+      border: 1px dashed #b4d7db;
+      cursor: not-allowed;
+      font-style: italic;
+      box-shadow: none;
+    }
 
-/* Dropdown select */
-#taskForm select {
-  cursor: pointer;
-  background-color: #fff;
-}
+    /* Dropdown select */
+    #taskForm select {
+      cursor: pointer;
+      background-color: #fff;
+    }
 
-/* Textarea */
-#taskForm textarea {
-  resize: vertical;
-  min-height: 70px;
-}
+    /* Textarea */
+    #taskForm textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
 
-/* Buttons */
-#taskForm button[type="submit"],
-#taskForm button[type="button"] {
-  width: 48%;
-  margin: 10px 1%;
-  padding: 12px;
-  font-size: 15px;
-  font-weight: 700;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
+    /* Buttons */
+    #taskForm button[type="submit"],
+    #taskForm button[type="button"] {
+      width: 48%;
+      margin: 10px 1%;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
 
-#taskForm button[type="submit"] {
-  background-color: #2a9d8f;
-  color: white;
-}
+    #taskForm button[type="submit"] {
+      background-color: #2a9d8f;
+      color: white;
+    }
 
-#taskForm button[type="submit"]:hover {
-  background-color: #21877b;
-  transform: scale(1.02);
-}
+    #taskForm button[type="submit"]:hover {
+      background-color: #21877b;
+      transform: scale(1.02);
+    }
 
-#taskForm button[type="button"] {
-  background-color: #e76f51;
-  color: white;
-}
+    #taskForm button[type="button"] {
+      background-color: #e76f51;
+      color: white;
+    }
 
-#taskForm button[type="button"]:hover {
-  background-color: #c94f38;
-  transform: scale(1.02);
-}
+    #taskForm button[type="button"]:hover {
+      background-color: #c94f38;
+      transform: scale(1.02);
+    }
 
+    #taskForm button[type="button"]:focus {
+      background-color: #c94f38;
+      box-shadow: 0 6px 18px rgba(201, 79, 56, 0.6);
+      transform: translateY(-2px);
+      outline: none;
+    }
 
-
-#taskForm button[type="button"]:focus {
-  background-color: #c94f38;
-  box-shadow: 0 6px 18px rgba(201, 79, 56, 0.6);
-  transform: translateY(-2px);
-  outline: none;
-}
-
-/* Add subtle focus outline for accessibility */
-#taskForm input:focus-visible,
-#taskForm select:focus-visible,
-#taskForm textarea:focus-visible,
-#taskForm button:focus-visible {
-  outline: 3px solid #76c7b7;
-  outline-offset: 3px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 420px) {
-  #taskForm {
-    width: 90%;
-    padding: 20px;
-  }
-  #taskForm button[type="submit"],
-  #taskForm button[type="button"] {
-    width: 100%;
-    margin: 10px 0;
-  }
-}
-
+    /* Toast notification */
     #toast {
-  visibility: hidden;
-  min-width: 250px;
-  background-color: #e63946;
-  color: #fff;
-  text-align: center;
-  border-radius: 6px;
-  padding: 12px;
-  position: fixed;
-  z-index: 2000;
-  bottom: 30px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-weight: bold;
-}
-#toast.show {
-  visibility: visible;
-  animation: fadein 0.5s, fadeout 0.5s 2.5s;
-}
-@keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
-@keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+      visibility: hidden;
+      min-width: 300px;
+      background-color: #e76f51;
+      color: white;
+      text-align: center;
+      border-radius: 8px;
+      padding: 16px;
+      position: fixed;
+      z-index: 1000;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      font-weight: 600;
+    }
 
+    #toast.show {
+      visibility: visible;
+      animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    }
 
+    @keyframes fadein {
+      from {bottom: 0; opacity: 0;}
+      to {bottom: 30px; opacity: 1;}
+    }
 
+    @keyframes fadeout {
+      from {bottom: 30px; opacity: 1;}
+      to {bottom: 0; opacity: 0;}
+    }
 
-
+    /* Responsive adjustments */
+    @media (max-width: 420px) {
+      #taskForm {
+        width: 90%;
+        padding: 20px;
+      }
+      #taskForm button[type="submit"],
+      #taskForm button[type="button"] {
+        width: 100%;
+        margin: 10px 0;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Toast notification -->
+  <div id="toast"></div>
+
   <nav id="topNav">
     <button onclick="location.href='UserDashboard.html'">🏠 Home</button>
     <button onclick="location.href='CurrentTask.html'">🛠️ Current Working</button>
@@ -411,13 +405,11 @@
     </div>
   </header>
 
-
-
   <button id="createTaskBtn">+ Create Task</button>
 
   <label for="searchInput">Search Tasks:</label>
-<input type="text" id="searchInput" placeholder="Search by company or any word..." aria-label="Search tasks">
-<br/><br/>
+  <input type="text" id="searchInput" placeholder="Search by company or any word..." aria-label="Search tasks">
+  <br/><br/>
   <table id="tasksTable" aria-label="Tasks table">
     <thead>
       <tr>
@@ -436,100 +428,134 @@
 
   <!-- Task creation modal -->
   <div id="taskModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-<form id="taskForm">
-  <h3 id="modalTitle">Create / Edit Task</h3>
+    <form id="taskForm">
+      <h3 id="modalTitle">Create / Edit Task</h3>
 
-  <!-- SINO (auto-generated) -->
-  <label>SINO:<br/>
-    <input type="text" name="SINO" id="SINO" readonly>
-  </label><br/><br/>
+      <!-- SINO (auto-generated) -->
+      <label>SINO:<br/>
+        <input type="text" name="SINO" id="SINO" readonly>
+      </label><br/><br/>
 
-  <!-- Company Name with autocomplete -->
-  <label>Company Name:<br/>
-    <input list="companyList" name="companyName" id="companyName" required>
-    <datalist id="companyList"></datalist>
-  </label><br/><br/>
+      <!-- Company Name with autocomplete -->
+      <label>Company Name:<br/>
+        <input list="companyList" name="companyName" id="companyName" required>
+        <datalist id="companyList"></datalist>
+      </label><br/><br/>
 
-  <!-- TYPE OF WORK (dynamic dropdown) -->
-  <label>TYPE OF WORK:<br/>
-    <input list="workTypeList" name="typeOfWork" id="typeOfWork" required>
-    <datalist id="workTypeList"></datalist>
-  </label><br/><br/>
+      <!-- TYPE OF WORK (dynamic dropdown) -->
+      <label>TYPE OF WORK:<br/>
+        <input list="workTypeList" name="typeOfWork" id="typeOfWork" required>
+        <datalist id="workTypeList"></datalist>
+      </label><br/><br/>
 
-  <!-- ACCOUNT TYPE -->
+      <!-- ACCOUNT TYPE -->
+      <label>Account Type:<br/>
+        <select name="accountType" id="accountType">
+          <option value="">--Select--</option>
+          <option>Credit Card</option>
+          <option>Chequing Acc</option>
+          <option>Savings Acc</option>
+          <option>Loan Acc</option>
+          <option>Other</option>
+        </select>
+      </label><br/><br/>
 
-  <label>Account Type:<br/>
+      <!-- Account # autofill from existing -->
+      <label>Account # / Cards:<br/>
+        <input list="accountsCardsList" name="accountsCards" id="accountsCards">
+        <datalist id="accountsCardsList"></datalist>
+      </label><br/><br/>
 
-    <select name="accountType" id="accountType">
+      <!-- Task (auto default to 'Daily Task' but editable) -->
+      <label>Task:<br/>
+        <input type="text" name="Task" id="Task">
+      </label><br/><br/>
 
-      <option value="">--Select--</option>
+      <!-- Owner (preset to username but editable) -->
+      <label>Owner:<br/>
+        <input type="text" name="Owner" id="Owner" required>
+      </label><br/><br/>
 
-      <option>Credit Card</option>
+      <!-- WORK FOR with period logic -->
+      <label>WORK FOR:<br/>
+        <select name="workFor" id="workFor">
+          <option value="">--Choose--</option>
+          <option value="Yearly">Yearly</option>
+          <option value="Monthly">Monthly</option>
+          <option value="Quarterly">Quarterly</option>
+          <option value="Bi-weekly">Bi-weekly</option>
+          <option value="Weekly">Weekly</option>
+          <option value="Custom">Custom</option>
+        </select>
+      </label><br/><br/>
 
-      <option>Chequing Acc</option>
+      <label>Period:<br/>
+        <input type="text" name="period" id="period" style="display:none;" placeholder="Enter period">
+      </label><br/><br/>
 
-      <option>Savings Acc</option>
+      <!-- Due Date -->
+      <label>Due Date:<br/>
+        <input type="date" name="dueDate" id="dueDate" required>
+      </label><br/><br/>
 
-      <option>Loan Acc</option>
+      <!-- Assigned By -->
+      <label>Assigned By:<br/>
+        <input list="assignedByList" name="AssignedBy" id="AssignedBy">
+        <datalist id="assignedByList"></datalist>
+      </label><br/><br/>
 
-      <option>Other</option>
+      <!-- Notes -->
+      <label>Notes:<br/>
+        <textarea name="Notes" id="Notes"></textarea>
+      </label><br/><br/>
 
-    </select>
-  </label><br/><br/>
+      <button type="submit">Save Task</button>
+      <button type="button" id="cancelBtn">Cancel</button>
+    </form>
+  </div>
 
-  <!-- Account # autofill from existing -->
-  <label>Account # / Cards:<br/>
-    <input list="accountsCardsList" name="accountsCards" id="accountsCards">
-    <datalist id="accountsCardsList"></datalist>
-  </label><br/><br/>
+  <!-- Edit Task Modal -->
+  <div id="editTaskModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
+    <form id="editTaskForm" style="background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
+      <h3 id="editModalTitle">Edit Task</h3>
+      
+      <input type="hidden" id="editTaskId">
+      
+      <label>Company Name:<br/>
+        <input type="text" id="editCompanyName" required>
+      </label><br/><br/>
 
-  <!-- Task (auto default to ‘Daily Task’ but editable) -->
-  <label>Task:<br/>
-    <input type="text" name="Task" id="Task">
-  </label><br/><br/>
+      <label>Type of Work:<br/>
+        <input type="text" id="editTypeOfWork" required>
+      </label><br/><br/>
 
-  <!-- Owner (preset to username but editable) -->
-  <label>Owner:<br/>
-    <input type="text" name="Owner" id="Owner" required>
-  </label><br/><br/>
+      <label>Status:<br/>
+        <select id="editStatus" required>
+          <option value="Not Started">Not Started</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+        </select>
+      </label><br/><br/>
 
-  <!-- WORK FOR with period logic -->
-  <label>WORK FOR:<br/>
-    <select name="workFor" id="workFor">
-      <option value="">--Choose--</option>
-      <option value="Yearly">Yearly</option>
-      <option value="Monthly">Monthly</option>
-      <option value="Quarterly">Quarterly</option>
-      <option value="Bi-weekly">Bi-weekly</option>
-      <option value="Weekly">Weekly</option>
-      <option value="Custom">Custom</option>
-    </select>
-  </label><br/><br/>
+      <label>Owner:<br/>
+        <input type="text" id="editOwner" required>
+      </label><br/><br/>
 
-  <label>Period:<br/>
-    <input type="text" name="period" id="period" style="display:none;" placeholder="Enter period">
-  </label><br/><br/>
+      <label>Due Date:<br/>
+        <input type="date" id="editDueDate" required>
+      </label><br/><br/>
 
-  <!-- Due Date -->
-  <label>Due Date:<br/>
-    <input type="date" name="dueDate" id="dueDate" required>
-  </label><br/><br/>
+      <label>Notes:<br/>
+        <textarea id="editNotes"></textarea>
+      </label><br/><br/>
 
-  <!-- Assigned By -->
-  <label>Assigned By:<br/>
-    <input list="assignedByList" name="AssignedBy" id="AssignedBy">
-    <datalist id="assignedByList"></datalist>
-  </label><br/><br/>
+      <label>Remarks:<br/>
+        <textarea id="editRemarks"></textarea>
+      </label><br/><br/>
 
-  <!-- Notes -->
-  <label>Notes:<br/>
-    <textarea name="Notes" id="Notes"></textarea>
-  </label><br/><br/>
-
-  <button type="submit">Save Task</button>
-  <button type="button" id="cancelBtn">Cancel</button>
-</form>
-
+      <button type="submit">Update Task</button>
+      <button type="button" id="editCancelBtn">Cancel</button>
+    </form>
   </div>
 
   <!-- Firebase SDK -->
@@ -569,275 +595,264 @@
     const taskModal = document.getElementById('taskModal');
     const taskForm = document.getElementById('taskForm');
     const cancelBtn = document.getElementById('cancelBtn');
+    const editTaskModal = document.getElementById('editTaskModal');
+    const editTaskForm = document.getElementById('editTaskForm');
+    const editCancelBtn = document.getElementById('editCancelBtn');
+    const toast = document.getElementById('toast');
 
     const rowsPerPage = 5;
     let currentPage = 1;
     let allTasks = [];
     let filteredTasks = [];
 
-// Load tasks for current user (Owner)
-async function loadTasks() {
-  try {
-    const snapshot = await db.collection('tasks').where('Owner', '==', username).get();
-    allTasks = [];
-    snapshot.forEach(doc => allTasks.push({ id: doc.id, ...doc.data() }));
+    // Show toast notification
+    function showToast(message) {
+      toast.textContent = message;
+      toast.className = 'show';
+      setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
+    }
 
-    // Sort tasks by SINO number ascending
-    allTasks.sort((a, b) => {
-      const getNumber = sino => {
-        if (!sino) return 0;
-        const match = sino.match(/(\d+)$/);
-        return match ? parseInt(match[1], 10) : 0;
-      };
-      return getNumber(a.SINO) - getNumber(b.SINO);
-    });
+    // Check if user has pending tasks
+    function hasPendingTasks() {
+      return allTasks.some(task => 
+        task.Owner === username && 
+        task.Status !== 'Completed'
+      );
+    }
 
-    filteredTasks = allTasks;
-    currentPage = 1;
-    renderTablePage(currentPage, filteredTasks);
-    renderPagination(filteredTasks);
-  } catch (err) {
-    console.error(err);
-    alert('Failed to load tasks');
-  }
-}
+    // Load tasks for current user (Owner)
+    async function loadTasks() {
+      try {
+        const snapshot = await db.collection('tasks').where('Owner', '==', username).get();
+        allTasks = [];
+        snapshot.forEach(doc => allTasks.push({ id: doc.id, ...doc.data() }));
 
-// ✅ Async global SINO generator using Firestore
-async function generateSINO() {
-  const snapshot = await db.collection('tasks').get();
+        // Sort tasks by SINO number ascending
+        allTasks.sort((a, b) => {
+          const getNumber = sino => {
+            if (!sino) return 0;
+            const match = sino.match(/(\d+)$/);
+            return match ? parseInt(match[1], 10) : 0;
+          };
+          return getNumber(a.SINO) - getNumber(b.SINO);
+        });
 
-  let maxNumber = 0;
+        filteredTasks = allTasks;
+        currentPage = 1;
+        renderTablePage(currentPage, filteredTasks);
+        renderPagination(filteredTasks);
+      } catch (err) {
+        console.error(err);
+        alert('Failed to load tasks');
+      }
+    }
 
-  snapshot.forEach(doc => {
-    const task = doc.data();
-    const sino = task.SINO;
-    if (sino) {
-      const match = sino.match(/(\d+)$/); // match numbers at the end
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxNumber) {
-          maxNumber = num;
+    // ✅ Async global SINO generator using Firestore
+    async function generateSINO() {
+      const snapshot = await db.collection('tasks').get();
+
+      let maxNumber = 0;
+
+      snapshot.forEach(doc => {
+        const task = doc.data();
+        const sino = task.SINO;
+        if (sino) {
+          const match = sino.match(/(\d+)$/); // match numbers at the end
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > maxNumber) {
+              maxNumber = num;
+            }
+          }
+        }
+      });
+
+      const nextNumber = maxNumber + 1;
+      return String(nextNumber).padStart(3, '0');
+    }
+
+    function pickField(task, ...fields) {
+      for (const field of fields) {
+        if (task[field] !== undefined && task[field] !== null && task[field].toString().trim() !== '') {
+          return task[field];
         }
       }
+      return ''; // fallback if none found
     }
-  });
 
-  const nextNumber = maxNumber + 1;
-  return String(nextNumber).padStart(3, '0');
-}
+    function renderTablePage(page, tasks) {
+      taskTableBody.innerHTML = '';
+      const start = (page - 1) * rowsPerPage;
+      const pageTasks = tasks.slice(start, start + rowsPerPage);
 
+      pageTasks.forEach((task, index) => {
+        const tr = document.createElement('tr');
+        tr.classList.add('task-row');
+        tr.setAttribute('tabindex', '0'); // for keyboard focus
+        tr.dataset.taskId = task.id;
 
-function pickField(task, ...fields) {
-  for (const field of fields) {
-    if (task[field] !== undefined && task[field] !== null && task[field].toString().trim() !== '') {
-      return task[field];
+        const statusColorMap = {
+          'Not Started': '#e76f51',
+          'In Progress': '#f4a261',
+          'Completed': '#2a9d8f'
+        };
+        const statusColor = statusColorMap[task.Status] || '#333';
+
+        tr.innerHTML = `
+          <td>${task.SINO || ''}</td>
+          <td>${task['Existing Company Name'] || ''}</td>
+          <td>${task['TYPE OF WORK'] || ''}</td>
+          <td style="color: ${statusColor}; font-weight: 700;">${task.Status || ''}</td>
+          <td>${task.Owner || ''}</td>
+          <td>
+            <button class="edit-btn" data-id="${task.id}" aria-label="Edit task ${task.SINO || ''}">Edit</button>
+            <button class="delete-btn" data-id="${task.id}" aria-label="Delete task ${task.SINO || ''}">Delete</button>
+          </td>
+        `;
+        taskTableBody.appendChild(tr);
+
+        // Create hidden detail row for this task
+        const detailRow = document.createElement('tr');
+        detailRow.classList.add('detail-row');
+        detailRow.style.display = 'none'; // hidden by default
+        detailRow.innerHTML = `
+          <td colspan="6" style="background: #f9f9f9; padding: 12px; font-size: 14px; color: #555;">
+            <strong>SINO:</strong> ${task.SINO || 'N/A'}<br/>
+            <strong>Company Name:</strong> ${task["Existing Company Name"] || 'N/A'}<br/>
+            <strong>Type of Work:</strong> ${task["TYPE OF WORK"] || 'N/A'}<br/>
+            <strong>Account Type:</strong> ${task["ACCOUNT TYPE"] || 'N/A'}<br/>
+            <strong>Accounts / Cards:</strong> ${task["Accounts / Cards"] || 'N/A'}<br/>
+            <strong>Task:</strong> ${task["Task"] || 'N/A'}<br/>
+            <strong>Status:</strong> ${task["Status"] || 'N/A'}<br/>
+            <strong>Owner:</strong> ${task["Owner"] || 'N/A'}<br/>
+            <strong>Due Date:</strong> ${task["Due date"] || 'N/A'}<br/>
+            <strong>Assigned By:</strong> ${task["Assigned By"] || 'N/A'}<br/>
+            <strong>Time Started:</strong> ${pickField(task, "TimeStarted", "Time Start") || 'N/A'}<br/>
+            <strong>Time End:</strong> ${pickField(task, "TimeEnd", "Time End") || 'N/A'}<br/>
+            <strong>Total Pause Hours:</strong> ${pickField(task, "TotalPauseHours", "TOTAL OUT OF HOURS") || 'N/A'}<br/>
+            <strong>Total Work Hours:</strong> ${pickField(task, "TotalWorkHours", "Total Work Hours") || 'N/A'}<br/>
+            <strong>Notes:</strong> ${task.Notes ? task.Notes.replace(/\n/g, '<br/>') : 'None'}<br/>
+            <strong>Remarks:</strong> ${pickField(task, "Remarks", "Remarks (New)") ? pickField(task, "Remarks", "Remarks (New)").replace(/\n/g, '<br/>') : 'None'}<br/>
+            <strong>Created By:</strong> ${task.CreatedBy || 'N/A'}
+          </td>
+        `;
+
+        taskTableBody.appendChild(detailRow);
+
+        // Toggle detail row on click of main row
+        tr.addEventListener('click', () => {
+          const isVisible = detailRow.style.display === 'table-row';
+          // Hide all other detail rows first (optional)
+          document.querySelectorAll('.detail-row').forEach(r => r.style.display = 'none');
+          if (!isVisible) {
+            detailRow.style.display = 'table-row';
+          } else {
+            detailRow.style.display = 'none';
+          }
+        });
+      });
+
+      attachRowEventListeners();
     }
-  }
-  return ''; // fallback if none found
-}
 
+    function renderPagination(tasks) {
+      paginationDiv.innerHTML = '';
+      const totalPages = Math.ceil(tasks.length / rowsPerPage);
+      if (totalPages <= 1) return;
 
+      // Create Prev button
+      const prevBtn = document.createElement('button');
+      prevBtn.textContent = 'Prev';
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.onclick = () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderTablePage(currentPage, filteredTasks);
+          renderPagination(filteredTasks);
+        }
+      };
+      paginationDiv.appendChild(prevBtn);
 
-function renderTablePage(page, tasks) {
-  taskTableBody.innerHTML = '';
-  const start = (page - 1) * rowsPerPage;
-  const pageTasks = tasks.slice(start, start + rowsPerPage);
+      const addPageButton = (page) => {
+        const btn = document.createElement('button');
+        btn.textContent = page;
+        btn.disabled = page === currentPage;
+        btn.onclick = () => {
+          currentPage = page;
+          renderTablePage(currentPage, filteredTasks);
+          renderPagination(filteredTasks);
+        };
+        paginationDiv.appendChild(btn);
+      };
 
-  pageTasks.forEach((task, index) => {
-    const tr = document.createElement('tr');
-    tr.classList.add('task-row');
-    tr.setAttribute('tabindex', '0'); // for keyboard focus
-    tr.dataset.taskId = task.id;
+      // Always show first page
+      addPageButton(1);
 
-    const statusColorMap = {
-      'Not Started': '#e76f51',
-      'In Progress': '#f4a261',
-      'Completed': '#2a9d8f'
-    };
-    const statusColor = statusColorMap[task.Status] || '#333';
-
-    tr.innerHTML = `
-      <td>${task.SINO || ''}</td>
-      <td>${task['Existing Company Name'] || ''}</td>
-      <td>${task['TYPE OF WORK'] || ''}</td>
-      <td style="color: ${statusColor}; font-weight: 700;">${task.Status || ''}</td>
-      <td>${task.Owner || ''}</td>
-      <td>
-        <button class="edit-btn" data-id="${task.id}" aria-label="Edit task ${task.SINO || ''}">Edit</button>
-        <button class="delete-btn" data-id="${task.id}" aria-label="Delete task ${task.SINO || ''}">Delete</button>
-      </td>
-    `;
-    taskTableBody.appendChild(tr);
-
-    // Create hidden detail row for this task
-    const detailRow = document.createElement('tr');
-    detailRow.classList.add('detail-row');
-    detailRow.style.display = 'none'; // hidden by default
-detailRow.innerHTML = `
-  <td colspan="6" style="background: #f9f9f9; padding: 12px; font-size: 14px; color: #555;">
-    <strong>SINO:</strong> ${task.SINO || 'N/A'}<br/>
-    <strong>Company Name:</strong> ${task["Existing Company Name"] || 'N/A'}<br/>
-    <strong>Type of Work:</strong> ${task["TYPE OF WORK"] || 'N/A'}<br/>
-    <strong>Account Type:</strong> ${task["ACCOUNT TYPE"] || 'N/A'}<br/>
-    <strong>Accounts / Cards:</strong> ${task["Accounts / Cards"] || 'N/A'}<br/>
-    <strong>Task:</strong> ${task["Task"] || 'N/A'}<br/>
-    <strong>Status:</strong> ${task["Status"] || 'N/A'}<br/>
-    <strong>Owner:</strong> ${task["Owner"] || 'N/A'}<br/>
-    <strong>Due Date:</strong> ${task["Due date"] || 'N/A'}<br/>
-    <strong>Assigned By:</strong> ${task["Assigned By"] || 'N/A'}<br/>
-    <strong>Time Started:</strong> ${pickField(task, "TimeStarted", "Time Start") || 'N/A'}<br/>
-    <strong>Time End:</strong> ${pickField(task, "TimeEnd", "Time End") || 'N/A'}<br/>
-    <strong>Total Pause Hours:</strong> ${pickField(task, "TotalPauseHours", "TOTAL OUT OF HOURS") || 'N/A'}<br/>
-    <strong>Total Work Hours:</strong> ${pickField(task, "TotalWorkHours", "Total Work Hours") || 'N/A'}<br/>
-    <strong>Notes:</strong> ${task["Notes"] ? task["Notes"].replace(/\n/g, '<br/>') : 'None'}<br/>
-    <strong>Remarks:</strong> ${pickField(task, "Remarks", "Remarks (New)") ? pickField(task, "Remarks", "Remarks (New)").replace(/\n/g, '<br/>') : 'None'}<br/>
-    <strong>Created By:</strong> ${task.CreatedBy || 'N/A'}
-  </td>
-`;
-
-
-
-    taskTableBody.appendChild(detailRow);
-
-    // Toggle detail row on click of main row
-    tr.addEventListener('click', () => {
-      const isVisible = detailRow.style.display === 'table-row';
-      // Hide all other detail rows first (optional)
-      document.querySelectorAll('.detail-row').forEach(r => r.style.display = 'none');
-      if (!isVisible) {
-        detailRow.style.display = 'table-row';
-      } else {
-        detailRow.style.display = 'none';
+      if (currentPage > 3) {
+        const dot = document.createElement('span');
+        dot.textContent = '...';
+        paginationDiv.appendChild(dot);
       }
-    });
-  });
 
-  attachRowEventListeners();
-}
+      // Middle pages
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) {
+        addPageButton(i);
+      }
 
+      if (currentPage < totalPages - 2) {
+        const dot = document.createElement('span');
+        dot.textContent = '...';
+        paginationDiv.appendChild(dot);
+      }
 
-function renderPagination(tasks) {
-  paginationDiv.innerHTML = '';
-  const totalPages = Math.ceil(tasks.length / rowsPerPage);
-  if (totalPages <= 1) return;
+      // Always show last page if more than one
+      if (totalPages > 1) {
+        addPageButton(totalPages);
+      }
 
-  // Create Prev button
-  const prevBtn = document.createElement('button');
-  prevBtn.textContent = 'Prev';
-  prevBtn.disabled = currentPage === 1;
-  prevBtn.onclick = () => {
-    if (currentPage > 1) {
-      currentPage--;
-      renderTablePage(currentPage, filteredTasks);
-      renderPagination(filteredTasks);
+      // Create Next button
+      const nextBtn = document.createElement('button');
+      nextBtn.textContent = 'Next';
+      nextBtn.disabled = currentPage === totalPages;
+      nextBtn.onclick = () => {
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderTablePage(currentPage, filteredTasks);
+          renderPagination(filteredTasks);
+        }
+      };
+      paginationDiv.appendChild(nextBtn);
     }
-  };
-  paginationDiv.appendChild(prevBtn);
-
-  const addPageButton = (page) => {
-    const btn = document.createElement('button');
-    btn.textContent = page;
-    btn.disabled = page === currentPage;
-    btn.onclick = () => {
-      currentPage = page;
-      renderTablePage(currentPage, filteredTasks);
-      renderPagination(filteredTasks);
-    };
-    paginationDiv.appendChild(btn);
-  };
-
-  // Always show first page
-  addPageButton(1);
-
-  if (currentPage > 3) {
-    const dot = document.createElement('span');
-    dot.textContent = '...';
-    paginationDiv.appendChild(dot);
-  }
-
-  // Middle pages
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-  for (let i = start; i <= end; i++) {
-    addPageButton(i);
-  }
-
-  if (currentPage < totalPages - 2) {
-    const dot = document.createElement('span');
-    dot.textContent = '...';
-    paginationDiv.appendChild(dot);
-  }
-
-  // Always show last page if more than one
-  if (totalPages > 1) {
-    addPageButton(totalPages);
-  }
-
-  // Create Next button
-  const nextBtn = document.createElement('button');
-  nextBtn.textContent = 'Next';
-  nextBtn.disabled = currentPage === totalPages;
-  nextBtn.onclick = () => {
-    if (currentPage < totalPages) {
-      currentPage++;
-      renderTablePage(currentPage, filteredTasks);
-      renderPagination(filteredTasks);
-    }
-  };
-  paginationDiv.appendChild(nextBtn);
-}
-
 
     // Attach edit/delete handlers
     function attachRowEventListeners() {
       document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.onclick = async (e) => {
-  const id = e.target.dataset.id;
-  const task = allTasks.find(t => t.id === id);
-  if (!task) return alert('Task not found.');
+          e.stopPropagation(); // Prevent row click event
+          const id = e.target.dataset.id;
+          const task = allTasks.find(t => t.id === id);
+          if (!task) return alert('Task not found.');
 
-  const newCompany = prompt('Company Name:', task['Existing Company Name'] || '');
-  if (newCompany === null) return;
+          // Populate edit form
+          document.getElementById('editTaskId').value = id;
+          document.getElementById('editCompanyName').value = task['Existing Company Name'] || '';
+          document.getElementById('editTypeOfWork').value = task['TYPE OF WORK'] || '';
+          document.getElementById('editStatus').value = task.Status || 'Not Started';
+          document.getElementById('editOwner').value = task.Owner || '';
+          document.getElementById('editDueDate').value = task['Due date'] || '';
+          document.getElementById('editNotes').value = task.Notes || '';
+          document.getElementById('editRemarks').value = pickField(task, "Remarks", "Remarks (New)") || '';
 
-  const newTypeOfWork = prompt('Type of Work:', task['TYPE OF WORK'] || '');
-  if (newTypeOfWork === null) return;
-
-  const newStatus = prompt('Status (Not Started, In Progress, Completed):', task.Status || '');
-  if (newStatus === null) return;
-
-  const newOwner = prompt('Owner:', task.Owner || '');
-  if (newOwner === null) return;
-
-  const newDueDate = prompt('Due Date (YYYY-MM-DD):', task['Due date'] || '');
-  if (newDueDate === null) return;
-
-  const newNotes = prompt('Notes:', task.Notes || '');
-  if (newNotes === null) return;
-
-  const newRemarks = prompt('Remarks:', task.Remarks || '');
-  if (newRemarks === null) return;
-
-  try {
-    await db.collection('tasks').doc(id).update({
-      'Existing Company Name': newCompany,
-      'TYPE OF WORK': newTypeOfWork,
-      Status: newStatus,
-      Owner: newOwner,
-      'Due date': newDueDate,
-      Notes: newNotes,
-      Remarks: newRemarks
-    });
-    alert('Task updated');
-    loadTasks();
-  } catch (err) {
-    console.error(err);
-    alert('Failed to update task');
-  }
-};
-
+          // Show edit modal
+          editTaskModal.style.display = 'flex';
+        };
+      });
 
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.onclick = async (e) => {
+          e.stopPropagation(); // Prevent row click event
           const id = e.target.dataset.id;
           if (!confirm('Delete this task?')) return;
           try {
@@ -853,242 +868,212 @@ function renderPagination(tasks) {
     }
 
     // Open/close modal
-createTaskBtn.onclick = () => {
-  taskForm.reset();
-  taskModal.style.display = 'flex';
-  document.body.style.overflow = 'hidden'; // 🔒 Lock background scroll
-};
+    createTaskBtn.onclick = async () => {
+      // Check if user has pending tasks
+      if (hasPendingTasks()) {
+        showToast("You have pending tasks. Please complete them before creating a new task.");
+        return;
+      }
+      
+      taskForm.reset();
+      companyList.innerHTML = workTypeList.innerHTML = assignedByList.innerHTML = '';
+      allTasks.forEach(task => {
+        companyList.append(new Option(task['Existing Company Name'], task['Existing Company Name']));
+        workTypeList.append(new Option(task['TYPE OF WORK'], task['TYPE OF WORK']));
+        assignedByList.append(new Option(task['Assigned By'], task['Assigned By']));
+      });
+      ownerInput.value = username;
+      TaskInput.value = `Daily task for ${username}`;
+      SINOinput.value = await generateSINO();
+      taskModal.style.display = 'flex';
+    };
 
-cancelBtn.onclick = () => {
-  taskModal.style.display = 'none';
-  document.body.style.overflow = '';
-};
-
-
-
-
+    cancelBtn.onclick = () => {
+      taskModal.style.display = 'none';
+      document.body.style.overflow = '';
+    };
 
     // Submit new task
-taskForm.onsubmit = async (e) => {
-  e.preventDefault();
+    taskForm.onsubmit = async (e) => {
+      e.preventDefault();
 
-  // 🔎 Check if this user already has a pending task
-  const pendingSnapshot = await db.collection('tasks')
-    .where('Owner', '==', username)
-    .where('Status', 'in', ['Not Started', 'In Progress'])
-    .get();
+      const formData = new FormData(taskForm);
+      const data = {};
 
-  if (!pendingSnapshot.empty) {
-    showToast("⚠️ You already have a pending task!");
-    return; // stop saving
-  }
+      formData.forEach((v, k) => {
+        data[k] = v.trim();
+      });
 
-  // ✅ Proceed with task creation
-  const data = {
-    SINO: await generateSINO(),
-    'Existing Company Name': companyInput.value.trim(),
-    'TYPE OF WORK': typeOfWorkInput.value.trim(),
-    'ACCOUNT TYPE': accountType.value,
-    'Accounts / Cards': accountsInput.value.trim(),
-    Task: TaskInput.value.trim(),
-    Owner: ownerInput.value.trim(),
-    'WORK FOR': workFor.value,
-    Period: periodInput.value.trim(),
-    'Due date': dueDate.value,
-    'Assigned By': assignedByInput.value.trim(),
-    Notes: Notes.value.trim(),
-    Remarks: '', // new field
-    Status: 'Not Started',
-    CreatedBy: username
-  };
+      if (!data.companyName || !data.typeOfWork || !data.dueDate || !data.Owner) {
+        return alert('Please fill all required fields');
+      }
 
-  try {
-    await db.collection('tasks').add(data);
-    alert('Task created!');
-    taskModal.style.display = 'none';
-    window.location.href = "CurrentTask.html"; // 🚀 redirect
-  } catch (e) {
-    console.error(e);
-    alert('Error creating task');
-  }
-};
+      // ✅ Wait for SINO to be generated from DB
+      data.SINO = await generateSINO();
+      data.Status = 'Not Started';
 
+      // Map form fields to Firestore field names
+      data['Existing Company Name'] = data.companyName;
+      data['TYPE OF WORK'] = data.typeOfWork;
+      data['WORK FOR'] = data.workFor;
+      data['Due date'] = data.dueDate;
+      data.Owner = data.Owner;
+      data.Notes = data.Notes || '';
+      data.CreatedBy = username;
 
-    // Load user tasks on page load
-    window.onload = loadTasks;
+      // 🧹 Clean up unused keys
+      delete data.companyName;
+      delete data.typeOfWork;
+      delete data.dueDate;
+      delete data.Owner;
+      delete data.Notes;
+      delete data.workFor;
+
+      try {
+        await db.collection('tasks').add(data);
+        alert('Task created!');
+        taskModal.style.display = 'none';
+        loadTasks();
+        
+        // After creating task, redirect to CurrentTask.html
+        window.location.href = 'CurrentTask.html';
+      } catch (err) {
+        console.error(err);
+        alert('Failed to create task');
+      }
+    };
+
+    // Handle edit form submission
+    editTaskForm.onsubmit = async (e) => {
+      e.preventDefault();
+      
+      const id = document.getElementById('editTaskId').value;
+      const updates = {
+        'Existing Company Name': document.getElementById('editCompanyName').value,
+        'TYPE OF WORK': document.getElementById('editTypeOfWork').value,
+        'Status': document.getElementById('editStatus').value,
+        'Owner': document.getElementById('editOwner').value,
+        'Due date': document.getElementById('editDueDate').value,
+        'Notes': document.getElementById('editNotes').value,
+        'Remarks': document.getElementById('editRemarks').value
+      };
+      
+      try {
+        await db.collection('tasks').doc(id).update(updates);
+        alert('Task updated successfully!');
+        editTaskModal.style.display = 'none';
+        loadTasks();
+      } catch (err) {
+        console.error(err);
+        alert('Failed to update task');
+      }
+    };
+
+    // Close edit modal
+    editCancelBtn.onclick = () => {
+      editTaskModal.style.display = 'none';
+    };
+
     // Refs
-const companyList = document.getElementById('companyList');
-const workTypeList = document.getElementById('workTypeList');
-const accountsCardsList = document.getElementById('accountsCardsList');
-const assignedByList = document.getElementById('assignedByList');
+    const companyList = document.getElementById('companyList');
+    const workTypeList = document.getElementById('workTypeList');
+    const accountsCardsList = document.getElementById('accountsCardsList');
+    const assignedByList = document.getElementById('assignedByList');
 
-const SINOinput = document.getElementById('SINO');
-const workFor = document.getElementById('workFor');
-const periodInput = document.getElementById('period');
-const accountType = document.getElementById('accountType');
-const companyInput = document.getElementById('companyName');
-const typeOfWorkInput = document.getElementById('typeOfWork');
-const accountsInput = document.getElementById('accountsCards');
-const assignedByInput = document.getElementById('AssignedBy');
-const ownerInput = document.getElementById('Owner');
-const TaskInput = document.getElementById('Task');
+    const SINOinput = document.getElementById('SINO');
+    const workFor = document.getElementById('workFor');
+    const periodInput = document.getElementById('period');
+    const accountType = document.getElementById('accountType');
+    const companyInput = document.getElementById('companyName');
+    const typeOfWorkInput = document.getElementById('typeOfWork');
+    const accountsInput = document.getElementById('accountsCards');
+    const assignedByInput = document.getElementById('AssignedBy');
+    const ownerInput = document.getElementById('Owner');
+    const TaskInput = document.getElementById('Task');
+    const dueDate = document.getElementById('dueDate');
+    const Notes = document.getElementById('Notes');
 
-// Preload user & SINO when modal opens
-createTaskBtn.onclick = () => {
-  taskForm.reset();
-  companyList.innerHTML = workTypeList.innerHTML = assignedByList.innerHTML = '';
-  allTasks.forEach(task => {
-    companyList.append(new Option(task['Existing Company Name'], task['Existing Company Name']));
-    workTypeList.append(new Option(task['TYPE OF WORK'], task['TYPE OF WORK']));
-    assignedByList.append(new Option(task['Assigned By'], task['Assigned By']));
-  });
-  ownerInput.value = username;
-  TaskInput.value = `Daily task for ${username}`;
-  SINOinput.value = generateSINO();
-  taskModal.style.display = 'flex';
-};
+    // WORK FOR show Period
+    workFor.addEventListener('change', () => {
+      if (workFor.value) {
+        periodInput.style.display = 'block';
+        periodInput.placeholder = `${workFor.value} period`;
+      } else {
+        periodInput.style.display = 'none';
+      }
+    });
 
-// WORK FOR show Period
-workFor.addEventListener('change', () => {
-  if (workFor.value) {
-    periodInput.style.display = 'block';
-    periodInput.placeholder = `${workFor.value} period`;
-  } else {
-    periodInput.style.display = 'none';
-  }
-});
+    // Fill accounts/cards when company + accountType match
+    function updateAccounts() {
+      const c = companyInput.value.toLowerCase();
+      const type = accountType.value.toLowerCase();
+      accountsCardsList.innerHTML = '';
 
-// Fill accounts/cards when company + accountType match
-function updateAccounts() {
-  const c = companyInput.value.toLowerCase();
-  const type = accountType.value.toLowerCase();
-  accountsCardsList.innerHTML = '';
-
-  new Set(allTasks
-    .filter(t =>
-      t['Existing Company Name']?.toLowerCase() === c &&
-      t['ACCOUNT TYPE']?.toLowerCase() === type &&
-      t['Accounts / Cards']
-    )
-    .map(t => t['Accounts / Cards'])
-  ).forEach(val => accountsCardsList.append(new Option(val, val)));
-}
-
-companyInput.addEventListener('input', updateAccounts);
-accountType.addEventListener('change', updateAccounts);
-
-
-// On form submit: map your fields and cleanup
-taskForm.onsubmit = async (e) => {
-  e.preventDefault();
-  const data = {
-    SINO: SINOinput.value,
-    'Existing Company Name': companyInput.value.trim(),
-    'TYPE OF WORK': typeOfWorkInput.value.trim(),
-    'ACCOUNT TYPE': accountType.value,
-    'Accounts / Cards': accountsInput.value.trim(),
-    Task: TaskInput.value.trim(),
-    Owner: ownerInput.value.trim(),
-    'WORK FOR': workFor.value,
-    Period: periodInput.value.trim(),
-    'Due date': dueDate.value,
-    'Assigned By': assignedByInput.value.trim(),
-    Notes: Notes.value.trim(),
-    Status: 'Not Started',
-    CreatedBy: username
-  };
-  try {
-    await db.collection('tasks').add(data);
-    alert('Task added!');
-    taskModal.style.display = 'none';
-    loadTasks();
-  } catch (e) {
-    console.error(e);
-    alert('Error creating task');
-  }
-};
-
-// Unique helper
-function addUniqueOptions(datalist, valuesArray) {
-  const seen = new Set();
-  datalist.innerHTML = '';
-  valuesArray.forEach(val => {
-    const trimmed = val.trim();
-    if (trimmed && !seen.has(trimmed.toLowerCase())) {
-      seen.add(trimmed.toLowerCase());
-      datalist.append(new Option(trimmed));
+      new Set(allTasks
+        .filter(t =>
+          t['Existing Company Name']?.toLowerCase() === c &&
+          t['ACCOUNT TYPE']?.toLowerCase() === type &&
+          t['Accounts / Cards']
+        )
+        .map(t => t['Accounts / Cards'])
+      ).forEach(val => accountsCardsList.append(new Option(val, val)));
     }
-  });
-}
 
+    companyInput.addEventListener('input', updateAccounts);
+    accountType.addEventListener('change', updateAccounts);
 
-// When opening modal:
-createTaskBtn.onclick = async () => {
-  taskForm.reset();
-  SINOinput.value = await generateSINO();
-  ownerInput.value = username;
-  ownerInput.setAttribute("readonly", true);
-  TaskInput.value = `Daily task for ${username}`;
-  periodInput.style.display = 'none';
+    // Unique helper
+    function addUniqueOptions(datalist, valuesArray) {
+      const seen = new Set();
+      datalist.innerHTML = '';
+      valuesArray.forEach(val => {
+        const trimmed = val.trim();
+        if (trimmed && !seen.has(trimmed.toLowerCase())) {
+          seen.add(trimmed.toLowerCase());
+          datalist.append(new Option(trimmed));
+        }
+      });
+    }
 
-  // 🔁 These must run after allTasks is ready
-  const companies = allTasks.map(t => t['Existing Company Name']);
-  const workTypes = allTasks.map(t => t['TYPE OF WORK']);
-  const assignedByListArr = allTasks.map(t => t['Assigned By']);
+    function populateGlobalSuggestions() {
+      const companies = [];
+      const accounts = [];
 
-  addUniqueOptions(companyList, companies);
-  addUniqueOptions(workTypeList, workTypes);
-  addUniqueOptions(assignedByList, assignedByListArr);
+      allTasks.forEach(task => {
+        const company = task['Existing Company Name'];
+        const account = task['Accounts / Cards'];
+        if (company && company.trim()) companies.push(company.trim());
+        if (account && account.trim()) accounts.push(account.trim());
+      });
 
-  taskModal.style.display = 'flex';
-};
-
-function populateGlobalSuggestions() {
-  const companies = [];
-  const accounts = [];
-
-  allTasks.forEach(task => {
-    const company = task['Existing Company Name'];
-    const account = task['Accounts / Cards'];
-    if (company && company.trim()) companies.push(company.trim());
-    if (account && account.trim()) accounts.push(account.trim());
-  });
-
-  addUniqueOptions(companyList, companies);
-  addUniqueOptions(accountsCardsList, accounts);
-}
+      addUniqueOptions(companyList, companies);
+      addUniqueOptions(accountsCardsList, accounts);
+    }
 
     const searchInput = document.getElementById('searchInput');
 
-searchInput.addEventListener('input', () => {
-  const query = searchInput.value.trim().toLowerCase();
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.trim().toLowerCase();
 
-  if (!query) {
-    filteredTasks = allTasks;
-  } else {
-    filteredTasks = allTasks.filter(task => {
-      // Convert task object values to strings and join
-      const combined = Object.values(task).join(' ').toLowerCase();
-      return combined.includes(query);
+      if (!query) {
+        filteredTasks = allTasks;
+      } else {
+        filteredTasks = allTasks.filter(task => {
+          // Convert task object values to strings and join
+          const combined = Object.values(task).join(' ').toLowerCase();
+          return combined.includes(query);
+        });
+      }
+
+      currentPage = 1;
+      renderTablePage(currentPage, filteredTasks);
+      renderPagination(filteredTasks);
     });
-  }
 
-  currentPage = 1;
-  renderTablePage(currentPage, filteredTasks);
-  renderPagination(filteredTasks);
-});
-
-
-  
-window.onload = async () => {
-  await loadTasks();
-  populateGlobalSuggestions(); // ✅ after tasks are loaded
-};
-  
-
-
-
+    window.onload = async () => {
+      await loadTasks();
+      populateGlobalSuggestions(); // ✅ after tasks are loaded
+    };
   </script>
-
 </body>
 </html>
