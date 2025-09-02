@@ -516,21 +516,21 @@
       </label><br/><br/>
 
       <!-- WORK FOR with period logic -->
-      <label>WORK FOR:<br/>
-        <select name="workFor" id="workFor">
-          <option value="">--Choose--</option>
-          <option value="Yearly">Yearly</option>
-          <option value="Monthly">Monthly</option>
-          <option value="Quarterly">Quarterly</option>
-          <option value="Bi-weekly">Bi-weekly</option>
-          <option value="Weekly">Weekly</option>
-          <option value="Custom">Custom</option>
-        </select>
-      </label><br/><br/>
+ <label>WORK FOR:<br/>
+  <select name="workFor" id="workFor">
+    <option value="">--Choose--</option>
+    <option value="Yearly">Yearly</option>
+    <option value="Monthly">Monthly</option>
+    <option value="Quarterly">Quarterly</option>
+    <option value="Bi-weekly">Bi-weekly</option>
+    <option value="Weekly">Weekly</option>
+    <option value="Custom">Custom</option>
+  </select>
+</label><br/><br/>
 
-      <label>Period:<br/>
-        <input type="text" name="period" id="period" style="display:none;" placeholder="Enter period">
-      </label><br/><br/>
+<label>Period:<br/>
+  <input type="text" name="period" id="period" style="display:none;" placeholder="Enter period">
+</label><br/><br/>
 
       <!-- Due Date -->
       <label>Due Date:<br/>
@@ -1170,18 +1170,18 @@
     }
 
     // Handle WORK FOR dropdown change
-    document.getElementById('workFor').addEventListener('change', (e) => {
-      const periodInput = document.getElementById('period');
-      if (e.target.value === 'Custom') {
-        periodInput.style.display = 'block';
-        periodInput.required = true;
-      } else {
-        periodInput.style.display = 'none';
-        periodInput.required = false;
-        periodInput.value = '';
-      }
-    });
-
+    // Handle WORK FOR dropdown change
+document.getElementById('workFor').addEventListener('change', (e) => {
+  const periodInput = document.getElementById('period');
+  if (e.target.value === 'Custom') {
+    periodInput.style.display = 'block';
+    periodInput.required = true;
+  } else {
+    periodInput.style.display = 'none';
+    periodInput.required = false;
+    periodInput.value = '';
+  }
+});
     // Initialize the application
     document.addEventListener('DOMContentLoaded', () => {
       loadTasks();
