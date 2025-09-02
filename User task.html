@@ -466,92 +466,92 @@
   <div id="paginationControls" aria-label="Pagination controls"></div>
 
   <!-- Task creation modal -->
-  <div id="taskModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <form id="taskForm">
-      <h3 id="modalTitle">Create / Edit Task</h3>
+<div id="taskModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <form id="taskForm">
+    <h3 id="modalTitle">Create / Edit Task</h3>
 
-      <!-- SINO (auto-generated) -->
-      <label>SINO:<br/>
-        <input type="text" name="SINO" id="SINO" readonly>
-      </label><br/><br/>
+    <!-- SINO (auto-generated) -->
+    <label>SINO:<br/>
+      <input type="text" name="SINO" id="SINO" readonly>
+    </label><br/><br/>
 
-      <!-- Company Name with autocomplete -->
-      <label>Company Name:<br/>
-        <input list="companyList" name="companyName" id="companyName" required>
-        <datalist id="companyList"></datalist>
-      </label><br/><br/>
+    <!-- Company Name with autocomplete - FIXED -->
+    <label>Company Name:<br/>
+      <input list="companyList" name="Existing Company Name" id="companyName" required>
+      <datalist id="companyList"></datalist>
+    </label><br/><br/>
 
-      <!-- TYPE OF WORK (dynamic dropdown) -->
-      <label>TYPE OF WORK:<br/>
-        <input list="workTypeList" name="typeOfWork" id="typeOfWork" required>
-        <datalist id="workTypeList"></datalist>
-      </label><br/><br/>
+    <!-- TYPE OF WORK (dynamic dropdown) -->
+    <label>TYPE OF WORK:<br/>
+      <input list="workTypeList" name="TYPE OF WORK" id="typeOfWork" required>
+      <datalist id="workTypeList"></datalist>
+    </label><br/><br/>
 
-      <!-- ACCOUNT TYPE -->
-      <label>Account Type:<br/>
-        <select name="accountType" id="accountType">
-          <option value="">--Select--</option>
-          <option>Credit Card</option>
-          <option>Chequing Acc</option>
-          <option>Savings Acc</option>
-          <option>Loan Acc</option>
-          <option>Other</option>
-        </select>
-      </label><br/><br/>
+    <!-- ACCOUNT TYPE -->
+    <label>Account Type:<br/>
+      <select name="ACCOUNT TYPE" id="accountType">
+        <option value="">--Select--</option>
+        <option>Credit Card</option>
+        <option>Chequing Acc</option>
+        <option>Savings Acc</option>
+        <option>Loan Acc</option>
+        <option>Other</option>
+      </select>
+    </label><br/><br/>
 
-      <!-- Account # autofill from existing -->
-      <label>Account # / Cards:<br/>
-        <input list="accountsCardsList" name="accountsCards" id="accountsCards">
-        <datalist id="accountsCardsList"></datalist>
-      </label><br/><br/>
+    <!-- Account # autofill from existing -->
+    <label>Account # / Cards:<br/>
+      <input list="accountsCardsList" name="Accounts / Cards" id="accountsCards">
+      <datalist id="accountsCardsList"></datalist>
+    </label><br/><br/>
 
-      <!-- Task (auto default to 'Daily Task' but editable) -->
-      <label>Task:<br/>
-        <input type="text" name="Task" id="Task">
-      </label><br/><br/>
+    <!-- Task (auto default to 'Daily Task' but editable) -->
+    <label>Task:<br/>
+      <input type="text" name="Task" id="Task">
+    </label><br/><br/>
 
-      <!-- Owner (preset to username but editable) -->
-      <label>Owner:<br/>
-        <input type="text" name="Owner" id="Owner" required>
-      </label><br/><br/>
+    <!-- Owner (preset to username but editable) -->
+    <label>Owner:<br/>
+      <input type="text" name="Owner" id="Owner" required>
+    </label><br/><br/>
 
-      <!-- WORK FOR with period logic -->
-<label for="workFor">WORK FOR:</label>
-<select name="workFor" id="workFor">
-    <option value="">--Choose--</option>
-    <option value="Yearly">Yearly</option>
-    <option value="Monthly">Monthly</option>
-    <option value="Quarterly">Quarterly</option>
-    <option value="Bi-weekly">Bi-weekly</option>
-    <option value="Weekly">Weekly</option>
-    <option value="Custom">Custom</option>
-</select>
+    <!-- WORK FOR with period logic -->
+    <label for="workFor">WORK FOR:</label>
+    <select name="WORK FOR" id="workFor">
+      <option value="">--Choose--</option>
+      <option value="Yearly">Yearly</option>
+      <option value="Monthly">Monthly</option>
+      <option value="Quarterly">Quarterly</option>
+      <option value="Bi-weekly">Bi-weekly</option>
+      <option value="Weekly">Weekly</option>
+      <option value="Custom">Custom</option>
+    </select>
 
-<label for="period" style="display: none;">Period:</label>
-<input type="text" name="period" id="period" style="display: none;" placeholder="Enter period">
-</label><br/><br/>
+    <label for="period" style="display: none;">Period:</label>
+    <input type="text" name="Period" id="period" style="display: none;" placeholder="Enter period">
+    <br/><br/>
 
-      <!-- Due Date -->
-      <label>Due Date:<br/>
-        <input type="date" name="dueDate" id="dueDate" required>
-      </label><br/><br/>
+    <!-- Due Date - FIXED field name -->
+    <label>Due Date:<br/>
+      <input type="date" name="Due date" id="dueDate" required>
+    </label><br/><br/>
 
-      <!-- Assigned By -->
-      <label>Assigned By:<br/>
-        <input list="assignedByList" name="AssignedBy" id="AssignedBy">
-        <datalist id="assignedByList"></datalist>
-      </label><br/><br/>
+    <!-- Assigned By -->
+    <label>Assigned By:<br/>
+      <input list="assignedByList" name="Assigned By" id="AssignedBy">
+      <datalist id="assignedByList"></datalist>
+    </label><br/><br/>
 
-      <!-- Notes -->
-      <label>Notes:<br/>
-        <textarea name="Notes" id="Notes"></textarea>
-      </label><br/><br/>
+    <!-- Notes -->
+    <label>Notes:<br/>
+      <textarea name="Notes" id="Notes"></textarea>
+    </label><br/><br/>
 
-      <button type="submit" id="submitTaskBtn">Save Task</button>
-      <button type="button" id="cancelBtn">Cancel</button>
-    </form>
-  </div>
-
+    <button type="submit" id="submitTaskBtn">Save Task</button>
+    <button type="button" id="cancelBtn">Cancel</button>
+  </form>
+</div>
+  
   <!-- Edit Task Modal -->
   <div id="editTaskModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
     <form id="editTaskForm" style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);">
