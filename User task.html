@@ -128,7 +128,7 @@
       color: #2a9d8f;
     }
 
-    .edit-btn, .delete-btn, .attachment-btn {
+    .edit-btn, .delete-btn {
       padding: 5px 10px;
       margin-right: 5px;
       border: none;
@@ -151,16 +151,9 @@
     .delete-btn:hover {
       background-color: #a62b32;
     }
-    .attachment-btn {
-      background-color: #3a86ff;
-      color: white;
-    }
-    .attachment-btn:hover {
-      background-color: #2667cc;
-    }
 
     /* Modal styles */
-    #taskModal, #editTaskModal, #attachmentModal { 
+    #taskModal { 
       display: none; 
       position: fixed; 
       top: 0; 
@@ -175,23 +168,12 @@
       padding: 20px;
     }
 
-    #taskModal form, #editTaskModal form {
+    #taskModal form {
       background: white; 
       padding: 20px; 
       border-radius: 8px; 
       width: 100%;
       max-width: 400px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      overflow-y: auto;
-      max-height: 90vh;
-    }
-
-    #attachmentModal .modal-content {
-      background: white; 
-      padding: 20px; 
-      border-radius: 8px; 
-      width: 100%;
-      max-width: 600px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.2);
       overflow-y: auto;
       max-height: 90vh;
@@ -231,7 +213,7 @@
       background-color: #e0f2f1;
     }
 
-    #taskForm, #editTaskForm {
+    #taskForm {
       background: linear-gradient(to bottom right, #f3f4ff, #dde6ff);
       border: none;
       border-radius: 16px;
@@ -243,7 +225,7 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    #taskForm h3, #editTaskForm h3 {
+    #taskForm h3 {
       color: #2a9d8f;
       text-align: center;
       margin-bottom: 22px;
@@ -253,7 +235,7 @@
     }
 
     /* Label styling */
-    #taskForm label, #editTaskForm label {
+    #taskForm label {
       display: block;
       font-weight: 600;
       margin-bottom: 6px;
@@ -265,11 +247,7 @@
     #taskForm input[type="text"],
     #taskForm input[type="date"],
     #taskForm select,
-    #taskForm textarea,
-    #editTaskForm input[type="text"],
-    #editTaskForm input[type="date"],
-    #editTaskForm select,
-    #editTaskForm textarea {
+    #taskForm textarea {
       width: 100%;
       padding: 12px 15px;
       border-radius: 12px;
@@ -287,28 +265,21 @@
     /* Hover & focus */
     #taskForm input:not([readonly]):hover,
     #taskForm select:hover,
-    #taskForm textarea:hover,
-    #editTaskForm input:not([readonly]):hover,
-    #editTaskForm select:hover,
-    #editTaskForm textarea:hover {
+    #taskForm textarea:hover {
       background-color: #f0faff;
       border-color: #2a9d8f;
     }
 
     #taskForm input:not([readonly]):focus,
     #taskForm select:focus,
-    #taskForm textarea:focus,
-    #editTaskForm input:not([readonly]):focus,
-    #editTaskForm select:focus,
-    #editTaskForm textarea:focus {
+    #taskForm textarea:focus {
       outline: none;
       border-color: #2a9d8f;
       box-shadow: 0 0 5px rgba(42, 157, 143, 0.3);
     }
 
     /* Read-only fields (SINO, Task, Owner) */
-    #taskForm input[readonly],
-    #editTaskForm input[readonly] {
+    #taskForm input[readonly] {
       background-color: #e3f3f5;
       color: #657e83;
       border: 1px dashed #b4d7db;
@@ -318,24 +289,20 @@
     }
 
     /* Dropdown select */
-    #taskForm select,
-    #editTaskForm select {
+    #taskForm select {
       cursor: pointer;
       background-color: #fff;
     }
 
     /* Textarea */
-    #taskForm textarea,
-    #editTaskForm textarea {
+    #taskForm textarea {
       resize: vertical;
       min-height: 70px;
     }
 
     /* Buttons */
     #taskForm button[type="submit"],
-    #taskForm button[type="button"],
-    #editTaskForm button[type="submit"],
-    #editTaskForm button[type="button"] {
+    #taskForm button[type="button"] {
       width: 48%;
       margin: 10px 1%;
       padding: 12px;
@@ -347,32 +314,27 @@
       transition: background-color 0.3s ease, transform 0.2s ease;
     }
 
-    #taskForm button[type="submit"],
-    #editTaskForm button[type="submit"] {
+    #taskForm button[type="submit"] {
       background-color: #2a9d8f;
       color: white;
     }
 
-    #taskForm button[type="submit"]:hover,
-    #editTaskForm button[type="submit"]:hover {
+    #taskForm button[type="submit"]:hover {
       background-color: #21877b;
       transform: scale(1.02);
     }
 
-    #taskForm button[type="button"],
-    #editTaskForm button[type="button"] {
+    #taskForm button[type="button"] {
       background-color: #e76f51;
       color: white;
     }
 
-    #taskForm button[type="button"]:hover,
-    #editTaskForm button[type="button"]:hover {
+    #taskForm button[type="button"]:hover {
       background-color: #c94f38;
       transform: scale(1.02);
     }
 
-    #taskForm button[type="button"]:focus,
-    #editTaskForm button[type="button"]:focus {
+    #taskForm button[type="button"]:focus {
       background-color: #c94f38;
       box-shadow: 0 6px 18px rgba(201, 79, 56, 0.6);
       transform: translateY(-2px);
@@ -412,66 +374,14 @@
       to {bottom: 0; opacity: 0;}
     }
 
-    /* Attachment styles */
-    .attachment-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      background-color: #f9f9f9;
-    }
-    
-    .attachment-thumbnail {
-      width: 60px;
-      height: 60px;
-      object-fit: cover;
-      margin-right: 10px;
-      border-radius: 4px;
-    }
-    
-    .attachment-info {
-      flex-grow: 1;
-    }
-    
-    .attachment-name {
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-    
-    .attachment-download {
-      background-color: #3a86ff;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-    }
-    
-    .attachment-download:hover {
-      background-color: #2667cc;
-    }
-    
-    .no-attachments {
-      text-align: center;
-      color: #777;
-      font-style: italic;
-      margin: 20px 0;
-    }
-
     /* Responsive adjustments */
     @media (max-width: 420px) {
-      #taskForm, #editTaskForm {
+      #taskForm {
         width: 90%;
         padding: 20px;
       }
       #taskForm button[type="submit"],
-      #taskForm button[type="button"],
-      #editTaskForm button[type="submit"],
-      #editTaskForm button[type="button"] {
+      #taskForm button[type="button"] {
         width: 100%;
         margin: 10px 0;
       }
@@ -599,20 +509,14 @@
         <textarea name="Notes" id="Notes"></textarea>
       </label><br/><br/>
 
-      <!-- File Upload -->
-      <label>Attachments:<br/>
-        <input type="file" id="fileUpload" multiple accept="image/*,.pdf,.doc,.docx">
-        <div id="filePreview"></div>
-      </label><br/><br/>
-
       <button type="submit">Save Task</button>
       <button type="button" id="cancelBtn">Cancel</button>
     </form>
   </div>
 
   <!-- Edit Task Modal -->
-  <div id="editTaskModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
-    <form id="editTaskForm">
+  <div id="editTaskModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
+    <form id="editTaskForm" style="background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
       <h3 id="editModalTitle">Edit Task</h3>
       
       <input type="hidden" id="editTaskId">
@@ -649,30 +553,14 @@
         <textarea id="editRemarks"></textarea>
       </label><br/><br/>
 
-      <!-- File Upload in Edit Form -->
-      <label>Add More Attachments:<br/>
-        <input type="file" id="editFileUpload" multiple accept="image/*,.pdf,.doc,.docx">
-        <div id="editFilePreview"></div>
-      </label><br/><br/>
-
       <button type="submit">Update Task</button>
       <button type="button" id="editCancelBtn">Cancel</button>
     </form>
   </div>
 
-  <!-- Attachment Modal -->
-  <div id="attachmentModal">
-    <div class="modal-content">
-      <h3>Task Attachments</h3>
-      <div id="attachmentList"></div>
-      <button type="button" id="closeAttachmentModal" style="margin-top: 20px;">Close</button>
-    </div>
-  </div>
-
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
   <script>
     // Firebase config - replace with yours
@@ -686,7 +574,6 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const storage = firebase.storage();
 
     // User session
     const username = sessionStorage.getItem('username');
@@ -711,21 +598,12 @@
     const editTaskModal = document.getElementById('editTaskModal');
     const editTaskForm = document.getElementById('editTaskForm');
     const editCancelBtn = document.getElementById('editCancelBtn');
-    const attachmentModal = document.getElementById('attachmentModal');
-    const closeAttachmentModal = document.getElementById('closeAttachmentModal');
-    const attachmentList = document.getElementById('attachmentList');
     const toast = document.getElementById('toast');
-    const fileUpload = document.getElementById('fileUpload');
-    const filePreview = document.getElementById('filePreview');
-    const editFileUpload = document.getElementById('editFileUpload');
-    const editFilePreview = document.getElementById('editFilePreview');
 
     const rowsPerPage = 5;
     let currentPage = 1;
     let allTasks = [];
     let filteredTasks = [];
-    let currentTaskFiles = [];
-    let currentEditTaskId = null;
 
     // Show toast notification
     function showToast(message) {
@@ -829,8 +707,6 @@
           <td>
             <button class="edit-btn" data-id="${task.id}" aria-label="Edit task ${task.SINO || ''}">Edit</button>
             <button class="delete-btn" data-id="${task.id}" aria-label="Delete task ${task.SINO || ''}">Delete</button>
-            ${task.attachments && task.attachments.length > 0 ? 
-              `<button class="attachment-btn" data-id="${task.id}" aria-label="View attachments for task ${task.SINO || ''}">View Attachments</button>` : ''}
           </td>
         `;
         taskTableBody.appendChild(tr);
@@ -857,8 +733,6 @@
             <strong>Total Work Hours:</strong> ${pickField(task, "TotalWorkHours", "Total Work Hours") || 'N/A'}<br/>
             <strong>Notes:</strong> ${task.Notes ? task.Notes.replace(/\n/g, '<br/>') : 'None'}<br/>
             <strong>Remarks:</strong> ${pickField(task, "Remarks", "Remarks (New)") ? pickField(task, "Remarks", "Remarks (New)").replace(/\n/g, '<br/>') : 'None'}<br/>
-            <strong>Attachments:</strong> ${task.attachments && task.attachments.length > 0 ? 
-              `<a href="#" class="view-attachments" data-id="${task.id}">View ${task.attachments.length} attachment(s)</a>` : 'None'}<br/>
             <strong>Created By:</strong> ${task.CreatedBy || 'N/A'}
           </td>
         `;
@@ -970,31 +844,6 @@
           document.getElementById('editDueDate').value = task['Due date'] || '';
           document.getElementById('editNotes').value = task.Notes || '';
           document.getElementById('editRemarks').value = pickField(task, "Remarks", "Remarks (New)") || '';
-          
-          // Store task ID for file uploads
-          currentEditTaskId = id;
-          editFilePreview.innerHTML = '';
-          
-          // Show existing attachments if any
-          if (task.attachments && task.attachments.length > 0) {
-            const attachmentsHeader = document.createElement('p');
-            attachmentsHeader.textContent = 'Existing attachments:';
-            attachmentsHeader.style.fontWeight = 'bold';
-            editFilePreview.appendChild(attachmentsHeader);
-            
-            task.attachments.forEach(attachment => {
-              const attachmentItem = document.createElement('div');
-              attachmentItem.className = 'attachment-item';
-              attachmentItem.innerHTML = `
-                <img src="${attachment.url}" alt="${attachment.name}" class="attachment-thumbnail">
-                <div class="attachment-info">
-                  <div class="attachment-name">${attachment.name}</div>
-                  <a href="${attachment.url}" download="${attachment.name}" class="attachment-download">Download</a>
-                </div>
-              `;
-              editFilePreview.appendChild(attachmentItem);
-            });
-          }
 
           // Show edit modal
           editTaskModal.style.display = 'flex';
@@ -1016,118 +865,16 @@
           }
         };
       });
-
-      document.querySelectorAll('.attachment-btn, .view-attachments').forEach(btn => {
-        btn.onclick = async (e) => {
-          e.stopPropagation(); // Prevent row click event
-          const id = e.target.dataset.id || e.target.parentElement.dataset.id;
-          const task = allTasks.find(t => t.id === id);
-          if (!task || !task.attachments || task.attachments.length === 0) return;
-          
-          // Show attachments in modal
-          showAttachments(task.attachments);
-        };
-      });
     }
-
-    // Show attachments in modal
-    function showAttachments(attachments) {
-      attachmentList.innerHTML = '';
-      
-      if (attachments.length === 0) {
-        attachmentList.innerHTML = '<p class="no-attachments">No attachments found</p>';
-      } else {
-        attachments.forEach(attachment => {
-          const attachmentItem = document.createElement('div');
-          attachmentItem.className = 'attachment-item';
-          attachmentItem.innerHTML = `
-            <img src="${attachment.url}" alt="${attachment.name}" class="attachment-thumbnail">
-            <div class="attachment-info">
-              <div class="attachment-name">${attachment.name}</div>
-              <div>Uploaded: ${new Date(attachment.uploadedAt).toLocaleDateString()}</div>
-              <a href="${attachment.url}" download="${attachment.name}" class="attachment-download">Download</a>
-            </div>
-          `;
-          attachmentList.appendChild(attachmentItem);
-        });
-      }
-      
-      attachmentModal.style.display = 'flex';
-    }
-
-    // Upload files to Firebase Storage
-    async function uploadFiles(taskId, files) {
-      const uploadPromises = [];
-      const attachments = [];
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const storageRef = storage.ref(`tasks/${taskId}/${file.name}`);
-        const uploadTask = storageRef.put(file);
-        
-        uploadPromises.push(
-          uploadTask.then(snapshot => snapshot.ref.getDownloadURL())
-            .then(url => {
-              attachments.push({
-                name: file.name,
-                url: url,
-                uploadedAt: new Date().toISOString()
-              });
-            })
-        );
-      }
-      
-      await Promise.all(uploadPromises);
-      return attachments;
-    }
-
-    // Handle file upload preview
-    fileUpload.addEventListener('change', function() {
-      filePreview.innerHTML = '';
-      currentTaskFiles = Array.from(this.files);
-      
-      if (currentTaskFiles.length > 0) {
-        const fileList = document.createElement('div');
-        fileList.innerHTML = '<strong>Selected files:</strong>';
-        
-        currentTaskFiles.forEach(file => {
-          const fileItem = document.createElement('div');
-          fileItem.textContent = `${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
-          fileList.appendChild(fileItem);
-        });
-        
-        filePreview.appendChild(fileList);
-      }
-    });
-
-    // Handle edit file upload preview
-    editFileUpload.addEventListener('change', function() {
-      const files = Array.from(this.files);
-      
-      if (files.length > 0) {
-        const fileList = document.createElement('div');
-        fileList.innerHTML = '<strong>New files to upload:</strong>';
-        
-        files.forEach(file => {
-          const fileItem = document.createElement('div');
-          fileItem.textContent = `${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
-          fileList.appendChild(fileItem);
-        });
-        
-        editFilePreview.appendChild(fileList);
-      }
-    });
 
     // Open/close modal
     createTaskBtn.onclick = async () => {
-      // Check if user has pending tasks and show warning if they do
+      // Check if user has pending tasks
       if (hasPendingTasks()) {
-        showToast("You have pending tasks. Please complete them for better organization.");
+        showToast("You have pending tasks. Please complete them before creating a new task.");
       }
       
       taskForm.reset();
-      filePreview.innerHTML = '';
-      currentTaskFiles = [];
       companyList.innerHTML = workTypeList.innerHTML = assignedByList.innerHTML = '';
       allTasks.forEach(task => {
         companyList.append(new Option(task['Existing Company Name'], task['Existing Company Name']));
@@ -1173,17 +920,6 @@
       data.Notes = data.Notes || '';
       data.CreatedBy = username;
 
-      // Upload files if any
-      if (currentTaskFiles.length > 0) {
-        try {
-          data.attachments = await uploadFiles(data.SINO, currentTaskFiles);
-        } catch (error) {
-          console.error('Error uploading files:', error);
-          alert('Error uploading files. Please try again.');
-          return;
-        }
-      }
-
       // 🧹 Clean up unused keys
       delete data.companyName;
       delete data.typeOfWork;
@@ -1197,6 +933,9 @@
         alert('Task created!');
         taskModal.style.display = 'none';
         loadTasks();
+        
+        // After creating task, redirect to CurrentTask.html
+        window.location.href = 'CurrentTask.html';
       } catch (err) {
         console.error(err);
         alert('Failed to create task');
@@ -1218,22 +957,6 @@
         'Remarks': document.getElementById('editRemarks').value
       };
       
-      // Upload new files if any
-      const newFiles = editFileUpload.files;
-      if (newFiles.length > 0) {
-        try {
-          const newAttachments = await uploadFiles(id, Array.from(newFiles));
-          // Get existing attachments
-          const taskDoc = await db.collection('tasks').doc(id).get();
-          const existingAttachments = taskDoc.data().attachments || [];
-          updates.attachments = [...existingAttachments, ...newAttachments];
-        } catch (error) {
-          console.error('Error uploading files:', error);
-          alert('Error uploading files. Please try again.');
-          return;
-        }
-      }
-      
       try {
         await db.collection('tasks').doc(id).update(updates);
         alert('Task updated successfully!');
@@ -1248,11 +971,6 @@
     // Close edit modal
     editCancelBtn.onclick = () => {
       editTaskModal.style.display = 'none';
-    };
-
-    // Close attachment modal
-    closeAttachmentModal.onclick = () => {
-      attachmentModal.style.display = 'none';
     };
 
     // Refs
