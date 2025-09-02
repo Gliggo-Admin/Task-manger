@@ -936,26 +936,27 @@ taskForm.onsubmit = async (e) => {
     return alert('Please fill all required fields');
   }
 
-  // ✅ Wait for SINO to be generated from DB
+
+ // ✅ Wait for SINO to be generated from DB
   data.SINO = await generateSINO();
   data.Status = 'Not Started';
 
-  // Map form fields to Firestore field names
+  // Map form fields to Firestore field names - FIXED OWNER FIELD
   data['Existing Company Name'] = data.companyName;
   data['TYPE OF WORK'] = data.typeOfWork;
   data['WORK FOR'] = data.workFor;
   data['Due date'] = data.dueDate;
-  data.Owner = data.Owner;
+  data['Owner'] = data.Owner;  // This line was missing - now properly mapped
   data.Notes = data.Notes || '';
   data.CreatedBy = username;
 
-  // 🧹 Clean up unused keys
+  // 🧹 Clean up unused keys - DON'T DELETE OWNER
   delete data.companyName;
   delete data.typeOfWork;
   delete data.dueDate;
-  delete data.Owner;
   delete data.Notes;
   delete data.workFor;
+  // Note: We're NOT deleting data.Owner anymore
 
   try {
     await db.collection('tasks').add(data);
@@ -970,6 +971,7 @@ taskForm.onsubmit = async (e) => {
     alert('Failed to create task');
   }
 };
+
 
 // Handle edit form submission
 editTaskForm.onsubmit = async (e) => {
