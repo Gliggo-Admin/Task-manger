@@ -617,7 +617,7 @@ function showToast(message) {
 function hasPendingTasks() {
   return allTasks.some(task => 
     task.Owner === username && 
-    task.Status !== 'Completed'
+    (task.Status !== 'Completed' && task.Status !== 'Complete')
   );
 }
 
@@ -680,12 +680,23 @@ async function generateSINO() {
 
 function pickField(task, ...fields) {
   for (const field of fields) {
-    if (task[field] !== undefined && task[field] !== null && task[field].toString().trim() !== '') {
-      return task[field];
+    // Also check for field names with spaces and different capitalization
+    const fieldVariations = [
+      field,
+      field.replace(/\s+/g, ' '), // Normalize spaces
+      field.toLowerCase(),
+      field.toUpperCase()
+    ];
+    
+    for (const variation of fieldVariations) {
+      if (task[variation] !== undefined && task[variation] !== null && task[variation].toString().trim() !== '') {
+        return task[variation];
+      }
     }
   }
   return ''; // fallback if none found
 }
+
 
 function renderTablePage(page, tasks) {
   console.log("Rendering page:", page, "with tasks:", tasks.length);
@@ -707,11 +718,12 @@ function renderTablePage(page, tasks) {
     tr.setAttribute('tabindex', '0'); // for keyboard focus
     tr.dataset.taskId = task.id;
 
-    const statusColorMap = {
-      'Not Started': '#e76f51',
-      'In Progress': '#f4a261',
-      'Completed': '#2a9d8f'
-    };
+  const statusColorMap = {
+  'Not Started': '#e76f51',
+  'In Progress': '#f4a261',
+  'Completed': '#2a9d8f',
+  'Complete': '#2a9d8f' // Add this line to handle "Complete" status
+};
     const statusColor = statusColorMap[task.Status] || '#333';
 
     tr.innerHTML = `
@@ -732,26 +744,26 @@ function renderTablePage(page, tasks) {
     detailRow.classList.add('detail-row');
     detailRow.style.display = 'none'; // hidden by default
     detailRow.innerHTML = `
-      <td colspan="6" style="background: #f9f9f9; padding: 12px; font-size: 14px; color: #555;">
-        <strong>SINO:</strong> ${task.SINO || 'N/A'}<br/>
-        <strong>Company Name:</strong> ${task["Existing Company Name"] || 'N/A'}<br/>
-        <strong>Type of Work:</strong> ${task["TYPE OF WORK"] || 'N/A'}<br/>
-        <strong>Account Type:</strong> ${task["ACCOUNT TYPE"] || 'N/A'}<br/>
-        <strong>Accounts / Cards:</strong> ${task["Accounts / Cards"] || 'N/A'}<br/>
-        <strong>Task:</strong> ${task["Task"] || 'N/A'}<br/>
-        <strong>Status:</strong> ${task["Status"] || 'N/A'}<br/>
-        <strong>Owner:</strong> ${task["Owner"] || 'N/A'}<br/>
-        <strong>Due Date:</strong> ${task["Due date"] || 'N/A'}<br/>
-        <strong>Assigned By:</strong> ${task["Assigned By"] || 'N/A'}<br/>
-        <strong>Time Started:</strong> ${pickField(task, "TimeStarted", "Time Start") || 'N/A'}<br/>
-        <strong>Time End:</strong> ${pickField(task, "TimeEnd", "Time End") || 'N/A'}<br/>
-        <strong>Total Pause Hours:</strong> ${pickField(task, "TotalPauseHours", "TOTAL OUT OF HOURS") || 'N/A'}<br/>
-        <strong>Total Work Hours:</strong> ${pickField(task, "TotalWorkHours", "Total Work Hours") || 'N/A'}<br/>
-        <strong>Notes:</strong> ${task.Notes ? task.Notes.replace(/\n/g, '<br/>') : 'None'}<br/>
-        <strong>Remarks:</strong> ${pickField(task, "Remarks", "Remarks (New)") ? pickField(task, "Remarks", "Remarks (New)").replace(/\n/g, '<br/>') : 'None'}<br/>
-        <strong>Created By:</strong> ${task.CreatedBy || 'N/A'}
-      </td>
-    `;
+  <td colspan="6" style="background: #f9f9f9; padding: 12px; font-size: 14px; color: #555;">
+    <strong>SINO:</strong> ${pickField(task, "SINO") || 'N/A'}<br/>
+    <strong>Company Name:</strong> ${pickField(task, "Existing Company Name", "Company Name") || 'N/A'}<br/>
+    <strong>Type of Work:</strong> ${pickField(task, "TYPE OF WORK", "Type of Work") || 'N/A'}<br/>
+    <strong>Account Type:</strong> ${pickField(task, "ACCOUNT TYPE", "Account Type") || 'N/A'}<br/>
+    <strong>Accounts / Cards:</strong> ${pickField(task, "Accounts / Cards", "AccountsCards") || 'N/A'}<br/>
+    <strong>Task:</strong> ${pickField(task, "Task") || 'N/A'}<br/>
+    <strong>Status:</strong> ${pickField(task, "Status") || 'N/A'}<br/>
+    <strong>Owner:</strong> ${pickField(task, "Owner") || 'N/A'}<br/>
+    <strong>Due Date:</strong> ${pickField(task, "Due date", "Due Date") || 'N/A'}<br/>
+    <strong>Assigned By:</strong> ${pickField(task, "Assigned By", "AssignedBy") || 'N/A'}<br/>
+    <strong>Time Started:</strong> ${pickField(task, "TimeStarted", "Time Start", "taskStart") || 'N/A'}<br/>
+    <strong>Time End:</strong> ${pickField(task, "TimeEnd", "Time End", "taskEnd") || 'N/A'}<br/>
+    <strong>Total Pause Hours:</strong> ${pickField(task, "TotalPauseHours", "TOTAL OUT OF HOURS") || 'N/A'}<br/>
+    <strong>Total Work Hours:</strong> ${pickField(task, "TotalWorkHours", "Total Work Hours") || 'N/A'}<br/>
+    <strong>Notes:</strong> ${pickField(task, "Notes") ? pickField(task, "Notes").replace(/\n/g, '<br/>') : 'None'}<br/>
+    <strong>Remarks:</strong> ${pickField(task, "Remarks", "Remarks (New)") ? pickField(task, "Remarks", "Remarks (New)").replace(/\n/g, '<br/>') : 'None'}<br/>
+    <strong>Created By:</strong> ${pickField(task, "CreatedBy") || 'N/A'}
+  </td>
+`;
 
     taskTableBody.appendChild(detailRow);
 
@@ -1097,12 +1109,10 @@ async function initializeApp() {
 }
 
 // Call initializeApp when the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', initializeApp); 
-
-    window.onload = async function() {
+document.addEventListener('DOMContentLoaded', async function() {
   await loadTasks();
   populateGlobalSuggestions();
-};
+});
     
   </script>
 </body>
