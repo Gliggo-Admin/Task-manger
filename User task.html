@@ -485,27 +485,38 @@
     <input type="text" name="period" id="period" style="display:none;" placeholder="Enter period">
   </label><br/><br/>
 
-  <!-- Due Date -->
-  <label>Due Date:<br/>
-    <input type="date" name="dueDate" id="dueDate" required>
-  </label><br/><br/>
+  <<!-- Edit Task Modal -->
+<div id="editModal" role="dialog" aria-modal="true" style="display:none; 
+  position:fixed; top:0; left:0; width:100%; height:100%; 
+  background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:101;">
+  <form id="editForm" style="background:white; padding:20px; border-radius:8px; width:90%; max-width:400px;">
+    <h3>Edit Task</h3>
+    <input type="hidden" id="editTaskId">
+    
+    <label>Due Date:<br/>
+      <input type="date" id="editDueDate" required>
+    </label><br/><br/>
 
-  <!-- Assigned By -->
-  <label>Assigned By:<br/>
-    <input list="assignedByList" name="AssignedBy" id="AssignedBy">
-    <datalist id="assignedByList"></datalist>
-  </label><br/><br/>
+    <label>Notes:<br/>
+      <textarea id="editNotes"></textarea>
+    </label><br/><br/>
 
-  <!-- Notes -->
-  <label>Notes:<br/>
-    <textarea name="Notes" id="Notes"></textarea>
-  </label><br/><br/>
+    <label>Remarks:<br/>
+      <textarea id="editRemarks"></textarea>
+    </label><br/><br/>
 
-  <button type="submit">Save Task</button>
-  <button type="button" id="cancelBtn">Cancel</button>
-</form>
+    <button type="submit">Save</button>
+    <button type="button" id="closeEditBtn">Cancel</button>
+  </form>
+</div>
+    
+    <div id="toast" style="
+  visibility:hidden; min-width:250px; margin-left:-125px; 
+  background:#333; color:#fff; text-align:center; border-radius:5px;
+  padding:16px; position:fixed; z-index:200; left:50%; bottom:30px;
+  font-size:15px;">
+</div>
 
-  </div>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -660,6 +671,7 @@ detailRow.innerHTML = `
     <strong>Owner:</strong> ${task["Owner"] || 'N/A'}<br/>
     <strong>Due Date:</strong> ${task["Due date"] || 'N/A'}<br/>
     <strong>Assigned By:</strong> ${task["Assigned By"] || 'N/A'}<br/>
+    <strong>Notes:</strong> ${task["Notes"] ? task["Notes"].replace(/\n/g, '<br/>') : 'None'}<br/>
     <strong>Time Started:</strong> ${pickField(task, "TimeStarted", "Time Start") || 'N/A'}<br/>
     <strong>Time End:</strong> ${pickField(task, "TimeEnd", "Time End") || 'N/A'}<br/>
     <strong>Total Pause Hours:</strong> ${pickField(task, "TotalPauseHours", "TOTAL OUT OF HOURS") || 'N/A'}<br/>
@@ -762,40 +774,69 @@ function renderPagination(tasks) {
 
 
     // Attach edit/delete handlers
-    function attachRowEventListeners() {
-      document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.onclick = async (e) => {
-          const id = e.target.dataset.id;
-          const task = allTasks.find(t => t.id === id);
-          if (!task) return alert('Task not found.');
+   function attachRowEventListeners() {
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.onclick = (e) => {
+      const id = e.target.dataset.id;
+      const task = allTasks.find(t => t.id === id);
+      if (!task) return alert('Task not found.');
 
-          // Prompt user for new values
-          const newCompany = prompt('Company Name:', task['Existing Company Name'] || '');
-          if (newCompany === null) return;
-          const newTypeOfWork = prompt('Type of Work:', task['TYPE OF WORK'] || '');
-          if (newTypeOfWork === null) return;
-          const newStatus = prompt('Status (Not Started, In Progress, Completed):', task.Status || '');
-          if (newStatus === null) return;
-          const newOwner = prompt('Owner:', task.Owner || '');
-          if (newOwner === null) return;
-          const newNotes = prompt('Notes:', task.Notes || '');
+      // Fill modal
+      document.getElementById('editTaskId').value = id;
+      document.getElementById('editDueDate').value = task['Due date'] || '';
+      document.getElementById('editNotes').value = task.Notes || '';
+      document.getElementById('editRemarks').value = task.Remarks || '';
 
-          try {
-            await db.collection('tasks').doc(id).update({
-              'Existing Company Name': newCompany,
-              'TYPE OF WORK': newTypeOfWork,
-              Status: newStatus,
-              Owner: newOwner,
-              Notes: newNotes,
-            });
-            alert('Task updated');
-            loadTasks();
-          } catch (err) {
-            console.error(err);
-            alert('Failed to update task');
-          }
-        };
-      });
+      document.getElementById('editModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    };
+  });
+
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.onclick = async (e) => {
+      const id = e.target.dataset.id;
+      if (!confirm('Delete this task?')) return;
+      try {
+        await db.collection('tasks').doc(id).delete();
+        alert('Task deleted');
+        loadTasks();
+      } catch (err) {
+        console.error(err);
+        alert('Failed to delete task');
+      }
+    };
+  });
+}
+
+// Handle save from edit modal
+document.getElementById('editForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const id = document.getElementById('editTaskId').value;
+  const dueDate = document.getElementById('editDueDate').value;
+  const notes = document.getElementById('editNotes').value;
+  const remarks = document.getElementById('editRemarks').value;
+
+  try {
+    await db.collection('tasks').doc(id).update({
+      'Due date': dueDate,
+      Notes: notes,
+      Remarks: remarks
+    });
+    alert('Task updated');
+    document.getElementById('editModal').style.display = 'none';
+    document.body.style.overflow = '';
+    loadTasks();
+  } catch (err) {
+    console.error(err);
+    alert('Failed to update task');
+  }
+};
+
+document.getElementById('closeEditBtn').onclick = () => {
+  document.getElementById('editModal').style.display = 'none';
+  document.body.style.overflow = '';
+};
+
 
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.onclick = async (e) => {
@@ -865,15 +906,26 @@ data.SINO = await generateSINO();
   delete data.workFor;
 
   try {
-    await db.collection('tasks').add(data);
-    alert('Task created!');
-    taskModal.style.display = 'none';
-    loadTasks();
-  } catch (err) {
-    console.error(err);
-    alert('Failed to create task');
+  await db.collection('tasks').add(data);
+
+  // Check for pending tasks
+  const pendingSnap = await db.collection('tasks')
+    .where('Owner', '==', username)
+    .where('Status', '!=', 'Completed')
+    .get();
+
+  if (!pendingSnap.empty) {
+    showToast(`You still have ${pendingSnap.size} pending task(s).`);
+  } else {
+    window.location.href = 'CurrentTask.html';
   }
-};
+
+  taskModal.style.display = 'none';
+  loadTasks();
+} catch (e) {
+  console.error(e);
+  alert('Error creating task');
+}
 
     // Load user tasks on page load
     window.onload = loadTasks;
@@ -1043,6 +1095,12 @@ window.onload = async () => {
   await loadTasks();
   populateGlobalSuggestions(); // ✅ after tasks are loaded
 };
+function showToast(msg) {
+  const toast = document.getElementById("toast");
+  toast.textContent = msg;
+  toast.style.visibility = "visible";
+  setTimeout(() => { toast.style.visibility = "hidden"; }, 3000);
+}
 
 
   </script>
