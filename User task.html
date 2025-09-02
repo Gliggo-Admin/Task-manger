@@ -900,7 +900,6 @@ createTaskBtn.onclick = async () => {
   // Check if user has pending tasks
   if (hasPendingTasks()) {
     showToast("You have pending tasks. Please complete them before creating a new task.");
-    return;
   }
   
   taskForm.reset();
