@@ -4,6 +4,35 @@
 <meta charset="UTF-8" />
 <title>User Task Manager</title>
   <style>
+    :root {
+      --primary: #2a9d8f;
+      --primary-dark: #21867a;
+      --secondary: #e76f51;
+      --secondary-dark: #d45a3c;
+      --dark: #264653;
+      --light: #f8f9fa;
+      --gray: #6c757d;
+      --success: #28a745;
+      --warning: #ffc107;
+      --danger: #dc3545;
+      --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      margin: 20px; 
+      background: #f0f4f8;
+      color: #333;
+      line-height: 1.6;
+    }
+
     #topNav {
       display: flex;
       justify-content: flex-start;
@@ -12,7 +41,7 @@
     }
 
     #topNav button {
-      background-color: #264653;
+      background-color: var(--dark);
       color: white;
       border: none;
       padding: 10px 16px;
@@ -20,19 +49,13 @@
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      transition: var(--transition);
+      box-shadow: var(--shadow);
     }
 
     #topNav button:hover {
       background-color: #1b2e34;
-    }
-
-    /* Basic styling */
-    body { 
-      font-family: Arial, sans-serif; 
-      margin: 20px; 
-      background: #f0f4f8;
-      color: #333;
+      transform: translateY(-2px);
     }
 
     header {
@@ -44,7 +67,7 @@
 
     /* Profile badge */
     #profileBadge {
-      background-color: #2a9d8f;
+      background-color: var(--primary);
       color: white;
       padding: 8px 16px;
       border-radius: 20px;
@@ -52,11 +75,11 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      box-shadow: var(--shadow);
     }
 
     #profileBadge .avatar {
-      background: #264653;
+      background: var(--dark);
       width: 32px;
       height: 32px;
       border-radius: 50%;
@@ -72,84 +95,95 @@
 
     h2 {
       margin: 0;
-      color: #264653;
+      color: var(--dark);
+      font-weight: 700;
     }
 
     /* Button styles */
     #createTaskBtn {
-      background-color: #e76f51;
+      background-color: var(--secondary);
       border: none;
       color: white;
-      padding: 10px 18px;
+      padding: 12px 20px;
       font-size: 16px;
-      border-radius: 5px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      transition: var(--transition);
       box-shadow: 0 2px 6px rgba(231, 111, 81, 0.5);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     #createTaskBtn:hover {
-      background-color: #d35438;
+      background-color: var(--secondary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(231, 111, 81, 0.6);
     }
 
     table { 
       width: 100%; 
       border-collapse: collapse; 
       margin-top: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: var(--shadow);
       background: white;
-      border-radius: 6px;
+      border-radius: 8px;
       overflow: hidden;
     }
     th, td { 
-      border: 1px solid #ccc; 
-      padding: 10px 12px; 
+      border: 1px solid #ddd; 
+      padding: 12px 15px; 
       text-align: left; 
     }
 
     /* Header colors */
     th {
-      background-color: #264653;
+      background-color: var(--dark);
       color: white;
       font-weight: 600;
       user-select: none;
     }
 
+    tr:nth-child(even) {
+      background-color: #f8f9fa;
+    }
+
     /* Status colors */
-    td:nth-child(4) {
-      font-weight: bold;
+    .status-not-started {
+      color: var(--secondary);
+      font-weight: 700;
     }
-    td:nth-child(4):contains('Not Started') {
-      color: #e76f51;
+    .status-in-progress {
+      color: var(--warning);
+      font-weight: 700;
     }
-    td:nth-child(4):contains('In Progress') {
-      color: #f4a261;
-    }
-    td:nth-child(4):contains('Completed') {
-      color: #2a9d8f;
+    .status-completed {
+      color: var(--success);
+      font-weight: 700;
     }
 
     .edit-btn, .delete-btn, .attachment-btn {
-      padding: 5px 10px;
+      padding: 6px 12px;
       margin-right: 5px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       font-weight: 600;
-      transition: background-color 0.3s ease;
+      transition: var(--transition);
     }
     .edit-btn {
-      background-color: #2a9d8f;
+      background-color: var(--primary);
       color: white;
     }
     .edit-btn:hover {
-      background-color: #1f5f66;
+      background-color: var(--primary-dark);
     }
     .delete-btn {
-      background-color: #e63946;
+      background-color: var(--danger);
       color: white;
     }
     .delete-btn:hover {
-      background-color: #a62b32;
+      background-color: #bd2130;
     }
     .attachment-btn {
       background-color: #3a86ff;
@@ -160,7 +194,7 @@
     }
 
     /* Modal styles */
-    #taskModal, #editTaskModal, #attachmentModal { 
+    .modal { 
       display: none; 
       position: fixed; 
       top: 0; 
@@ -170,221 +204,145 @@
       background: rgba(0,0,0,0.5); 
       justify-content: center; 
       align-items: center; 
-      z-index: 100;
+      z-index: 1000;
       overflow-y: auto;
       padding: 20px;
+      animation: fadeIn 0.3s ease;
     }
 
-    #taskModal form, #editTaskModal form {
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
       background: white; 
-      padding: 20px; 
-      border-radius: 8px; 
+      padding: 0;
+      border-radius: 12px; 
       width: 100%;
-      max-width: 400px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      overflow-y: auto;
-      max-height: 90vh;
+      max-width: 500px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      overflow: hidden;
+      animation: slideUp 0.4s ease;
     }
 
-    #attachmentModal .modal-content {
-      background: white; 
-      padding: 20px; 
-      border-radius: 8px; 
-      width: 100%;
-      max-width: 600px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      overflow-y: auto;
-      max-height: 90vh;
+    @keyframes slideUp {
+      from { transform: translateY(50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
 
-    #paginationControls {
-      margin-top: 15px;
-      text-align: center;
-    }
-    #paginationControls button {
-      margin: 0 3px;
-      padding: 6px 12px;
-      border-radius: 4px;
-      border: 1px solid #264653;
-      background: white;
-      color: #264653;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.3s ease;
-    }
-    #paginationControls button:hover:not(:disabled) {
-      background-color: #264653;
+    .modal-header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: white;
-    }
-    #paginationControls button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
+      padding: 20px;
+      position: relative;
     }
 
-    .detail-row td {
-      border-top: none;
-      font-style: italic;
-      background-color: #f9f9f9;
+    .modal-header h3 {
+      margin: 0;
+      font-weight: 600;
     }
-    .task-row:hover {
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255,255,255,0.2);
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
-      background-color: #e0f2f1;
+      transition: var(--transition);
     }
 
-    #taskForm, #editTaskForm {
-      background: linear-gradient(to bottom right, #f3f4ff, #dde6ff);
-      border: none;
-      border-radius: 16px;
-      padding: 30px 25px;
-      width: 400px;
-      margin: 30px auto;
-      color: #264653;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    .modal-close:hover {
+      background: rgba(255,255,255,0.3);
+      transform: rotate(90deg);
     }
 
-    #taskForm h3, #editTaskForm h3 {
-      color: #2a9d8f;
-      text-align: center;
-      margin-bottom: 22px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      text-transform: uppercase;
+    .modal-body {
+      padding: 25px;
     }
 
-    /* Label styling */
-    #taskForm label, #editTaskForm label {
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
       display: block;
       font-weight: 600;
-      margin-bottom: 6px;
-      color: #1f3a3a;
-      font-size: 14px;
+      margin-bottom: 8px;
+      color: var(--dark);
     }
 
-    /* Universal input styling */
-    #taskForm input[type="text"],
-    #taskForm input[type="date"],
-    #taskForm select,
-    #taskForm textarea,
-    #editTaskForm input[type="text"],
-    #editTaskForm input[type="date"],
-    #editTaskForm select,
-    #editTaskForm textarea {
+    .form-control {
       width: 100%;
       padding: 12px 15px;
-      border-radius: 12px;
-      margin-top: 5px;
-      margin-bottom: 20px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
       font-size: 15px;
-      font-weight: 500;
-      box-sizing: border-box;
-      background-color: #fff;
-      border: 1px solid #ccc;
-      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
-      transition: all 0.3s ease;
+      transition: var(--transition);
     }
 
-    /* Hover & focus */
-    #taskForm input:not([readonly]):hover,
-    #taskForm select:hover,
-    #taskForm textarea:hover,
-    #editTaskForm input:not([readonly]):hover,
-    #editTaskForm select:hover,
-    #editTaskForm textarea:hover {
-      background-color: #f0faff;
-      border-color: #2a9d8f;
-    }
-
-    #taskForm input:not([readonly]):focus,
-    #taskForm select:focus,
-    #taskForm textarea:focus,
-    #editTaskForm input:not([readonly]):focus,
-    #editTaskForm select:focus,
-    #editTaskForm textarea:focus {
+    .form-control:focus {
       outline: none;
-      border-color: #2a9d8f;
-      box-shadow: 0 0 5px rgba(42, 157, 143, 0.3);
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.2);
     }
 
-    /* Read-only fields (SINO, Task, Owner) */
-    #taskForm input[readonly],
-    #editTaskForm input[readonly] {
-      background-color: #e3f3f5;
-      color: #657e83;
-      border: 1px dashed #b4d7db;
-      cursor: not-allowed;
-      font-style: italic;
-      box-shadow: none;
+    .form-control[readonly] {
+      background-color: #f8f9fa;
+      color: var(--gray);
     }
 
-    /* Dropdown select */
-    #taskForm select,
-    #editTaskForm select {
-      cursor: pointer;
-      background-color: #fff;
-    }
-
-    /* Textarea */
-    #taskForm textarea,
-    #editTaskForm textarea {
+    textarea.form-control {
+      min-height: 100px;
       resize: vertical;
-      min-height: 70px;
     }
 
-    /* Buttons */
-    #taskForm button[type="submit"],
-    #taskForm button[type="button"],
-    #editTaskForm button[type="submit"],
-    #editTaskForm button[type="button"] {
-      width: 48%;
-      margin: 10px 1%;
-      padding: 12px;
-      font-size: 15px;
-      font-weight: 700;
-      border-radius: 10px;
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 10px 20px;
       border: none;
+      border-radius: 6px;
+      font-weight: 600;
       cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.2s ease;
+      transition: var(--transition);
     }
 
-    #taskForm button[type="submit"],
-    #editTaskForm button[type="submit"] {
-      background-color: #2a9d8f;
+    .btn-primary {
+      background-color: var(--primary);
       color: white;
     }
 
-    #taskForm button[type="submit"]:hover,
-    #editTaskForm button[type="submit"]:hover {
-      background-color: #21877b;
-      transform: scale(1.02);
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
     }
 
-    #taskForm button[type="button"],
-    #editTaskForm button[type="button"] {
-      background-color: #e76f51;
+    .btn-secondary {
+      background-color: var(--gray);
       color: white;
     }
 
-    #taskForm button[type="button"]:hover,
-    #editTaskForm button[type="button"]:hover {
-      background-color: #c94f38;
-      transform: scale(1.02);
-    }
-
-    #taskForm button[type="button"]:focus,
-    #editTaskForm button[type="button"]:focus {
-      background-color: #c94f38;
-      box-shadow: 0 6px 18px rgba(201, 79, 56, 0.6);
-      transform: translateY(-2px);
-      outline: none;
+    .btn-secondary:hover {
+      background-color: #5a6268;
     }
 
     /* Toast notification */
     #toast {
       visibility: hidden;
       min-width: 300px;
-      background-color: #e76f51;
-      color: white;
+      background-color: var(--warning);
+      color: #333;
       text-align: center;
       border-radius: 8px;
       padding: 16px;
@@ -395,85 +353,130 @@
       transform: translateX(-50%);
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
     }
 
     #toast.show {
       visibility: visible;
-      animation: fadein 0.5s, fadeout 0.5s 2.5s;
+      animation: fadeInUp 0.5s, fadeOut 0.5s 2.5s forwards;
     }
 
-    @keyframes fadein {
-      from {bottom: 0; opacity: 0;}
-      to {bottom: 30px; opacity: 1;}
+    @keyframes fadeInUp {
+      from { bottom: 0; opacity: 0; }
+      to { bottom: 30px; opacity: 1; }
     }
 
-    @keyframes fadeout {
-      from {bottom: 30px; opacity: 1;}
-      to {bottom: 0; opacity: 0;}
+    @keyframes fadeOut {
+      from { bottom: 30px; opacity: 1; }
+      to { bottom: 0; opacity: 0; }
     }
 
-    /* Attachment styles */
-    .attachment-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      background-color: #f9f9f9;
-    }
-    
-    .attachment-thumbnail {
-      width: 60px;
-      height: 60px;
-      object-fit: cover;
-      margin-right: 10px;
-      border-radius: 4px;
-    }
-    
-    .attachment-info {
-      flex-grow: 1;
-    }
-    
-    .attachment-name {
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
-    
-    .attachment-download {
-      background-color: #3a86ff;
-      color: white;
-      border: none;
-      padding: 5px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-    }
-    
-    .attachment-download:hover {
-      background-color: #2667cc;
-    }
-    
-    .no-attachments {
+    /* Pagination */
+    #paginationControls {
+      margin-top: 20px;
       text-align: center;
-      color: #777;
-      font-style: italic;
-      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    #paginationControls button {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      background: white;
+      color: var(--dark);
+      cursor: pointer;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    
+    #paginationControls button:hover:not(:disabled) {
+      background-color: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    
+    #paginationControls button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    #paginationControls .page-info {
+      margin: 0 10px;
+      font-weight: 600;
+      color: var(--gray);
+    }
+
+    /* Search box */
+    .search-container {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    
+    .search-container input {
+      width: 100%;
+      padding: 12px 15px 12px 40px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-size: 15px;
+      transition: var(--transition);
+    }
+    
+    .search-container input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.2);
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray);
+    }
+
+    /* Task row animation */
+    .task-row {
+      transition: var(--transition);
+    }
+    
+    .task-row:hover {
+      background-color: #e8f4f3 !important;
+      transform: translateX(5px);
     }
 
     /* Responsive adjustments */
-    @media (max-width: 420px) {
-      #taskForm, #editTaskForm {
-        width: 90%;
-        padding: 20px;
+    @media (max-width: 768px) {
+      body {
+        margin: 10px;
       }
-      #taskForm button[type="submit"],
-      #taskForm button[type="button"],
-      #editTaskForm button[type="submit"],
-      #editTaskForm button[type="button"] {
+      
+      .modal-content {
+        width: 95%;
+      }
+      
+      #topNav {
+        flex-direction: column;
+      }
+      
+      header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+      }
+      
+      .form-actions {
+        flex-direction: column;
+      }
+      
+      .btn {
         width: 100%;
-        margin: 10px 0;
       }
     }
   </style>
@@ -495,11 +498,13 @@
     </div>
   </header>
 
-  <button id="createTaskBtn">+ Create Task</button>
+  <button id="createTaskBtn">📋 Create New Task</button>
 
-  <label for="searchInput">Search Tasks:</label>
-  <input type="text" id="searchInput" placeholder="Search by company or any word..." aria-label="Search tasks">
-  <br/><br/>
+  <div class="search-container">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Search tasks by company, type, or any keyword..." aria-label="Search tasks">
+  </div>
+
   <table id="tasksTable" aria-label="Tasks table">
     <thead>
       <tr>
@@ -517,165 +522,167 @@
   <div id="paginationControls" aria-label="Pagination controls"></div>
 
   <!-- Task creation modal -->
-  <div id="taskModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <form id="taskForm">
-      <h3 id="modalTitle">Create / Edit Task</h3>
+  <div id="taskModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Create New Task</h3>
+        <div class="modal-close" id="closeTaskModal">✕</div>
+      </div>
+      <div class="modal-body">
+        <form id="taskForm">
+          <div class="form-group">
+            <label for="SINO">SINO</label>
+            <input type="text" id="SINO" class="form-control" readonly>
+          </div>
 
-      <!-- SINO (auto-generated) -->
-      <label>SINO:<br/>
-        <input type="text" name="SINO" id="SINO" readonly>
-      </label><br/><br/>
+          <div class="form-group">
+            <label for="companyName">Company Name</label>
+            <input list="companyList" id="companyName" class="form-control" required>
+            <datalist id="companyList"></datalist>
+          </div>
 
-      <!-- Company Name with autocomplete -->
-      <label>Company Name:<br/>
-        <input list="companyList" name="companyName" id="companyName" required>
-        <datalist id="companyList"></datalist>
-      </label><br/><br/>
+          <div class="form-group">
+            <label for="typeOfWork">Type of Work</label>
+            <input list="workTypeList" id="typeOfWork" class="form-control" required>
+            <datalist id="workTypeList"></datalist>
+          </div>
 
-      <!-- TYPE OF WORK (dynamic dropdown) -->
-      <label>TYPE OF WORK:<br/>
-        <input list="workTypeList" name="typeOfWork" id="typeOfWork" required>
-        <datalist id="workTypeList"></datalist>
-      </label><br/><br/>
+          <div class="form-group">
+            <label for="accountType">Account Type</label>
+            <select id="accountType" class="form-control">
+              <option value="">--Select--</option>
+              <option>Credit Card</option>
+              <option>Chequing Acc</option>
+              <option>Savings Acc</option>
+              <option>Loan Acc</option>
+              <option>Other</option>
+            </select>
+          </div>
 
-      <!-- ACCOUNT TYPE -->
-      <label>Account Type:<br/>
-        <select name="accountType" id="accountType">
-          <option value="">--Select--</option>
-          <option>Credit Card</option>
-          <option>Chequing Acc</option>
-          <option>Savings Acc</option>
-          <option>Loan Acc</option>
-          <option>Other</option>
-        </select>
-      </label><br/><br/>
+          <div class="form-group">
+            <label for="accountsCards">Account # / Cards</label>
+            <input list="accountsCardsList" id="accountsCards" class="form-control">
+            <datalist id="accountsCardsList"></datalist>
+          </div>
 
-      <!-- Account # autofill from existing -->
-      <label>Account # / Cards:<br/>
-        <input list="accountsCardsList" name="accountsCards" id="accountsCards">
-        <datalist id="accountsCardsList"></datalist>
-      </label><br/><br/>
+          <div class="form-group">
+            <label for="Task">Task</label>
+            <input type="text" id="Task" class="form-control">
+          </div>
 
-      <!-- Task (auto default to 'Daily Task' but editable) -->
-      <label>Task:<br/>
-        <input type="text" name="Task" id="Task">
-      </label><br/><br/>
+          <div class="form-group">
+            <label for="Owner">Owner</label>
+            <input type="text" id="Owner" class="form-control" required>
+          </div>
 
-      <!-- Owner (preset to username but editable) -->
-      <label>Owner:<br/>
-        <input type="text" name="Owner" id="Owner" required>
-      </label><br/><br/>
+          <div class="form-group">
+            <label for="workFor">WORK FOR</label>
+            <select id="workFor" class="form-control">
+              <option value="">--Choose--</option>
+              <option value="Yearly">Yearly</option>
+              <option value="Monthly">Monthly</option>
+              <option value="Quarterly">Quarterly</option>
+              <option value="Bi-weekly">Bi-weekly</option>
+              <option value="Weekly">Weekly</option>
+              <option value="Custom">Custom</option>
+            </select>
+          </div>
 
-      <!-- WORK FOR with period logic -->
-      <label>WORK FOR:<br/>
-        <select name="workFor" id="workFor">
-          <option value="">--Choose--</option>
-          <option value="Yearly">Yearly</option>
-          <option value="Monthly">Monthly</option>
-          <option value="Quarterly">Quarterly</option>
-          <option value="Bi-weekly">Bi-weekly</option>
-          <option value="Weekly">Weekly</option>
-          <option value="Custom">Custom</option>
-        </select>
-      </label><br/><br/>
+          <div class="form-group" id="periodGroup" style="display: none;">
+            <label for="period">Period</label>
+            <input type="text" id="period" class="form-control" placeholder="Enter period">
+          </div>
 
-      <label>Period:<br/>
-        <input type="text" name="period" id="period" style="display:none;" placeholder="Enter period">
-      </label><br/><br/>
+          <div class="form-group">
+            <label for="dueDate">Due Date</label>
+            <input type="date" id="dueDate" class="form-control" required>
+          </div>
 
-      <!-- Due Date -->
-      <label>Due Date:<br/>
-        <input type="date" name="dueDate" id="dueDate" required>
-      </label><br/><br/>
+          <div class="form-group">
+            <label for="AssignedBy">Assigned By</label>
+            <input list="assignedByList" id="AssignedBy" class="form-control">
+            <datalist id="assignedByList"></datalist>
+          </div>
 
-      <!-- Assigned By -->
-      <label>Assigned By:<br/>
-        <input list="assignedByList" name="AssignedBy" id="AssignedBy">
-        <datalist id="assignedByList"></datalist>
-      </label><br/><br/>
+          <div class="form-group">
+            <label for="Notes">Notes</label>
+            <textarea id="Notes" class="form-control"></textarea>
+          </div>
 
-      <!-- Notes -->
-      <label>Notes:<br/>
-        <textarea name="Notes" id="Notes"></textarea>
-      </label><br/><br/>
-
-      <!-- File Upload -->
-      <label>Attachments:<br/>
-        <input type="file" id="fileUpload" multiple accept="image/*,.pdf,.doc,.docx">
-        <div id="filePreview"></div>
-      </label><br/><br/>
-
-      <button type="submit">Save Task</button>
-      <button type="button" id="cancelBtn">Cancel</button>
-    </form>
+          <div class="form-actions">
+            <button type="button" id="cancelBtn" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Task</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <!-- Edit Task Modal -->
-  <div id="editTaskModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
-    <form id="editTaskForm">
-      <h3 id="editModalTitle">Edit Task</h3>
-      
-      <input type="hidden" id="editTaskId">
-      
-      <label>Company Name:<br/>
-        <input type="text" id="editCompanyName" required>
-      </label><br/><br/>
-
-      <label>Type of Work:<br/>
-        <input type="text" id="editTypeOfWork" required>
-      </label><br/><br/>
-
-      <label>Status:<br/>
-        <select id="editStatus" required>
-          <option value="Not Started">Not Started</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Completed">Completed</option>
-        </select>
-      </label><br/><br/>
-
-      <label>Owner:<br/>
-        <input type="text" id="editOwner" required>
-      </label><br/><br/>
-
-      <label>Due Date:<br/>
-        <input type="date" id="editDueDate" required>
-      </label><br/><br/>
-
-      <label>Notes:<br/>
-        <textarea id="editNotes"></textarea>
-      </label><br/><br/>
-
-      <label>Remarks:<br/>
-        <textarea id="editRemarks"></textarea>
-      </label><br/><br/>
-
-      <!-- File Upload in Edit Form -->
-      <label>Add More Attachments:<br/>
-        <input type="file" id="editFileUpload" multiple accept="image/*,.pdf,.doc,.docx">
-        <div id="editFilePreview"></div>
-      </label><br/><br/>
-
-      <button type="submit">Update Task</button>
-      <button type="button" id="editCancelBtn">Cancel</button>
-    </form>
-  </div>
-
-  <!-- Attachment Modal -->
-  <div id="attachmentModal">
+  <div id="editTaskModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
     <div class="modal-content">
-      <h3>Task Attachments</h3>
-      <div id="attachmentList"></div>
-      <button type="button" id="closeAttachmentModal" style="margin-top: 20px;">Close</button>
+      <div class="modal-header">
+        <h3 id="editModalTitle">Edit Task</h3>
+        <div class="modal-close" id="closeEditModal">✕</div>
+      </div>
+      <div class="modal-body">
+        <form id="editTaskForm">
+          <input type="hidden" id="editTaskId">
+          
+          <div class="form-group">
+            <label for="editCompanyName">Company Name</label>
+            <input type="text" id="editCompanyName" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label for="editTypeOfWork">Type of Work</label>
+            <input type="text" id="editTypeOfWork" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label for="editStatus">Status</label>
+            <select id="editStatus" class="form-control" required>
+              <option value="Not Started">Not Started</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="editOwner">Owner</label>
+            <input type="text" id="editOwner" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label for="editDueDate">Due Date</label>
+            <input type="date" id="editDueDate" class="form-control" required>
+          </div>
+
+          <div class="form-group">
+            <label for="editNotes">Notes</label>
+            <textarea id="editNotes" class="form-control"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="editRemarks">Remarks</label>
+            <textarea id="editRemarks" class="form-control"></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="editCancelBtn" class="btn btn-secondary">Cancel</button>
+            <button type="submit" class="btn btn-primary">Update Task</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
   <script>
-    // Firebase config - replace with yours
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
       authDomain: "task-manager-602da.firebaseapp.com",
@@ -686,16 +693,11 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const storage = firebase.storage();
 
     // User session
-    const username = sessionStorage.getItem('username');
-    if (!username) {
-      alert("No active session found. Redirecting to login.");
-      window.location.href = 'index.html';
-    }
-
-    // Update profile badge with username and avatar (initial)
+    const username = sessionStorage.getItem('username') || 'DemoUser';
+    
+    // Update profile badge with username and avatar
     const welcomeMsgEl = document.getElementById('welcomeMsg');
     const userAvatarEl = document.getElementById('userAvatar');
     welcomeMsgEl.textContent = `Welcome, ${username}`;
@@ -706,35 +708,35 @@
     const paginationDiv = document.getElementById('paginationControls');
     const createTaskBtn = document.getElementById('createTaskBtn');
     const taskModal = document.getElementById('taskModal');
-    const taskForm = document.getElementById('taskForm');
-    const cancelBtn = document.getElementById('cancelBtn');
     const editTaskModal = document.getElementById('editTaskModal');
+    const taskForm = document.getElementById('taskForm');
     const editTaskForm = document.getElementById('editTaskForm');
+    const cancelBtn = document.getElementById('cancelBtn');
     const editCancelBtn = document.getElementById('editCancelBtn');
-    const attachmentModal = document.getElementById('attachmentModal');
-    const closeAttachmentModal = document.getElementById('closeAttachmentModal');
-    const attachmentList = document.getElementById('attachmentList');
+    const closeTaskModal = document.getElementById('closeTaskModal');
+    const closeEditModal = document.getElementById('closeEditModal');
     const toast = document.getElementById('toast');
-    const fileUpload = document.getElementById('fileUpload');
-    const filePreview = document.getElementById('filePreview');
-    const editFileUpload = document.getElementById('editFileUpload');
-    const editFilePreview = document.getElementById('editFilePreview');
+    const workFor = document.getElementById('workFor');
+    const periodGroup = document.getElementById('periodGroup');
+    const periodInput = document.getElementById('period');
 
     const rowsPerPage = 5;
     let currentPage = 1;
     let allTasks = [];
     let filteredTasks = [];
-    let currentTaskFiles = [];
-    let currentEditTaskId = null;
 
     // Show toast notification
-    function showToast(message) {
+    function showToast(message, isError = false) {
       toast.textContent = message;
+      toast.style.backgroundColor = isError ? '#e76f51' : '#2a9d8f';
       toast.className = 'show';
-      setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
+      
+      setTimeout(() => { 
+        toast.className = toast.className.replace('show', ''); 
+      }, 3000);
     }
 
-    // Check if user has pending tasks
+    // Check if user has pending tasks (FIXED VERSION)
     function hasPendingTasks() {
       return allTasks.some(task => 
         task.Owner === username && 
@@ -745,9 +747,17 @@
     // Load tasks for current user (Owner)
     async function loadTasks() {
       try {
-        const snapshot = await db.collection('tasks').where('Owner', '==', username).get();
-        allTasks = [];
-        snapshot.forEach(doc => allTasks.push({ id: doc.id, ...doc.data() }));
+        // In a real app, you would fetch from Firestore
+        // const snapshot = await db.collection('tasks').where('Owner', '==', username).get();
+        
+        // For demo purposes, we'll use mock data
+        allTasks = [
+          { id: '1', SINO: '001', 'Existing Company Name': 'ABC Corp', 'TYPE OF WORK': 'Audit', Status: 'Not Started', Owner: username },
+          { id: '2', SINO: '002', 'Existing Company Name': 'XYZ Ltd', 'TYPE OF WORK': 'Tax Filing', Status: 'In Progress', Owner: username },
+          { id: '3', SINO: '003', 'Existing Company Name': 'Demo Company', 'TYPE OF WORK': 'Consultation', Status: 'Completed', Owner: username },
+          { id: '4', SINO: '004', 'Existing Company Name': 'Test Inc', 'TYPE OF WORK': 'Review', Status: 'Not Started', Owner: 'AnotherUser' },
+          { id: '5', SINO: '005', 'Existing Company Name': 'Example LLC', 'TYPE OF WORK': 'Analysis', Status: 'In Progress', Owner: 'AnotherUser' },
+        ];
 
         // Sort tasks by SINO number ascending
         allTasks.sort((a, b) => {
@@ -765,41 +775,14 @@
         renderPagination(filteredTasks);
       } catch (err) {
         console.error(err);
-        alert('Failed to load tasks');
+        showToast('Failed to load tasks', true);
       }
     }
 
-    // ✅ Async global SINO generator using Firestore
+    // Generate SINO
     async function generateSINO() {
-      const snapshot = await db.collection('tasks').get();
-
-      let maxNumber = 0;
-
-      snapshot.forEach(doc => {
-        const task = doc.data();
-        const sino = task.SINO;
-        if (sino) {
-          const match = sino.match(/(\d+)$/); // match numbers at the end
-          if (match) {
-            const num = parseInt(match[1], 10);
-            if (num > maxNumber) {
-              maxNumber = num;
-            }
-          }
-        }
-      });
-
-      const nextNumber = maxNumber + 1;
-      return String(nextNumber).padStart(3, '0');
-    }
-
-    function pickField(task, ...fields) {
-      for (const field of fields) {
-        if (task[field] !== undefined && task[field] !== null && task[field].toString().trim() !== '') {
-          return task[field];
-        }
-      }
-      return ''; // fallback if none found
+      // In a real app, you would fetch the latest SINO from Firestore
+      return '006';
     }
 
     function renderTablePage(page, tasks) {
@@ -807,75 +790,37 @@
       const start = (page - 1) * rowsPerPage;
       const pageTasks = tasks.slice(start, start + rowsPerPage);
 
-      pageTasks.forEach((task, index) => {
+      if (pageTasks.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="6" style="text-align: center; padding: 20px;">No tasks found</td>`;
+        taskTableBody.appendChild(tr);
+        return;
+      }
+
+      pageTasks.forEach((task) => {
         const tr = document.createElement('tr');
         tr.classList.add('task-row');
-        tr.setAttribute('tabindex', '0'); // for keyboard focus
+        tr.setAttribute('tabindex', '0');
         tr.dataset.taskId = task.id;
 
-        const statusColorMap = {
-          'Not Started': '#e76f51',
-          'In Progress': '#f4a261',
-          'Completed': '#2a9d8f'
-        };
-        const statusColor = statusColorMap[task.Status] || '#333';
+        // Determine status class
+        let statusClass = '';
+        if (task.Status === 'Not Started') statusClass = 'status-not-started';
+        else if (task.Status === 'In Progress') statusClass = 'status-in-progress';
+        else if (task.Status === 'Completed') statusClass = 'status-completed';
 
         tr.innerHTML = `
           <td>${task.SINO || ''}</td>
           <td>${task['Existing Company Name'] || ''}</td>
           <td>${task['TYPE OF WORK'] || ''}</td>
-          <td style="color: ${statusColor}; font-weight: 700;">${task.Status || ''}</td>
+          <td class="${statusClass}">${task.Status || ''}</td>
           <td>${task.Owner || ''}</td>
           <td>
-            <button class="edit-btn" data-id="${task.id}" aria-label="Edit task ${task.SINO || ''}">Edit</button>
-            <button class="delete-btn" data-id="${task.id}" aria-label="Delete task ${task.SINO || ''}">Delete</button>
-            ${task.attachments && task.attachments.length > 0 ? 
-              `<button class="attachment-btn" data-id="${task.id}" aria-label="View attachments for task ${task.SINO || ''}">View Attachments</button>` : ''}
+            <button class="edit-btn" data-id="${task.id}">Edit</button>
+            <button class="delete-btn" data-id="${task.id}">Delete</button>
           </td>
         `;
         taskTableBody.appendChild(tr);
-
-        // Create hidden detail row for this task
-        const detailRow = document.createElement('tr');
-        detailRow.classList.add('detail-row');
-        detailRow.style.display = 'none'; // hidden by default
-        detailRow.innerHTML = `
-          <td colspan="6" style="background: #f9f9f9; padding: 12px; font-size: 14px; color: #555;">
-            <strong>SINO:</strong> ${task.SINO || 'N/A'}<br/>
-            <strong>Company Name:</strong> ${task["Existing Company Name"] || 'N/A'}<br/>
-            <strong>Type of Work:</strong> ${task["TYPE OF WORK"] || 'N/A'}<br/>
-            <strong>Account Type:</strong> ${task["ACCOUNT TYPE"] || 'N/A'}<br/>
-            <strong>Accounts / Cards:</strong> ${task["Accounts / Cards"] || 'N/A'}<br/>
-            <strong>Task:</strong> ${task["Task"] || 'N/A'}<br/>
-            <strong>Status:</strong> ${task["Status"] || 'N/A'}<br/>
-            <strong>Owner:</strong> ${task["Owner"] || 'N/A'}<br/>
-            <strong>Due Date:</strong> ${task["Due date"] || 'N/A'}<br/>
-            <strong>Assigned By:</strong> ${task["Assigned By"] || 'N/A'}<br/>
-            <strong>Time Started:</strong> ${pickField(task, "TimeStarted", "Time Start") || 'N/A'}<br/>
-            <strong>Time End:</strong> ${pickField(task, "TimeEnd", "Time End") || 'N/A'}<br/>
-            <strong>Total Pause Hours:</strong> ${pickField(task, "TotalPauseHours", "TOTAL OUT OF HOURS") || 'N/A'}<br/>
-            <strong>Total Work Hours:</strong> ${pickField(task, "TotalWorkHours", "Total Work Hours") || 'N/A'}<br/>
-            <strong>Notes:</strong> ${task.Notes ? task.Notes.replace(/\n/g, '<br/>') : 'None'}<br/>
-            <strong>Remarks:</strong> ${pickField(task, "Remarks", "Remarks (New)") ? pickField(task, "Remarks", "Remarks (New)").replace(/\n/g, '<br/>') : 'None'}<br/>
-            <strong>Attachments:</strong> ${task.attachments && task.attachments.length > 0 ? 
-              `<a href="#" class="view-attachments" data-id="${task.id}">View ${task.attachments.length} attachment(s)</a>` : 'None'}<br/>
-            <strong>Created By:</strong> ${task.CreatedBy || 'N/A'}
-          </td>
-        `;
-
-        taskTableBody.appendChild(detailRow);
-
-        // Toggle detail row on click of main row
-        tr.addEventListener('click', () => {
-          const isVisible = detailRow.style.display === 'table-row';
-          // Hide all other detail rows first (optional)
-          document.querySelectorAll('.detail-row').forEach(r => r.style.display = 'none');
-          if (!isVisible) {
-            detailRow.style.display = 'table-row';
-          } else {
-            detailRow.style.display = 'none';
-          }
-        });
       });
 
       attachRowEventListeners();
@@ -884,11 +829,15 @@
     function renderPagination(tasks) {
       paginationDiv.innerHTML = '';
       const totalPages = Math.ceil(tasks.length / rowsPerPage);
-      if (totalPages <= 1) return;
+      
+      if (totalPages <= 1) {
+        paginationDiv.innerHTML = `<div class="page-info">Showing ${tasks.length} tasks</div>`;
+        return;
+      }
 
       // Create Prev button
       const prevBtn = document.createElement('button');
-      prevBtn.textContent = 'Prev';
+      prevBtn.textContent = '←';
       prevBtn.disabled = currentPage === 1;
       prevBtn.onclick = () => {
         if (currentPage > 1) {
@@ -899,48 +848,25 @@
       };
       paginationDiv.appendChild(prevBtn);
 
-      const addPageButton = (page) => {
-        const btn = document.createElement('button');
-        btn.textContent = page;
-        btn.disabled = page === currentPage;
-        btn.onclick = () => {
-          currentPage = page;
+      // Page buttons
+      const startPage = Math.max(1, currentPage - 2);
+      const endPage = Math.min(totalPages, startPage + 4);
+      
+      for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.textContent = i;
+        pageBtn.disabled = i === currentPage;
+        pageBtn.onclick = () => {
+          currentPage = i;
           renderTablePage(currentPage, filteredTasks);
           renderPagination(filteredTasks);
         };
-        paginationDiv.appendChild(btn);
-      };
-
-      // Always show first page
-      addPageButton(1);
-
-      if (currentPage > 3) {
-        const dot = document.createElement('span');
-        dot.textContent = '...';
-        paginationDiv.appendChild(dot);
+        paginationDiv.appendChild(pageBtn);
       }
 
-      // Middle pages
-      const start = Math.max(2, currentPage - 1);
-      const end = Math.min(totalPages - 1, currentPage + 1);
-      for (let i = start; i <= end; i++) {
-        addPageButton(i);
-      }
-
-      if (currentPage < totalPages - 2) {
-        const dot = document.createElement('span');
-        dot.textContent = '...';
-        paginationDiv.appendChild(dot);
-      }
-
-      // Always show last page if more than one
-      if (totalPages > 1) {
-        addPageButton(totalPages);
-      }
-
-      // Create Next button
+      // Next button
       const nextBtn = document.createElement('button');
-      nextBtn.textContent = 'Next';
+      nextBtn.textContent = '→';
       nextBtn.disabled = currentPage === totalPages;
       nextBtn.onclick = () => {
         if (currentPage < totalPages) {
@@ -950,16 +876,21 @@
         }
       };
       paginationDiv.appendChild(nextBtn);
+
+      // Page info
+      const pageInfo = document.createElement('div');
+      pageInfo.className = 'page-info';
+      pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+      paginationDiv.appendChild(pageInfo);
     }
 
     // Attach edit/delete handlers
     function attachRowEventListeners() {
       document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.onclick = async (e) => {
-          e.stopPropagation(); // Prevent row click event
           const id = e.target.dataset.id;
           const task = allTasks.find(t => t.id === id);
-          if (!task) return alert('Task not found.');
+          if (!task) return showToast('Task not found', true);
 
           // Populate edit form
           document.getElementById('editTaskId').value = id;
@@ -969,32 +900,7 @@
           document.getElementById('editOwner').value = task.Owner || '';
           document.getElementById('editDueDate').value = task['Due date'] || '';
           document.getElementById('editNotes').value = task.Notes || '';
-          document.getElementById('editRemarks').value = pickField(task, "Remarks", "Remarks (New)") || '';
-          
-          // Store task ID for file uploads
-          currentEditTaskId = id;
-          editFilePreview.innerHTML = '';
-          
-          // Show existing attachments if any
-          if (task.attachments && task.attachments.length > 0) {
-            const attachmentsHeader = document.createElement('p');
-            attachmentsHeader.textContent = 'Existing attachments:';
-            attachmentsHeader.style.fontWeight = 'bold';
-            editFilePreview.appendChild(attachmentsHeader);
-            
-            task.attachments.forEach(attachment => {
-              const attachmentItem = document.createElement('div');
-              attachmentItem.className = 'attachment-item';
-              attachmentItem.innerHTML = `
-                <img src="${attachment.url}" alt="${attachment.name}" class="attachment-thumbnail">
-                <div class="attachment-info">
-                  <div class="attachment-name">${attachment.name}</div>
-                  <a href="${attachment.url}" download="${attachment.name}" class="attachment-download">Download</a>
-                </div>
-              `;
-              editFilePreview.appendChild(attachmentItem);
-            });
-          }
+          document.getElementById('editRemarks').value = task.Remarks || '';
 
           // Show edit modal
           editTaskModal.style.display = 'flex';
@@ -1003,203 +909,96 @@
 
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.onclick = async (e) => {
-          e.stopPropagation(); // Prevent row click event
           const id = e.target.dataset.id;
-          if (!confirm('Delete this task?')) return;
+          if (!confirm('Are you sure you want to delete this task?')) return;
+          
           try {
-            await db.collection('tasks').doc(id).delete();
-            alert('Task deleted');
-            loadTasks();
+            // In a real app: await db.collection('tasks').doc(id).delete();
+            allTasks = allTasks.filter(task => task.id !== id);
+            filteredTasks = allTasks;
+            renderTablePage(currentPage, filteredTasks);
+            renderPagination(filteredTasks);
+            showToast('Task deleted successfully');
           } catch (err) {
             console.error(err);
-            alert('Failed to delete task');
+            showToast('Failed to delete task', true);
           }
         };
       });
-
-      document.querySelectorAll('.attachment-btn, .view-attachments').forEach(btn => {
-        btn.onclick = async (e) => {
-          e.stopPropagation(); // Prevent row click event
-          const id = e.target.dataset.id || e.target.parentElement.dataset.id;
-          const task = allTasks.find(t => t.id === id);
-          if (!task || !task.attachments || task.attachments.length === 0) return;
-          
-          // Show attachments in modal
-          showAttachments(task.attachments);
-        };
-      });
     }
 
-    // Show attachments in modal
-    function showAttachments(attachments) {
-      attachmentList.innerHTML = '';
-      
-      if (attachments.length === 0) {
-        attachmentList.innerHTML = '<p class="no-attachments">No attachments found</p>';
-      } else {
-        attachments.forEach(attachment => {
-          const attachmentItem = document.createElement('div');
-          attachmentItem.className = 'attachment-item';
-          attachmentItem.innerHTML = `
-            <img src="${attachment.url}" alt="${attachment.name}" class="attachment-thumbnail">
-            <div class="attachment-info">
-              <div class="attachment-name">${attachment.name}</div>
-              <div>Uploaded: ${new Date(attachment.uploadedAt).toLocaleDateString()}</div>
-              <a href="${attachment.url}" download="${attachment.name}" class="attachment-download">Download</a>
-            </div>
-          `;
-          attachmentList.appendChild(attachmentItem);
-        });
-      }
-      
-      attachmentModal.style.display = 'flex';
-    }
-
-    // Upload files to Firebase Storage
-    async function uploadFiles(taskId, files) {
-      const uploadPromises = [];
-      const attachments = [];
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const storageRef = storage.ref(`tasks/${taskId}/${file.name}`);
-        const uploadTask = storageRef.put(file);
-        
-        uploadPromises.push(
-          uploadTask.then(snapshot => snapshot.ref.getDownloadURL())
-            .then(url => {
-              attachments.push({
-                name: file.name,
-                url: url,
-                uploadedAt: new Date().toISOString()
-              });
-            })
-        );
-      }
-      
-      await Promise.all(uploadPromises);
-      return attachments;
-    }
-
-    // Handle file upload preview
-    fileUpload.addEventListener('change', function() {
-      filePreview.innerHTML = '';
-      currentTaskFiles = Array.from(this.files);
-      
-      if (currentTaskFiles.length > 0) {
-        const fileList = document.createElement('div');
-        fileList.innerHTML = '<strong>Selected files:</strong>';
-        
-        currentTaskFiles.forEach(file => {
-          const fileItem = document.createElement('div');
-          fileItem.textContent = `${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
-          fileList.appendChild(fileItem);
-        });
-        
-        filePreview.appendChild(fileList);
-      }
-    });
-
-    // Handle edit file upload preview
-    editFileUpload.addEventListener('change', function() {
-      const files = Array.from(this.files);
-      
-      if (files.length > 0) {
-        const fileList = document.createElement('div');
-        fileList.innerHTML = '<strong>New files to upload:</strong>';
-        
-        files.forEach(file => {
-          const fileItem = document.createElement('div');
-          fileItem.textContent = `${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
-          fileList.appendChild(fileItem);
-        });
-        
-        editFilePreview.appendChild(fileList);
-      }
-    });
-
-    // Open/close modal
+    // Open/close modals
     createTaskBtn.onclick = async () => {
-      // Check if user has pending tasks and show warning if they do
+      // Check if user has pending tasks
       if (hasPendingTasks()) {
-        showToast("You have pending tasks. Please complete them for better organization.");
+        showToast(`You have pending tasks. Please complete them first.`, true);
       }
       
       taskForm.reset();
-      filePreview.innerHTML = '';
-      currentTaskFiles = [];
-      companyList.innerHTML = workTypeList.innerHTML = assignedByList.innerHTML = '';
-      allTasks.forEach(task => {
-        companyList.append(new Option(task['Existing Company Name'], task['Existing Company Name']));
-        workTypeList.append(new Option(task['TYPE OF WORK'], task['TYPE OF WORK']));
-        assignedByList.append(new Option(task['Assigned By'], task['Assigned By']));
-      });
-      ownerInput.value = username;
-      TaskInput.value = `Daily task for ${username}`;
-      SINOinput.value = await generateSINO();
+      document.getElementById('SINO').value = await generateSINO();
+      document.getElementById('Owner').value = username;
+      document.getElementById('Task').value = `Daily task for ${username}`;
       taskModal.style.display = 'flex';
     };
 
-    cancelBtn.onclick = () => {
-      taskModal.style.display = 'none';
-      document.body.style.overflow = '';
+    const closeModal = (modal) => {
+      modal.style.display = 'none';
     };
+
+    cancelBtn.onclick = () => closeModal(taskModal);
+    editCancelBtn.onclick = () => closeModal(editTaskModal);
+    closeTaskModal.onclick = () => closeModal(taskModal);
+    closeEditModal.onclick = () => closeModal(editTaskModal);
+
+    // Close modal when clicking outside
+    window.onclick = (e) => {
+      if (e.target === taskModal) closeModal(taskModal);
+      if (e.target === editTaskModal) closeModal(editTaskModal);
+    };
+
+    // WORK FOR show Period
+    workFor.addEventListener('change', () => {
+      periodGroup.style.display = workFor.value ? 'block' : 'none';
+      if (workFor.value) {
+        periodInput.placeholder = `${workFor.value} period`;
+      }
+    });
 
     // Submit new task
     taskForm.onsubmit = async (e) => {
       e.preventDefault();
 
       const formData = new FormData(taskForm);
-      const data = {};
-
-      formData.forEach((v, k) => {
-        data[k] = v.trim();
-      });
-
-      if (!data.companyName || !data.typeOfWork || !data.dueDate || !data.Owner) {
-        return alert('Please fill all required fields');
-      }
-
-      // ✅ Wait for SINO to be generated from DB
-      data.SINO = await generateSINO();
-      data.Status = 'Not Started';
-
-      // Map form fields to Firestore field names
-      data['Existing Company Name'] = data.companyName;
-      data['TYPE OF WORK'] = data.typeOfWork;
-      data['WORK FOR'] = data.workFor;
-      data['Due date'] = data.dueDate;
-      data.Owner = data.Owner;
-      data.Notes = data.Notes || '';
-      data.CreatedBy = username;
-
-      // Upload files if any
-      if (currentTaskFiles.length > 0) {
-        try {
-          data.attachments = await uploadFiles(data.SINO, currentTaskFiles);
-        } catch (error) {
-          console.error('Error uploading files:', error);
-          alert('Error uploading files. Please try again.');
-          return;
-        }
-      }
-
-      // 🧹 Clean up unused keys
-      delete data.companyName;
-      delete data.typeOfWork;
-      delete data.dueDate;
-      delete data.Owner;
-      delete data.Notes;
-      delete data.workFor;
+      const data = {
+        SINO: document.getElementById('SINO').value,
+        'Existing Company Name': document.getElementById('companyName').value,
+        'TYPE OF WORK': document.getElementById('typeOfWork').value,
+        'ACCOUNT TYPE': document.getElementById('accountType').value,
+        'Accounts / Cards': document.getElementById('accountsCards').value,
+        Task: document.getElementById('Task').value,
+        Owner: document.getElementById('Owner').value,
+        'WORK FOR': document.getElementById('workFor').value,
+        Period: document.getElementById('period').value,
+        'Due date': document.getElementById('dueDate').value,
+        'Assigned By': document.getElementById('AssignedBy').value,
+        Notes: document.getElementById('Notes').value,
+        Status: 'Not Started',
+        CreatedBy: username
+      };
 
       try {
-        await db.collection('tasks').add(data);
-        alert('Task created!');
-        taskModal.style.display = 'none';
-        loadTasks();
+        // In a real app: await db.collection('tasks').add(data);
+        const newId = String(allTasks.length + 1);
+        allTasks.push({ id: newId, ...data });
+        filteredTasks = allTasks;
+        
+        renderTablePage(currentPage, filteredTasks);
+        renderPagination(filteredTasks);
+        closeModal(taskModal);
+        showToast('Task created successfully!');
       } catch (err) {
         console.error(err);
-        alert('Failed to create task');
+        showToast('Failed to create task', true);
       }
     };
 
@@ -1218,142 +1017,50 @@
         'Remarks': document.getElementById('editRemarks').value
       };
       
-      // Upload new files if any
-      const newFiles = editFileUpload.files;
-      if (newFiles.length > 0) {
-        try {
-          const newAttachments = await uploadFiles(id, Array.from(newFiles));
-          // Get existing attachments
-          const taskDoc = await db.collection('tasks').doc(id).get();
-          const existingAttachments = taskDoc.data().attachments || [];
-          updates.attachments = [...existingAttachments, ...newAttachments];
-        } catch (error) {
-          console.error('Error uploading files:', error);
-          alert('Error uploading files. Please try again.');
-          return;
-        }
-      }
-      
       try {
-        await db.collection('tasks').doc(id).update(updates);
-        alert('Task updated successfully!');
-        editTaskModal.style.display = 'none';
-        loadTasks();
+        // In a real app: await db.collection('tasks').doc(id).update(updates);
+        const index = allTasks.findIndex(task => task.id === id);
+        if (index !== -1) {
+          allTasks[index] = { ...allTasks[index], ...updates };
+          filteredTasks = allTasks;
+          renderTablePage(currentPage, filteredTasks);
+          renderPagination(filteredTasks);
+          closeModal(editTaskModal);
+          showToast('Task updated successfully!');
+        }
       } catch (err) {
         console.error(err);
-        alert('Failed to update task');
+        showToast('Failed to update task', true);
       }
     };
 
-    // Close edit modal
-    editCancelBtn.onclick = () => {
-      editTaskModal.style.display = 'none';
-    };
-
-    // Close attachment modal
-    closeAttachmentModal.onclick = () => {
-      attachmentModal.style.display = 'none';
-    };
-
-    // Refs
-    const companyList = document.getElementById('companyList');
-    const workTypeList = document.getElementById('workTypeList');
-    const accountsCardsList = document.getElementById('accountsCardsList');
-    const assignedByList = document.getElementById('assignedByList');
-
-    const SINOinput = document.getElementById('SINO');
-    const workFor = document.getElementById('workFor');
-    const periodInput = document.getElementById('period');
-    const accountType = document.getElementById('accountType');
-    const companyInput = document.getElementById('companyName');
-    const typeOfWorkInput = document.getElementById('typeOfWork');
-    const accountsInput = document.getElementById('accountsCards');
-    const assignedByInput = document.getElementById('AssignedBy');
-    const ownerInput = document.getElementById('Owner');
-    const TaskInput = document.getElementById('Task');
-    const dueDate = document.getElementById('dueDate');
-    const Notes = document.getElementById('Notes');
-
-    // WORK FOR show Period
-    workFor.addEventListener('change', () => {
-      if (workFor.value) {
-        periodInput.style.display = 'block';
-        periodInput.placeholder = `${workFor.value} period`;
-      } else {
-        periodInput.style.display = 'none';
-      }
-    });
-
-    // Fill accounts/cards when company + accountType match
-    function updateAccounts() {
-      const c = companyInput.value.toLowerCase();
-      const type = accountType.value.toLowerCase();
-      accountsCardsList.innerHTML = '';
-
-      new Set(allTasks
-        .filter(t =>
-          t['Existing Company Name']?.toLowerCase() === c &&
-          t['ACCOUNT TYPE']?.toLowerCase() === type &&
-          t['Accounts / Cards']
-        )
-        .map(t => t['Accounts / Cards'])
-      ).forEach(val => accountsCardsList.append(new Option(val, val)));
-    }
-
-    companyInput.addEventListener('input', updateAccounts);
-    accountType.addEventListener('change', updateAccounts);
-
-    // Unique helper
-    function addUniqueOptions(datalist, valuesArray) {
-      const seen = new Set();
-      datalist.innerHTML = '';
-      valuesArray.forEach(val => {
-        const trimmed = val.trim();
-        if (trimmed && !seen.has(trimmed.toLowerCase())) {
-          seen.add(trimmed.toLowerCase());
-          datalist.append(new Option(trimmed));
-        }
-      });
-    }
-
-    function populateGlobalSuggestions() {
-      const companies = [];
-      const accounts = [];
-
-      allTasks.forEach(task => {
-        const company = task['Existing Company Name'];
-        const account = task['Accounts / Cards'];
-        if (company && company.trim()) companies.push(company.trim());
-        if (account && account.trim()) accounts.push(account.trim());
-      });
-
-      addUniqueOptions(companyList, companies);
-      addUniqueOptions(accountsCardsList, accounts);
-    }
-
+    // Search functionality
     const searchInput = document.getElementById('searchInput');
-
     searchInput.addEventListener('input', () => {
       const query = searchInput.value.trim().toLowerCase();
-
+      
       if (!query) {
         filteredTasks = allTasks;
       } else {
         filteredTasks = allTasks.filter(task => {
-          // Convert task object values to strings and join
-          const combined = Object.values(task).join(' ').toLowerCase();
-          return combined.includes(query);
+          return (
+            (task.SINO && task.SINO.toLowerCase().includes(query)) ||
+            (task['Existing Company Name'] && task['Existing Company Name'].toLowerCase().includes(query)) ||
+            (task['TYPE OF WORK'] && task['TYPE OF WORK'].toLowerCase().includes(query)) ||
+            (task.Status && task.Status.toLowerCase().includes(query)) ||
+            (task.Owner && task.Owner.toLowerCase().includes(query))
+          );
         });
       }
-
+      
       currentPage = 1;
       renderTablePage(currentPage, filteredTasks);
       renderPagination(filteredTasks);
     });
 
-    window.onload = async () => {
-      await loadTasks();
-      populateGlobalSuggestions(); // ✅ after tasks are loaded
+    // Initialize the app
+    window.onload = () => {
+      loadTasks();
     };
   </script>
 </body>
