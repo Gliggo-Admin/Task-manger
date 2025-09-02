@@ -124,7 +124,7 @@
     td:nth-child(4):contains('In Progress') {
       color: #f4a261;
     }
-    td:nth-child(4):contains('Completed') {
+    td:nth-child(4):contains('Complete') {
       color: #2a9d8f;
     }
 
@@ -374,6 +374,37 @@
       to {bottom: 0; opacity: 0;}
     }
 
+    /* Loading overlay */
+    #loadingOverlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 24px;
+    }
+
+    .spinner {
+      border: 8px solid #f3f3f3;
+      border-top: 8px solid #2a9d8f;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
     /* Responsive adjustments */
     @media (max-width: 420px) {
       #taskForm {
@@ -391,6 +422,14 @@
 <body>
   <!-- Toast notification -->
   <div id="toast"></div>
+
+  <!-- Loading overlay -->
+  <div id="loadingOverlay">
+    <div style="text-align: center;">
+      <div style="margin-bottom: 20px;">Processing, please wait...</div>
+      <div class="spinner"></div>
+    </div>
+  </div>
 
   <nav id="topNav">
     <button onclick="location.href='UserDashboard.html'">🏠 Home</button>
@@ -509,52 +548,63 @@
         <textarea name="Notes" id="Notes"></textarea>
       </label><br/><br/>
 
-      <button type="submit">Save Task</button>
+      <button type="submit" id="submitTaskBtn">Save Task</button>
       <button type="button" id="cancelBtn">Cancel</button>
     </form>
   </div>
 
   <!-- Edit Task Modal -->
   <div id="editTaskModal" role="dialog" aria-modal="true" aria-labelledby="editModalTitle" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100;">
-    <form id="editTaskForm" style="background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
-      <h3 id="editModalTitle">Edit Task</h3>
+    <form id="editTaskForm" style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);">
+      <h3 id="editModalTitle" style="text-align: center; color: #2a9d8f; margin-bottom: 25px;">Edit Task</h3>
       
       <input type="hidden" id="editTaskId">
       
-      <label>Company Name:<br/>
-        <input type="text" id="editCompanyName" required>
-      </label><br/><br/>
-
-      <label>Type of Work:<br/>
-        <input type="text" id="editTypeOfWork" required>
-      </label><br/><br/>
-
-      <label>Status:<br/>
-        <select id="editStatus" required>
-          <option value="Not Started">Not Started</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Completed">Completed</option>
-        </select>
-      </label><br/><br/>
-
-      <label>Owner:<br/>
-        <input type="text" id="editOwner" required>
-      </label><br/><br/>
-
-      <label>Due Date:<br/>
-        <input type="date" id="editDueDate" required>
-      </label><br/><br/>
-
-      <label>Notes:<br/>
-        <textarea id="editNotes"></textarea>
-      </label><br/><br/>
-
-      <label>Remarks:<br/>
-        <textarea id="editRemarks"></textarea>
-      </label><br/><br/>
-
-      <button type="submit">Update Task</button>
-      <button type="button" id="editCancelBtn">Cancel</button>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div>
+          <label style="font-weight: 600; color: #1f3a3a; font-size: 14px;">Company Name:</label>
+          <input type="text" id="editCompanyName" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px;">
+        </div>
+        
+        <div>
+          <label style="font-weight: 600; color: #1f3a3a; font-size: 14px;">Type of Work:</label>
+          <input type="text" id="editTypeOfWork" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px;">
+        </div>
+        
+        <div>
+          <label style="font-weight: 600; color: #1f3a3a; font-size: 14px;">Status:</label>
+          <select id="editStatus" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px;">
+            <option value="Not Started">Not Started</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Complete">Complete</option>
+          </select>
+        </div>
+        
+        <div>
+          <label style="font-weight: 600; color: #1f3a3a; font-size: 14px;">Owner:</label>
+          <input type="text" id="editOwner" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px;">
+        </div>
+        
+        <div>
+          <label style="font-weight: 600; color: #1f3a3a; font-size: 14px;">Due Date:</label>
+          <input type="date" id="editDueDate" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px;">
+        </div>
+      </div>
+      
+      <div style="margin-top: 15px;">
+        <label style="font-weight: 600; color: #1f3a3a; font-size: 14px;">Notes:</label>
+        <textarea id="editNotes" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px; min-height: 80px;"></textarea>
+      </div>
+      
+      <div style="margin-top: 15px;">
+        <label style="font-weight: 600; color: #1f3a3a; font-size: 14px;">Remarks:</label>
+        <textarea id="editRemarks" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px; min-height: 80px;"></textarea>
+      </div>
+      
+      <div style="margin-top: 20px; display: flex; justify-content: space-between;">
+        <button type="submit" id="submitEditBtn" style="background-color: #2a9d8f; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">Update Task</button>
+        <button type="button" id="editCancelBtn" style="background-color: #e76f51; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 600;">Cancel</button>
+      </div>
     </form>
   </div>
 
@@ -563,558 +613,581 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
   <script>
-    // Firebase config - replace with yours
-    // Firebase config - replace with yours
-const firebaseConfig = {
-  apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-  authDomain: "task-manager-602da.firebaseapp.com",
-  projectId: "task-manager-602da",
-  storageBucket: "task-manager-602da.appspot.com",
-  messagingSenderId: "438978699329",
-  appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+      authDomain: "task-manager-602da.firebaseapp.com",
+      projectId: "task-manager-602da",
+      storageBucket: "task-manager-602da.appspot.com",
+      messagingSenderId: "438978699329",
+      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-// User session
-const username = sessionStorage.getItem('username');
-if (!username) {
-  alert("No active session found. Redirecting to login.");
-  window.location.href = 'index.html';
-}
+    // User session
+    const username = sessionStorage.getItem('username');
+    if (!username) {
+      alert("No active session found. Redirecting to login.");
+      window.location.href = 'index.html';
+    }
 
-// Update profile badge with username and avatar (initial)
-const welcomeMsgEl = document.getElementById('welcomeMsg');
-const userAvatarEl = document.getElementById('userAvatar');
-welcomeMsgEl.textContent = `Welcome, ${username}`;
-userAvatarEl.textContent = username.charAt(0).toUpperCase();
+    // Update profile badge with username and avatar (initial)
+    const welcomeMsgEl = document.getElementById('welcomeMsg');
+    const userAvatarEl = document.getElementById('userAvatar');
+    welcomeMsgEl.textContent = `Welcome, ${username}`;
+    userAvatarEl.textContent = username.charAt(0).toUpperCase();
 
-// DOM elements
-const taskTableBody = document.querySelector('#tasksTable tbody');
-const paginationDiv = document.getElementById('paginationControls');
-const createTaskBtn = document.getElementById('createTaskBtn');
-const taskModal = document.getElementById('taskModal');
-const taskForm = document.getElementById('taskForm');
-const cancelBtn = document.getElementById('cancelBtn');
-const editTaskModal = document.getElementById('editTaskModal');
-const editTaskForm = document.getElementById('editTaskForm');
-const editCancelBtn = document.getElementById('editCancelBtn');
-const toast = document.getElementById('toast');
+    // DOM elements
+    const taskTableBody = document.querySelector('#tasksTable tbody');
+    const paginationDiv = document.getElementById('paginationControls');
+    const createTaskBtn = document.getElementById('createTaskBtn');
+    const taskModal = document.getElementById('taskModal');
+    const taskForm = document.getElementById('taskForm');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const editTaskModal = document.getElementById('editTaskModal');
+    const editTaskForm = document.getElementById('editTaskForm');
+    const editCancelBtn = document.getElementById('editCancelBtn');
+    const toast = document.getElementById('toast');
+    const loadingOverlay = document.getElementById('loadingOverlay');
 
-const rowsPerPage = 5;
-let currentPage = 1;
-let allTasks = [];
-let filteredTasks = [];
+    const rowsPerPage = 5;
+    let currentPage = 1;
+    let allTasks = [];
+    let filteredTasks = [];
 
-// Show toast notification
-function showToast(message) {
-  toast.textContent = message;
-  toast.className = 'show';
-  setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
-}
+    // Show/hide loading overlay
+    function showLoading() {
+      loadingOverlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
 
-// Check if user has pending tasks
-function hasPendingTasks() {
-  return allTasks.some(task => 
-    task.Owner === username && 
-    (task.Status !== 'Completed' && task.Status !== 'Complete')
-  );
-}
+    function hideLoading() {
+      loadingOverlay.style.display = 'none';
+      document.body.style.overflow = '';
+    }
 
-// Load tasks for current user (Owner)
-async function loadTasks() {
-  try {
-    console.log("Loading tasks for user:", username);
-    const snapshot = await db.collection('tasks').where('Owner', '==', username).get();
-    allTasks = [];
-    snapshot.forEach(doc => {
-      const taskData = { id: doc.id, ...doc.data() };
-      console.log("Task loaded:", taskData);
-      allTasks.push(taskData);
-    });
+    // Show toast notification
+    function showToast(message) {
+      toast.textContent = message;
+      toast.className = 'show';
+      setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
+    }
 
-    // Sort tasks by SINO number ascending
-    allTasks.sort((a, b) => {
-      const getNumber = sino => {
-        if (!sino) return 0;
-        const match = sino.match(/(\d+)$/);
-        return match ? parseInt(match[1], 10) : 0;
-      };
-      return getNumber(a.SINO) - getNumber(b.SINO);
-    });
+    // Check if user has pending tasks
+    function hasPendingTasks() {
+      return allTasks.some(task => 
+        task.Owner === username && 
+        (task.Status !== 'Complete' && task.Status !== 'Completed')
+      );
+    }
 
-    console.log("Total tasks loaded:", allTasks.length);
-    filteredTasks = allTasks;
-    currentPage = 1;
-    renderTablePage(currentPage, filteredTasks);
-    renderPagination(filteredTasks);
-  } catch (err) {
-    console.error("Error loading tasks:", err);
-    alert('Failed to load tasks');
-  }
-}
+    // Load tasks for current user (Owner)
+    async function loadTasks() {
+      try {
+        console.log("Loading tasks for user:", username);
+        const snapshot = await db.collection('tasks').where('Owner', '==', username).get();
+        allTasks = [];
+        snapshot.forEach(doc => {
+          const taskData = { id: doc.id, ...doc.data() };
+          console.log("Task loaded:", taskData);
+          allTasks.push(taskData);
+        });
 
-// ✅ Async global SINO generator using Firestore
-async function generateSINO() {
-  const snapshot = await db.collection('tasks').get();
+        // Sort tasks by SINO number ascending
+        allTasks.sort((a, b) => {
+          const getNumber = sino => {
+            if (!sino) return 0;
+            const match = sino.match(/(\d+)$/);
+            return match ? parseInt(match[1], 10) : 0;
+          };
+          return getNumber(a.SINO) - getNumber(b.SINO);
+        });
 
-  let maxNumber = 0;
+        console.log("Total tasks loaded:", allTasks.length);
+        filteredTasks = allTasks;
+        currentPage = 1;
+        renderTablePage(currentPage, filteredTasks);
+        renderPagination(filteredTasks);
+      } catch (err) {
+        console.error("Error loading tasks:", err);
+        alert('Failed to load tasks');
+      }
+    }
 
-  snapshot.forEach(doc => {
-    const task = doc.data();
-    const sino = task.SINO;
-    if (sino) {
-      const match = sino.match(/(\d+)$/); // match numbers at the end
-      if (match) {
-        const num = parseInt(match[1], 10);
-        if (num > maxNumber) {
-          maxNumber = num;
+    // ✅ Async global SINO generator using Firestore
+    async function generateSINO() {
+      const snapshot = await db.collection('tasks').get();
+
+      let maxNumber = 0;
+
+      snapshot.forEach(doc => {
+        const task = doc.data();
+        const sino = task.SINO;
+        if (sino) {
+          const match = sino.match(/(\d+)$/); // match numbers at the end
+          if (match) {
+            const num = parseInt(match[1], 10);
+            if (num > maxNumber) {
+              maxNumber = num;
+            }
+          }
+        }
+      });
+
+      const nextNumber = maxNumber + 1;
+      return String(nextNumber).padStart(3, '0');
+    }
+
+    function pickField(task, ...fields) {
+      for (const field of fields) {
+        // Also check for field names with spaces and different capitalization
+        const fieldVariations = [
+          field,
+          field.replace(/\s+/g, ' '), // Normalize spaces
+          field.toLowerCase(),
+          field.toUpperCase()
+        ];
+        
+        for (const variation of fieldVariations) {
+          if (task[variation] !== undefined && task[variation] !== null && task[variation].toString().trim() !== '') {
+            return task[variation];
+          }
         }
       }
+      return ''; // fallback if none found
     }
-  });
 
-  const nextNumber = maxNumber + 1;
-  return String(nextNumber).padStart(3, '0');
-}
-
-function pickField(task, ...fields) {
-  for (const field of fields) {
-    // Also check for field names with spaces and different capitalization
-    const fieldVariations = [
-      field,
-      field.replace(/\s+/g, ' '), // Normalize spaces
-      field.toLowerCase(),
-      field.toUpperCase()
-    ];
-    
-    for (const variation of fieldVariations) {
-      if (task[variation] !== undefined && task[variation] !== null && task[variation].toString().trim() !== '') {
-        return task[variation];
+    function renderTablePage(page, tasks) {
+      console.log("Rendering page:", page, "with tasks:", tasks.length);
+      taskTableBody.innerHTML = '';
+      
+      if (tasks.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="6" style="text-align: center; padding: 20px;">No tasks found</td>`;
+        taskTableBody.appendChild(tr);
+        return;
       }
+      
+      const start = (page - 1) * rowsPerPage;
+      const pageTasks = tasks.slice(start, start + rowsPerPage);
+
+      pageTasks.forEach((task, index) => {
+        const tr = document.createElement('tr');
+        tr.classList.add('task-row');
+        tr.setAttribute('tabindex', '0'); // for keyboard focus
+        tr.dataset.taskId = task.id;
+
+        const statusColorMap = {
+          'Not Started': '#e76f51',
+          'In Progress': '#f4a261',
+          'Complete': '#2a9d8f',
+          'Completed': '#2a9d8f' // For backward compatibility
+        };
+        const statusColor = statusColorMap[task.Status] || '#333';
+
+        tr.innerHTML = `
+          <td>${task.SINO || ''}</td>
+          <td>${task['Existing Company Name'] || ''}</td>
+          <td>${task['TYPE OF WORK'] || ''}</td>
+          <td style="color: ${statusColor}; font-weight: 700;">${task.Status || ''}</td>
+          <td>${task.Owner || ''}</td>
+          <td>
+            <button class="edit-btn" data-id="${task.id}" aria-label="Edit task ${task.SINO || ''}">Edit</button>
+            <button class="delete-btn" data-id="${task.id}" aria-label="Delete task ${task.SINO || ''}">Delete</button>
+          </td>
+        `;
+        taskTableBody.appendChild(tr);
+
+        // Create hidden detail row for this task
+        const detailRow = document.createElement('tr');
+        detailRow.classList.add('detail-row');
+        detailRow.style.display = 'none'; // hidden by default
+        
+        // Check if task has attachments
+        const hasAttachments = task.Attachments && task.Attachments.length > 0;
+        let attachmentsHtml = 'None';
+        
+        if (hasAttachments) {
+          attachmentsHtml = '';
+          task.Attachments.forEach((att, idx) => {
+            attachmentsHtml += `<a href="${att.url}" target="_blank" style="display: block; margin: 5px 0; color: #2a9d8f;">Attachment ${idx + 1}</a>`;
+          });
+        }
+        
+        detailRow.innerHTML = `
+          <td colspan="6" style="background: #f9f9f9; padding: 12px; font-size: 14px; color: #555;">
+            <strong>SINO:</strong> ${pickField(task, "SINO") || 'N/A'}<br/>
+            <strong>Company Name:</strong> ${pickField(task, "Existing Company Name", "Company Name") || 'N/A'}<br/>
+            <strong>Type of Work:</strong> ${pickField(task, "TYPE OF WORK", "Type of Work") || 'N/A'}<br/>
+            <strong>Account Type:</strong> ${pickField(task, "ACCOUNT TYPE", "Account Type") || 'N/A'}<br/>
+            <strong>Accounts / Cards:</strong> ${pickField(task, "Accounts / Cards", "AccountsCards") || 'N/A'}<br/>
+            <strong>Task:</strong> ${pickField(task, "Task") || 'N/A'}<br/>
+            <strong>Status:</strong> ${pickField(task, "Status") || 'N/A'}<br/>
+            <strong>Owner:</strong> ${pickField(task, "Owner") || 'N/A'}<br/>
+            <strong>Due Date:</strong> ${pickField(task, "Due date", "Due Date") || 'N/A'}<br/>
+            <strong>Assigned By:</strong> ${pickField(task, "Assigned By", "AssignedBy") || 'N/A'}<br/>
+            <strong>Time Started:</strong> ${pickField(task, "TimeStarted", "Time Start", "taskStart") || 'N/A'}<br/>
+            <strong>Time End:</strong> ${pickField(task, "TimeEnd", "Time End", "taskEnd") || 'N/A'}<br/>
+            <strong>Total Pause Hours:</strong> ${pickField(task, "TotalPauseHours", "TOTAL OUT OF HOURS") || 'N/A'}<br/>
+            <strong>Total Work Hours:</strong> ${pickField(task, "TotalWorkHours", "Total Work Hours") || 'N/A'}<br/>
+            <strong>Attachments:</strong> ${attachmentsHtml}<br/>
+            <strong>Notes:</strong> ${pickField(task, "Notes") ? pickField(task, "Notes").replace(/\n/g, '<br/>') : 'None'}<br/>
+            <strong>Remarks:</strong> ${pickField(task, "Remarks", "Remarks (New)") ? pickField(task, "Remarks", "Remarks (New)").replace(/\n/g, '<br/>') : 'None'}<br/>
+            <strong>Created By:</strong> ${pickField(task, "CreatedBy") || 'N/A'}
+          </td>
+        `;
+
+        taskTableBody.appendChild(detailRow);
+
+        // Toggle detail row on click of main row
+        tr.addEventListener('click', () => {
+          const isVisible = detailRow.style.display === 'table-row';
+          // Hide all other detail rows first (optional)
+          document.querySelectorAll('.detail-row').forEach(r => r.style.display = 'none');
+          if (!isVisible) {
+            detailRow.style.display = 'table-row';
+          } else {
+            detailRow.style.display = 'none';
+          }
+        });
+      });
+
+      attachRowEventListeners();
     }
-  }
-  return ''; // fallback if none found
-}
 
+    function renderPagination(tasks) {
+      paginationDiv.innerHTML = '';
+      const totalPages = Math.ceil(tasks.length / rowsPerPage);
+      if (totalPages <= 1) return;
 
-function renderTablePage(page, tasks) {
-  console.log("Rendering page:", page, "with tasks:", tasks.length);
-  taskTableBody.innerHTML = '';
-  
-  if (tasks.length === 0) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td colspan="6" style="text-align: center; padding: 20px;">No tasks found</td>`;
-    taskTableBody.appendChild(tr);
-    return;
-  }
-  
-  const start = (page - 1) * rowsPerPage;
-  const pageTasks = tasks.slice(start, start + rowsPerPage);
+      // Create Prev button
+      const prevBtn = document.createElement('button');
+      prevBtn.textContent = 'Prev';
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.onclick = () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderTablePage(currentPage, filteredTasks);
+          renderPagination(filteredTasks);
+        }
+      };
+      paginationDiv.appendChild(prevBtn);
 
-  pageTasks.forEach((task, index) => {
-    const tr = document.createElement('tr');
-    tr.classList.add('task-row');
-    tr.setAttribute('tabindex', '0'); // for keyboard focus
-    tr.dataset.taskId = task.id;
+      const addPageButton = (page) => {
+        const btn = document.createElement('button');
+        btn.textContent = page;
+        btn.disabled = page === currentPage;
+        btn.onclick = () => {
+          currentPage = page;
+          renderTablePage(currentPage, filteredTasks);
+          renderPagination(filteredTasks);
+        };
+        paginationDiv.appendChild(btn);
+      };
 
-  const statusColorMap = {
-  'Not Started': '#e76f51',
-  'In Progress': '#f4a261',
-  'Completed': '#2a9d8f',
-  'Complete': '#2a9d8f' // Add this line to handle "Complete" status
-};
-    const statusColor = statusColorMap[task.Status] || '#333';
+      // Always show first page
+      addPageButton(1);
 
-    tr.innerHTML = `
-      <td>${task.SINO || ''}</td>
-      <td>${task['Existing Company Name'] || ''}</td>
-      <td>${task['TYPE OF WORK'] || ''}</td>
-      <td style="color: ${statusColor}; font-weight: 700;">${task.Status || ''}</td>
-      <td>${task.Owner || ''}</td>
-      <td>
-        <button class="edit-btn" data-id="${task.id}" aria-label="Edit task ${task.SINO || ''}">Edit</button>
-        <button class="delete-btn" data-id="${task.id}" aria-label="Delete task ${task.SINO || ''}">Delete</button>
-      </td>
-    `;
-    taskTableBody.appendChild(tr);
-
-    // Create hidden detail row for this task
-    const detailRow = document.createElement('tr');
-    detailRow.classList.add('detail-row');
-    detailRow.style.display = 'none'; // hidden by default
-    detailRow.innerHTML = `
-  <td colspan="6" style="background: #f9f9f9; padding: 12px; font-size: 14px; color: #555;">
-    <strong>SINO:</strong> ${pickField(task, "SINO") || 'N/A'}<br/>
-    <strong>Company Name:</strong> ${pickField(task, "Existing Company Name", "Company Name") || 'N/A'}<br/>
-    <strong>Type of Work:</strong> ${pickField(task, "TYPE OF WORK", "Type of Work") || 'N/A'}<br/>
-    <strong>Account Type:</strong> ${pickField(task, "ACCOUNT TYPE", "Account Type") || 'N/A'}<br/>
-    <strong>Accounts / Cards:</strong> ${pickField(task, "Accounts / Cards", "AccountsCards") || 'N/A'}<br/>
-    <strong>Task:</strong> ${pickField(task, "Task") || 'N/A'}<br/>
-    <strong>Status:</strong> ${pickField(task, "Status") || 'N/A'}<br/>
-    <strong>Owner:</strong> ${pickField(task, "Owner") || 'N/A'}<br/>
-    <strong>Due Date:</strong> ${pickField(task, "Due date", "Due Date") || 'N/A'}<br/>
-    <strong>Assigned By:</strong> ${pickField(task, "Assigned By", "AssignedBy") || 'N/A'}<br/>
-    <strong>Time Started:</strong> ${pickField(task, "TimeStarted", "Time Start", "taskStart") || 'N/A'}<br/>
-    <strong>Time End:</strong> ${pickField(task, "TimeEnd", "Time End", "taskEnd") || 'N/A'}<br/>
-    <strong>Total Pause Hours:</strong> ${pickField(task, "TotalPauseHours", "TOTAL OUT OF HOURS") || 'N/A'}<br/>
-    <strong>Total Work Hours:</strong> ${pickField(task, "TotalWorkHours", "Total Work Hours") || 'N/A'}<br/>
-    <strong>Notes:</strong> ${pickField(task, "Notes") ? pickField(task, "Notes").replace(/\n/g, '<br/>') : 'None'}<br/>
-    <strong>Remarks:</strong> ${pickField(task, "Remarks", "Remarks (New)") ? pickField(task, "Remarks", "Remarks (New)").replace(/\n/g, '<br/>') : 'None'}<br/>
-    <strong>Created By:</strong> ${pickField(task, "CreatedBy") || 'N/A'}
-  </td>
-`;
-
-    taskTableBody.appendChild(detailRow);
-
-    // Toggle detail row on click of main row
-    tr.addEventListener('click', () => {
-      const isVisible = detailRow.style.display === 'table-row';
-      // Hide all other detail rows first (optional)
-      document.querySelectorAll('.detail-row').forEach(r => r.style.display = 'none');
-      if (!isVisible) {
-        detailRow.style.display = 'table-row';
-      } else {
-        detailRow.style.display = 'none';
+      if (currentPage > 3) {
+        const dot = document.createElement('span');
+        dot.textContent = '...';
+        paginationDiv.appendChild(dot);
       }
-    });
-  });
 
-  attachRowEventListeners();
-}
+      // Middle pages
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) {
+        addPageButton(i);
+      }
 
-function renderPagination(tasks) {
-  paginationDiv.innerHTML = '';
-  const totalPages = Math.ceil(tasks.length / rowsPerPage);
-  if (totalPages <= 1) return;
+      if (currentPage < totalPages - 2) {
+        const dot = document.createElement('span');
+        dot.textContent = '...';
+        paginationDiv.appendChild(dot);
+      }
 
-  // Create Prev button
-  const prevBtn = document.createElement('button');
-  prevBtn.textContent = 'Prev';
-  prevBtn.disabled = currentPage === 1;
-  prevBtn.onclick = () => {
-    if (currentPage > 1) {
-      currentPage--;
-      renderTablePage(currentPage, filteredTasks);
-      renderPagination(filteredTasks);
+      // Always show last page if more than one
+      if (totalPages > 1) {
+        addPageButton(totalPages);
+      }
+
+      // Create Next button
+      const nextBtn = document.createElement('button');
+      nextBtn.textContent = 'Next';
+            nextBtn.disabled = currentPage === totalPages;
+      nextBtn.onclick = () => {
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderTablePage(currentPage, filteredTasks);
+          renderPagination(filteredTasks);
+        }
+      };
+      paginationDiv.appendChild(nextBtn);
     }
-  };
-  paginationDiv.appendChild(prevBtn);
 
-  const addPageButton = (page) => {
-    const btn = document.createElement('button');
-    btn.textContent = page;
-    btn.disabled = page === currentPage;
-    btn.onclick = () => {
-      currentPage = page;
-      renderTablePage(currentPage, filteredTasks);
-      renderPagination(filteredTasks);
-    };
-    paginationDiv.appendChild(btn);
-  };
+    function attachRowEventListeners() {
+      // Edit button event listeners
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation(); // Prevent triggering the row click
+          const taskId = btn.getAttribute('data-id');
+          openEditModal(taskId);
+        });
+      });
 
-  // Always show first page
-  addPageButton(1);
-
-  if (currentPage > 3) {
-    const dot = document.createElement('span');
-    dot.textContent = '...';
-    paginationDiv.appendChild(dot);
-  }
-
-  // Middle pages
-  const start = Math.max(2, currentPage - 1);
-  const end = Math.min(totalPages - 1, currentPage + 1);
-  for (let i = start; i <= end; i++) {
-    addPageButton(i);
-  }
-
-  if (currentPage < totalPages - 2) {
-    const dot = document.createElement('span');
-    dot.textContent = '...';
-    paginationDiv.appendChild(dot);
-  }
-
-  // Always show last page if more than one
-  if (totalPages > 1) {
-    addPageButton(totalPages);
-  }
-
-  // Create Next button
-  const nextBtn = document.createElement('button');
-  nextBtn.textContent = 'Next';
-  nextBtn.disabled = currentPage === totalPages;
-  nextBtn.onclick = () => {
-    if (currentPage < totalPages) {
-      currentPage++;
-      renderTablePage(currentPage, filteredTasks);
-      renderPagination(filteredTasks);
+      // Delete button event listeners
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation(); // Prevent triggering the row click
+          const taskId = btn.getAttribute('data-id');
+          deleteTask(taskId);
+        });
+      });
     }
-  };
-  paginationDiv.appendChild(nextBtn);
-}
 
-// Attach edit/delete handlers
-function attachRowEventListeners() {
-  document.querySelectorAll('.edit-btn').forEach(btn => {
-    btn.onclick = async (e) => {
-      e.stopPropagation(); // Prevent row click event
-      const id = e.target.dataset.id;
-      const task = allTasks.find(t => t.id === id);
-      if (!task) return alert('Task not found.');
-
-      // Populate edit form
-      document.getElementById('editTaskId').value = id;
-      document.getElementById('editCompanyName').value = task['Existing Company Name'] || '';
-      document.getElementById('editTypeOfWork').value = task['TYPE OF WORK'] || '';
-      document.getElementById('editStatus').value = task.Status || 'Not Started';
-      document.getElementById('editOwner').value = task.Owner || '';
-      document.getElementById('editDueDate').value = task['Due date'] || '';
-      document.getElementById('editNotes').value = task.Notes || '';
-      document.getElementById('editRemarks').value = pickField(task, "Remarks", "Remarks (New)") || '';
-
-      // Show edit modal
-      editTaskModal.style.display = 'flex';
-    };
-  });
-
-  document.querySelectorAll('.delete-btn').forEach(btn => {
-    btn.onclick = async (e) => {
-      e.stopPropagation(); // Prevent row click event
-      const id = e.target.dataset.id;
-      if (!confirm('Delete this task?')) return;
+    async function openEditModal(taskId) {
       try {
-        await db.collection('tasks').doc(id).delete();
-        alert('Task deleted');
-        loadTasks();
-      } catch (err) {
-        console.error(err);
-        alert('Failed to delete task');
+        showLoading();
+        const taskDoc = await db.collection('tasks').doc(taskId).get();
+        
+        if (!taskDoc.exists) {
+          showToast('Task not found');
+          return;
+        }
+
+        const task = taskDoc.data();
+        
+        // Populate the edit form
+        document.getElementById('editTaskId').value = taskId;
+        document.getElementById('editCompanyName').value = task['Existing Company Name'] || '';
+        document.getElementById('editTypeOfWork').value = task['TYPE OF WORK'] || '';
+        document.getElementById('editStatus').value = task.Status || 'Not Started';
+        document.getElementById('editOwner').value = task.Owner || '';
+        document.getElementById('editDueDate').value = task['Due date'] || '';
+        document.getElementById('editNotes').value = task.Notes || '';
+        document.getElementById('editRemarks').value = task.Remarks || '';
+
+        // Show the modal
+        editTaskModal.style.display = 'flex';
+      } catch (error) {
+        console.error('Error opening edit modal:', error);
+        showToast('Error loading task details');
+      } finally {
+        hideLoading();
       }
-    };
-  });
-}
-
-// Open/close modal
-createTaskBtn.onclick = async () => {
-  // Check if user has pending tasks
-  if (hasPendingTasks()) {
-    showToast("You have pending tasks. Please complete them before creating a new task.");
-  }
-  
-  taskForm.reset();
-  companyList.innerHTML = workTypeList.innerHTML = assignedByList.innerHTML = '';
-  allTasks.forEach(task => {
-    companyList.append(new Option(task['Existing Company Name'], task['Existing Company Name']));
-    workTypeList.append(new Option(task['TYPE OF WORK'], task['TYPE OF WORK']));
-    assignedByList.append(new Option(task['Assigned By'], task['Assigned By']));
-  });
-  ownerInput.value = username;
-  TaskInput.value = `Daily task for ${username}`;
-  SINOinput.value = await generateSINO();
-  taskModal.style.display = 'flex';
-};
-
-cancelBtn.onclick = () => {
-  taskModal.style.display = 'none';
-  document.body.style.overflow = '';
-};
-
-// Submit new task
-taskForm.onsubmit = async (e) => {
-  e.preventDefault();
-
-  const formData = new FormData(taskForm);
-  const data = {};
-
-  formData.forEach((v, k) => {
-    data[k] = v.trim();
-  });
-
-  if (!data.companyName || !data.typeOfWork || !data.dueDate || !data.Owner) {
-    return alert('Please fill all required fields');
-  }
-
-
- // ✅ Wait for SINO to be generated from DB
-  data.SINO = await generateSINO();
-  data.Status = 'Not Started';
-
-  // Map form fields to Firestore field names - FIXED OWNER FIELD
-  data['Existing Company Name'] = data.companyName;
-  data['TYPE OF WORK'] = data.typeOfWork;
-  data['WORK FOR'] = data.workFor;
-  data['Due date'] = data.dueDate;
-  data['Owner'] = data.Owner;  // This line was missing - now properly mapped
-  data.Notes = data.Notes || '';
-  data.CreatedBy = username;
-
-  // 🧹 Clean up unused keys - DON'T DELETE OWNER
-  delete data.companyName;
-  delete data.typeOfWork;
-  delete data.dueDate;
-  delete data.Notes;
-  delete data.workFor;
-  // Note: We're NOT deleting data.Owner anymore
-
-  try {
-    await db.collection('tasks').add(data);
-    alert('Task created!');
-    taskModal.style.display = 'none';
-    loadTasks();
-    
-    // After creating task, redirect to CurrentTask.html
-    window.location.href = 'CurrentTask.html';
-  } catch (err) {
-    console.error(err);
-    alert('Failed to create task');
-  }
-};
-
-
-// Handle edit form submission
-editTaskForm.onsubmit = async (e) => {
-  e.preventDefault();
-  
-  const id = document.getElementById('editTaskId').value;
-  const updates = {
-    'Existing Company Name': document.getElementById('editCompanyName').value,
-    'TYPE OF WORK': document.getElementById('editTypeOfWork').value,
-    'Status': document.getElementById('editStatus').value,
-    'Owner': document.getElementById('editOwner').value,
-    'Due date': document.getElementById('editDueDate').value,
-    'Notes': document.getElementById('editNotes').value,
-    'Remarks': document.getElementById('editRemarks').value
-  };
-  
-  try {
-    await db.collection('tasks').doc(id).update(updates);
-    alert('Task updated successfully!');
-    editTaskModal.style.display = 'none';
-    loadTasks();
-  } catch (err) {
-    console.error(err);
-    alert('Failed to update task');
-  }
-};
-
-// Close edit modal
-editCancelBtn.onclick = () => {
-  editTaskModal.style.display = 'none';
-};
-
-// Refs
-const companyList = document.getElementById('companyList');
-const workTypeList = document.getElementById('workTypeList');
-const accountsCardsList = document.getElementById('accountsCardsList');
-const assignedByList = document.getElementById('assignedByList');
-
-const SINOinput = document.getElementById('SINO');
-const workFor = document.getElementById('workFor');
-const periodInput = document.getElementById('period');
-const accountType = document.getElementById('accountType');
-const companyInput = document.getElementById('companyName');
-const typeOfWorkInput = document.getElementById('typeOfWork');
-const accountsInput = document.getElementById('accountsCards');
-const assignedByInput = document.getElementById('AssignedBy');
-const ownerInput = document.getElementById('Owner');
-const TaskInput = document.getElementById('Task');
-const dueDate = document.getElementById('dueDate');
-const Notes = document.getElementById('Notes');
-
-// WORK FOR show Period
-workFor.addEventListener('change', () => {
-  if (workFor.value) {
-    periodInput.style.display = 'block';
-    periodInput.placeholder = `${workFor.value} period`;
-  } else {
-    periodInput.style.display = 'none';
-  }
-});
-
-// Fill accounts/cards when company + accountType match
-function updateAccounts() {
-  const c = companyInput.value.toLowerCase();
-  const type = accountType.value.toLowerCase();
-  accountsCardsList.innerHTML = '';
-
-  new Set(allTasks
-    .filter(t =>
-      t['Existing Company Name']?.toLowerCase() === c &&
-      t['ACCOUNT TYPE']?.toLowerCase() === type &&
-      t['Accounts / Cards']
-    )
-    .map(t => t['Accounts / Cards'])
-  ).forEach(val => accountsCardsList.append(new Option(val, val)));
-}
-
-companyInput.addEventListener('input', updateAccounts);
-accountType.addEventListener('change', updateAccounts);
-
-// Unique helper
-function addUniqueOptions(datalist, valuesArray) {
-  const seen = new Set();
-  datalist.innerHTML = '';
-  valuesArray.forEach(val => {
-    const trimmed = val.trim();
-    if (trimmed && !seen.has(trimmed.toLowerCase())) {
-      seen.add(trimmed.toLowerCase());
-      datalist.append(new Option(trimmed));
     }
-  });
-}
 
-function populateGlobalSuggestions() {
-  const companies = [];
-  const accounts = [];
+    async function deleteTask(taskId) {
+      if (!confirm('Are you sure you want to delete this task?')) return;
 
-  allTasks.forEach(task => {
-    const company = task['Existing Company Name'];
-    const account = task['Accounts / Cards'];
-    if (company && company.trim()) companies.push(company.trim());
-    if (account && account.trim()) accounts.push(account.trim());
-  });
+      try {
+        showLoading();
+        await db.collection('tasks').doc(taskId).delete();
+        showToast('Task deleted successfully');
+        loadTasks(); // Reload the task list
+      } catch (error) {
+        console.error('Error deleting task:', error);
+        showToast('Error deleting task');
+      } finally {
+        hideLoading();
+      }
+    }
 
-  addUniqueOptions(companyList, companies);
-  addUniqueOptions(accountsCardsList, accounts);
-}
-
-const searchInput = document.getElementById('searchInput');
-
-searchInput.addEventListener('input', () => {
-  const query = searchInput.value.trim().toLowerCase();
-
-  if (!query) {
-    filteredTasks = allTasks;
-  } else {
-    filteredTasks = allTasks.filter(task => {
-      // Convert task object values to strings and join
-      const combined = Object.values(task).join(' ').toLowerCase();
-      return combined.includes(query);
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase().trim();
+      
+      if (!searchTerm) {
+        filteredTasks = allTasks;
+      } else {
+        filteredTasks = allTasks.filter(task => {
+          // Search across multiple fields
+          return (
+            (task['Existing Company Name'] && task['Existing Company Name'].toLowerCase().includes(searchTerm)) ||
+            (task['TYPE OF WORK'] && task['TYPE OF WORK'].toLowerCase().includes(searchTerm)) ||
+            (task.SINO && task.SINO.toLowerCase().includes(searchTerm)) ||
+            (task.Status && task.Status.toLowerCase().includes(searchTerm)) ||
+            (task.Notes && task.Notes.toLowerCase().includes(searchTerm))
+          );
+        });
+      }
+      
+      currentPage = 1;
+      renderTablePage(currentPage, filteredTasks);
+      renderPagination(filteredTasks);
     });
-  }
 
-  currentPage = 1;
-  renderTablePage(currentPage, filteredTasks);
-  renderPagination(filteredTasks);
-});
+    // Modal event handlers
+    createTaskBtn.addEventListener('click', async () => {
+      // Generate SINO
+      const newSINO = await generateSINO();
+      document.getElementById('SINO').value = newSINO;
+      
+      // Set default values
+      document.getElementById('Owner').value = username;
+      document.getElementById('Task').value = 'Daily Task';
+      
+      // Show modal
+      taskModal.style.display = 'flex';
+      document.getElementById('modalTitle').textContent = 'Create New Task';
+    });
 
-// Initialize the application
-async function initializeApp() {
-  try {
-    await loadTasks();
-    populateGlobalSuggestions();
-  } catch (error) {
-    console.error("Error initializing app:", error);
-  }
-}
+    cancelBtn.addEventListener('click', () => {
+      taskModal.style.display = 'none';
+      taskForm.reset();
+    });
 
-// Call initializeApp when the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', async function() {
-  await loadTasks();
-  populateGlobalSuggestions();
-});
-    
+    editCancelBtn.addEventListener('click', () => {
+      editTaskModal.style.display = 'none';
+    });
+
+    // Close modals when clicking outside
+    window.addEventListener('click', (e) => {
+      if (e.target === taskModal) {
+        taskModal.style.display = 'none';
+        taskForm.reset();
+      }
+      if (e.target === editTaskModal) {
+        editTaskModal.style.display = 'none';
+      }
+    });
+
+    // Handle form submission for creating/editing tasks
+    taskForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      try {
+        showLoading();
+        
+        const formData = new FormData(taskForm);
+        const taskData = Object.fromEntries(formData.entries());
+        
+        // Add timestamp
+        taskData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        taskData.CreatedBy = username;
+        
+        // Save to Firestore
+        await db.collection('tasks').add(taskData);
+        
+        showToast('Task created successfully');
+        taskModal.style.display = 'none';
+        taskForm.reset();
+        loadTasks(); // Reload tasks
+      } catch (error) {
+        console.error('Error creating task:', error);
+        showToast('Error creating task');
+      } finally {
+        hideLoading();
+      }
+    });
+
+    // Handle edit form submission
+    editTaskForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      try {
+        showLoading();
+        
+        const taskId = document.getElementById('editTaskId').value;
+        const updatedData = {
+          'Existing Company Name': document.getElementById('editCompanyName').value,
+          'TYPE OF WORK': document.getElementById('editTypeOfWork').value,
+          'Status': document.getElementById('editStatus').value,
+          'Owner': document.getElementById('editOwner').value,
+          'Due date': document.getElementById('editDueDate').value,
+          'Notes': document.getElementById('editNotes').value,
+          'Remarks': document.getElementById('editRemarks').value,
+          'updatedAt': firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await db.collection('tasks').doc(taskId).update(updatedData);
+        
+        showToast('Task updated successfully');
+        editTaskModal.style.display = 'none';
+        loadTasks(); // Reload tasks
+      } catch (error) {
+        console.error('Error updating task:', error);
+        showToast('Error updating task');
+      } finally {
+        hideLoading();
+      }
+    });
+
+    // Load dropdown options from existing tasks
+    async function loadDropdownOptions() {
+      try {
+        const snapshot = await db.collection('tasks').get();
+        const companies = new Set();
+        const workTypes = new Set();
+        const accounts = new Set();
+        const assignedBys = new Set();
+        
+        snapshot.forEach(doc => {
+          const task = doc.data();
+          if (task['Existing Company Name']) companies.add(task['Existing Company Name']);
+          if (task['TYPE OF WORK']) workTypes.add(task['TYPE OF WORK']);
+          if (task['Accounts / Cards']) accounts.add(task['Accounts / Cards']);
+          if (task['Assigned By']) assignedBys.add(task['Assigned By']);
+        });
+        
+        // Update datalists
+        const companyList = document.getElementById('companyList');
+        companyList.innerHTML = '';
+        companies.forEach(company => {
+          const option = document.createElement('option');
+          option.value = company;
+          companyList.appendChild(option);
+        });
+        
+        const workTypeList = document.getElementById('workTypeList');
+        workTypeList.innerHTML = '';
+        workTypes.forEach(workType => {
+          const option = document.createElement('option');
+          option.value = workType;
+          workTypeList.appendChild(option);
+        });
+        
+        const accountsList = document.getElementById('accountsCardsList');
+        accountsList.innerHTML = '';
+        accounts.forEach(account => {
+          const option = document.createElement('option');
+          option.value = account;
+          accountsList.appendChild(option);
+        });
+        
+        const assignedByList = document.getElementById('assignedByList');
+        assignedByList.innerHTML = '';
+        assignedBys.forEach(assignedBy => {
+          const option = document.createElement('option');
+          option.value = assignedBy;
+          assignedByList.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error loading dropdown options:', error);
+      }
+    }
+
+    // Handle WORK FOR dropdown change
+    document.getElementById('workFor').addEventListener('change', (e) => {
+      const periodInput = document.getElementById('period');
+      if (e.target.value === 'Custom') {
+        periodInput.style.display = 'block';
+        periodInput.required = true;
+      } else {
+        periodInput.style.display = 'none';
+        periodInput.required = false;
+        periodInput.value = '';
+      }
+    });
+
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', () => {
+      loadTasks();
+      loadDropdownOptions();
+    });
   </script>
 </body>
 </html>
+      
