@@ -393,7 +393,7 @@
   <label for="searchInput">Search Tasks:</label>
 <input type="text" id="searchInput" placeholder="Search by company or any word..." aria-label="Search tasks">
 <br/><br/>
-  <table id="tasksTable" aria-label="Tasks table">
+ <table id="taskTable">
     <thead>
       <tr>
         <th>SINO</th>
@@ -506,7 +506,7 @@
     </label><br/><br/>
 
     <button type="submit">Save</button>
-    <button type="button" id="closeEditBtn">Cancel</button>
+    <button type="button" id="cancelBtn">Cancel</button>
   </form>
 </div>
     
@@ -549,7 +549,7 @@
     userAvatarEl.textContent = username.charAt(0).toUpperCase();
 
     // DOM elements
-    const taskTableBody = document.querySelector('#tasksTable tbody');
+    const taskTableBody = document.querySelector("#taskTable");
     const paginationDiv = document.getElementById('paginationControls');
     const createTaskBtn = document.getElementById('createTaskBtn');
     const taskModal = document.getElementById('taskModal');
@@ -563,30 +563,30 @@
 
 // Load tasks for current user (Owner)
 async function loadTasks() {
-  try {
-    const snapshot = await db.collection('tasks').where('Owner', '==', username).get();
-    allTasks = [];
-    snapshot.forEach(doc => allTasks.push({ id: doc.id, ...doc.data() }));
+  const user = JSON.parse(sessionStorage.getItem("user"));
+  if (!user) return;
 
-    // Sort tasks by SINO number ascending
-    allTasks.sort((a, b) => {
-      const getNumber = sino => {
-        if (!sino) return 0;
-        const match = sino.match(/(\d+)$/);
-        return match ? parseInt(match[1], 10) : 0;
-      };
-      return getNumber(a.SINO) - getNumber(b.SINO);
+  try {
+    // Query tasks owned by the logged-in user
+    const q = query(
+      collection(db, "tasks"),
+      where("Owner", "==", user.displayName || user.email), // FIX: use "Owner"
+      orderBy("SINO", "asc") // FIX: use "SINO"
+    );
+
+    const querySnapshot = await getDocs(q);
+
+    const tasks = [];
+    querySnapshot.forEach((doc) => {
+      tasks.push({ id: doc.id, ...doc.data() });
     });
 
-    filteredTasks = allTasks;
-    currentPage = 1;
-    renderTablePage(currentPage, filteredTasks);
-    renderPagination(filteredTasks);
+    renderTasks(tasks);
   } catch (err) {
-    console.error(err);
-    alert('Failed to load tasks');
+    console.error("Error loading tasks:", err);
   }
 }
+
 
 // ✅ Async global SINO generator using Firestore
 async function generateSINO() {
@@ -624,12 +624,12 @@ function pickField(task, ...fields) {
 
 
 
-function renderTablePage(page, tasks) {
+function renderTasks(tasks) {
   taskTableBody.innerHTML = '';
   const start = (page - 1) * rowsPerPage;
   const pageTasks = tasks.slice(start, start + rowsPerPage);
 
-  pageTasks.forEach((task, index) => {
+  pageTasks.forEach((task) => {
     const tr = document.createElement('tr');
     tr.classList.add('task-row');
     tr.setAttribute('tabindex', '0'); // for keyboard focus
@@ -645,7 +645,7 @@ function renderTablePage(page, tasks) {
     tr.innerHTML = `
       <td>${task.SINO || ''}</td>
       <td>${task['Existing Company Name'] || ''}</td>
-      <td>${task['TYPE OF WORK'] || ''}</td>
+<td>${task['TYPE OF WORK'] || ''}</td>
       <td style="color: ${statusColor}; font-weight: 700;">${task.Status || ''}</td>
       <td>${task.Owner || ''}</td>
       <td>
@@ -654,6 +654,9 @@ function renderTablePage(page, tasks) {
       </td>
     `;
     taskTableBody.appendChild(tr);
+  });
+}
+
 
     // Create hidden detail row for this task
     const detailRow = document.createElement('tr');
@@ -815,7 +818,9 @@ document.getElementById('editForm').onsubmit = async (e) => {
   const dueDate = document.getElementById('editDueDate').value;
   const notes = document.getElementById('editNotes').value;
   const remarks = document.getElementById('editRemarks').value;
+  const assignedByInput = document.getElementById('AssignedBy');
 
+  
   try {
     await db.collection('tasks').doc(id).update({
       'Due date': dueDate,
