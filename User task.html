@@ -622,7 +622,7 @@ function pickField(task, ...fields) {
 
 
 
-function renderTasks(tasks) {
+function renderTablePage(page, tasks) {
   taskTableBody.innerHTML = '';
   const start = (page - 1) * rowsPerPage;
   const pageTasks = tasks.slice(start, start + rowsPerPage);
@@ -633,17 +633,19 @@ function renderTasks(tasks) {
     tr.setAttribute('tabindex', '0'); // for keyboard focus
     tr.dataset.taskId = task.id;
 
+    // 🔥 Update with your Firestore values
     const statusColorMap = {
       'Not Started': '#e76f51',
       'In Progress': '#f4a261',
-      'Completed': '#2a9d8f'
+      'Completed': '#2a9d8f',
+      'Complete': '#2a9d8f', // add support for "Complete"
     };
     const statusColor = statusColorMap[task.Status] || '#333';
 
     tr.innerHTML = `
       <td>${task.SINO || ''}</td>
       <td>${task['Existing Company Name'] || ''}</td>
-<td>${task['TYPE OF WORK'] || ''}</td>
+      <td>${task['TYPE OF WORK'] || ''}</td>
       <td style="color: ${statusColor}; font-weight: 700;">${task.Status || ''}</td>
       <td>${task.Owner || ''}</td>
       <td>
