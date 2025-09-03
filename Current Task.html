@@ -288,13 +288,9 @@
     });
 
     // Cloudinary configuration
-    const cloudinaryConfig = {
-      cloudName: 'your_cloud_name', // Replace with your Cloudinary cloud name
-      uploadPreset: 'your_upload_preset' // Replace with your Cloudinary upload preset
-    };
-
+    const cloudinaryConfig = { cloudName: 'your_cloud_name', uploadPreset: 'your_upload_preset' };
     const db = firebase.firestore();
-    const taskBody = document.getElementById("task-body");
+
     let allTasks = [];
     let currentTaskId = null;
 
@@ -307,11 +303,8 @@
     const now = () => firebase.firestore.Timestamp.now();
 
     function formatMs(ms) {
-      const s = Math.floor(ms / 1000);
-      const h = Math.floor(s / 3600),
-            m = Math.floor((s % 3600) / 60),
-            sec = s % 60;
-      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+      const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+      return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
     }
 
     function calcTimeDetails(sessions = []) {
@@ -321,23 +314,136 @@
         if (start && end) {
           const startMs = start.getTime(), endMs = end.getTime();
           totalWorkMs += endMs - startMs;
-          if (lastEnd !== null) {
-            const pause = startMs - lastEnd;
-            if (pause > 0) {
-              totalPauseMs += pause;
-              pauseCount++;
-            }
+          if (lastEnd !== null && startMs > lastEnd) {
+            totalPauseMs += (startMs - lastEnd);
+            pauseCount++;
           }
           lastEnd = endMs;
         }
       });
-      return {
-        totalWorkMs,
-        totalPauseMs,
-        pauseCount,
-        startTime: sessions[0]?.start?.toDate().toLocaleString() || '—',
-        endTime: sessions.at(-1)?.end?.toDate().toLocaleString() || '—'
-      };
+      return { totalWorkMs, totalPauseMs, pauseCount, startTime: sessions[0]?.start?.toDate().toLocaleString() || '—', endTime: sessions.at(-1)?.end?.toDate().toLocaleString() || '—' };
+    }
+
+    function renderTasks(tasks) {
+      allTasks = tasks;
+      renderTableView(tasks);
+      renderKanbanView(tasks);
+    }
+
+    function renderTableView(tasks) {
+      const tbody = document.getElementById("task-body");
+      tbody.innerHTML = "";
+      tasks.forEach((task, idx) => {
+        const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
+        const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions || []);
+        const trMain = document.createElement("tr");
+        trMain.classList.add("row-expandable");
+        trMain.innerHTML = `
+          <td>${task.SINO}</td>
+          <td>${task["Existing Company Name"]}</td>
+          <td>${task["TYPE OF WORK"]}</td>
+          <td>${task["Due date"]}</td>
+          <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
+          <td>${task.Owner || "No Owner"}</td>
+          <td>${formatMs(totalWorkMs)}</td>
+        `;
+        tbody.appendChild(trMain);
+
+        const trDetail = document.createElement("tr");
+        trDetail.classList.add("row-details");
+        trDetail.style.display = "none";
+        trDetail.innerHTML = `
+          <td colspan="7">
+            <div><strong>Started:</strong> ${startTime}</div>
+            <div><strong>Ended:</strong> ${endTime}</div>
+            <div><strong>Work Hours:</strong> ${formatMs(totalWorkMs)}</div>
+            <div><strong>Pause Hours:</strong> ${formatMs(totalPauseMs)}</div>
+            <div><strong>Pause Count:</strong> ${pauseCount}</div>
+            <div><strong>Remarks:</strong> ${task.Remarks || '-'}</div>
+            <hr>
+            ${getButtonsHTML(sk)}
+          </td>`;
+        tbody.appendChild(trDetail);
+
+        trMain.addEventListener("click", () => {
+          trDetail.style.display = trDetail.style.display === "table-row" ? "none" : "table-row";
+        });
+      });
+      attachActions(tasks);
+    }
+
+    function renderKanbanView(tasks) {
+      ["not-started","in-progress","pending"].forEach(status => {
+        document.getElementById(`kanban-${status}`).innerHTML = "";
+      });
+      tasks.forEach((task, idx) => {
+        const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
+        const { totalWorkMs } = calcTimeDetails(task.workSessions || []);
+        const card = document.createElement("div");
+        card.className = 'kanban-card';
+        card.draggable = true;
+        card.dataset.id = task.id;
+
+        card.innerHTML = `
+          <h4>${task["TYPE OF WORK"]}</h4>
+          <p><strong>Company:</strong> ${task["Existing Company Name"]}</p>
+          <p><strong>Due:</strong> ${task["Due date"]}</p>
+          <p><strong>Owner:</strong> ${task.Owner || "No Owner"}</p>
+          <p><strong>Worked:</strong> ${formatMs(totalWorkMs)}</p>
+          <span class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</span>`;
+        document.getElementById(`kanban-${sk}`).appendChild(card);
+
+        card.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('text/plain', task.id);
+          setTimeout(() => card.classList.add('dragging'), 0);
+        });
+        card.addEventListener('dragend', () => card.classList.remove('dragging'));
+      });
+
+      document.querySelectorAll('.kanban-column').forEach(column => {
+        column.addEventListener('dragover', e => { e.preventDefault(); column.classList.add('drag-over'); });
+        column.addEventListener('dragleave', () => column.classList.remove('drag-over'));
+        column.addEventListener('drop', e => {
+          e.preventDefault(); column.classList.remove('drag-over');
+          const taskId = e.dataTransfer.getData('text/plain');
+          updateTaskStatus(taskId, column.dataset.status);
+        });
+      });
+    }
+
+    async function updateTaskStatus(taskId, newStatusKey) {
+      try {
+        const statusMap = { 'not-started': 'Not Started', 'in-progress': 'In Progress', 'pending': 'Pending' };
+        const taskRef = db.collection("tasks").doc(taskId);
+        const doc = await taskRef.get();
+        const data = doc.data();
+        if (!doc.exists) throw new Error("Task not found.");
+        const prevKey = (data.Status || "").toLowerCase().replace(/\s+/g, "-");
+        const sessions = Array.isArray(data.workSessions) ? [...data.workSessions] : [];
+        const ts = now();
+
+        // transitions
+        if (prevKey === 'in-progress' && newStatusKey === 'pending') {
+          const idx = sessions.findIndex(s => !s.end);
+          if (idx >= 0) sessions[idx].end = ts;
+        }
+        if (prevKey === 'pending' && newStatusKey === 'in-progress') {
+          if (!sessions.some(s => !s.end)) sessions.push({ start: ts, end: null });
+        }
+        if (prevKey === 'not-started' && newStatusKey === 'in-progress') {
+          if (!sessions.length) sessions.push({ start: ts, end: null });
+        }
+
+        await taskRef.update({
+          Status: statusMap[newStatusKey],
+          workSessions: sessions,
+          taskStart: data.taskStart || sessions[0]?.start || ts
+        });
+
+        loadTasks();
+      } catch (err) {
+        alert("Unable to update status: " + err.message);
+      }
     }
 
     function getButtonsHTML(statusKey) {
@@ -348,171 +454,36 @@
       }[statusKey] || `<em>No actions</em>`;
     }
 
-    function toggleComboBox(idx) {
-      document.querySelectorAll(".combo-box").forEach((row, i) => {
-        row.style.display = (i === idx && row.style.display !== "table-row") ? "table-row" : "none";
-      });
-    }
-
-    function renderTasks(tasks) {
-      allTasks = tasks;
-      renderTableView(tasks);
-      renderKanbanView(tasks);
-    }
-
-    function renderTableView(tasks) {
-      taskBody.innerHTML = "";
-      tasks.forEach((task, idx) => {
-        const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
-        const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions || []);
-        const tr = document.createElement("tr");
-        tr.onclick = () => toggleComboBox(idx);
-        tr.innerHTML = `
-          <td>${task.SINO}</td>
-          <td>${task["Existing Company Name"]}</td>
-          <td>${task["TYPE OF WORK"]}</td>
-          <td>${task["Due date"]}</td>
-          <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
-          <td>${task.Owner || "No Owner"}</td>
-          <td>${formatMs(totalWorkMs)}</td>
-        `;
-        taskBody.appendChild(tr);
-
-        const cr = document.createElement("tr");
-        cr.className = "combo-box";
-        cr.style.display = "none";
-        cr.innerHTML = `
-          <td colspan="7">
-            <div><strong>Started:</strong> ${startTime}</div>
-            <div><strong>Ended:</strong> ${endTime}</div>
-            <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
-            <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
-            <div><strong>Remarks:</strong> ${pauseCount > 1 ? "-" : (task.Remarks || "")}</div>
-            <hr style="margin:8px 0;">
-            ${getButtonsHTML(sk)}
-          </td>
-        `;
-        taskBody.appendChild(cr);
-      });
-      attachActions(tasks);
-    }
-
-    function renderKanbanView(tasks) {
-      // Clear all kanban columns
-      document.getElementById('kanban-not-started').innerHTML = '';
-      document.getElementById('kanban-in-progress').innerHTML = '';
-      document.getElementById('kanban-pending').innerHTML = '';
-      
-      tasks.forEach((task, idx) => {
-        const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
-        const { totalWorkMs } = calcTimeDetails(task.workSessions || []);
-        
-        const card = document.createElement('div');
-        card.className = 'kanban-card';
-        card.draggable = true;
-        card.dataset.id = task.id;
-        card.dataset.index = idx;
-        card.innerHTML = `
-          <h4>${task["TYPE OF WORK"]}</h4>
-          <p><strong>Company:</strong> ${task["Existing Company Name"]}</p>
-          <p><strong>Due:</strong> ${task["Due date"]}</p>
-          <p><strong>Owner:</strong> ${task.Owner || "No Owner"}</p>
-          <p><strong>Worked:</strong> ${formatMs(totalWorkMs)}</p>
-          <span class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</span>
-        `;
-        
-        // Add to appropriate column
-        document.getElementById(`kanban-${sk}`).appendChild(card);
-        
-        // Add drag events
-        card.addEventListener('dragstart', (e) => {
-          e.dataTransfer.setData('text/plain', task.id);
-          setTimeout(() => card.classList.add('dragging'), 0);
-        });
-        
-        card.addEventListener('dragend', () => {
-          card.classList.remove('dragging');
-        });
-      });
-      
-      // Make columns droppable
-      document.querySelectorAll('.kanban-column').forEach(column => {
-        column.addEventListener('dragover', (e) => {
-          e.preventDefault();
-          column.classList.add('drag-over');
-        });
-        
-        column.addEventListener('dragleave', () => {
-          column.classList.remove('drag-over');
-        });
-        
-        column.addEventListener('drop', (e) => {
-          e.preventDefault();
-          column.classList.remove('drag-over');
-          
-          const taskId = e.dataTransfer.getData('text/plain');
-          const newStatus = column.dataset.status;
-          
-          // Update task status in Firebase
-          updateTaskStatus(taskId, newStatus);
-        });
-      });
-    }
-
-    async function updateTaskStatus(taskId, newStatus) {
-      try {
-        const statusMap = {
-          'not-started': 'Not Started',
-          'in-progress': 'In Progress',
-          'pending': 'Pending'
-        };
-        
-        await db.collection("tasks").doc(taskId).update({
-          Status: statusMap[newStatus]
-        });
-        
-        // Reload tasks
-        loadTasks();
-      } catch (error) {
-        console.error("Error updating task status:", error);
-        alert("Failed to update task status");
-      }
-    }
-
     function attachActions(tasks) {
-      document.querySelectorAll(".combo-box").forEach((cr, idx) => {
-        cr.querySelectorAll("button").forEach(btn => {
-          btn.onclick = async e => {
+      document.querySelectorAll(".row-details").forEach((detailRow, idx) => {
+        detailRow.querySelectorAll("button").forEach(btn => {
+          btn.addEventListener("click", async e => {
             e.stopPropagation();
-            const t = tasks[idx], ref = db.collection("tasks").doc(t.id);
-            const ts = now(), sess = t.workSessions || [];
+            const t = tasks[idx], ref = db.collection("tasks").doc(t.id), ts = now();
+            const sess = [...(t.workSessions || [])];
+
             try {
               if (btn.classList.contains("btn-start")) {
-                if (sess.some(s => !s.end)) return alert("Already running.");
+                if (sess.some(s => !s.end)) return alert("Already running");
                 sess.push({ start: ts, end: null });
                 await ref.update({ Status: "In Progress", taskStart: ts, workSessions: sess });
-              }
-              if (btn.classList.contains("btn-pending")) {
+              } else if (btn.classList.contains("btn-pending")) {
                 const i = sess.findIndex(s => !s.end);
-                if (i < 0) return alert("No session to pause.");
+                if (i < 0) return alert("No session to pause");
                 sess[i].end = ts;
                 await ref.update({ Status: "Pending", workSessions: sess });
-              }
-              if (btn.classList.contains("btn-continue")) {
-                if (sess.some(s => !s.end)) return alert("Already running.");
+              } else if (btn.classList.contains("btn-continue")) {
+                if (sess.some(s => !s.end)) return alert("Already running");
                 sess.push({ start: ts, end: null });
                 await ref.update({ Status: "In Progress", workSessions: sess });
-              }
-              if (btn.classList.contains("btn-complete")) {
+              } else if (btn.classList.contains("btn-complete")) {
                 const i = sess.findIndex(s => !s.end);
-                if (i > -1) sess[i].end = ts;
-
-                const remarks = prompt("Enter remarks before completing:", t.Remarks || "");
+                if (i >= 0) sess[i].end = ts;
+                const remarks = prompt("Enter remarks:", t.Remarks || "");
                 if (remarks === null) return;
 
                 const { totalWorkMs, totalPauseMs } = calcTimeDetails(sess);
-                const startTime = sess[0]?.start || ts;
-                const endTime = sess.at(-1)?.end || ts;
+                const startTime = sess[0]?.start || ts, endTime = sess.at(-1)?.end || ts;
 
                 await ref.update({
                   Status: "Complete",
@@ -525,152 +496,39 @@
                   TotalPauseHours: formatMs(totalPauseMs),
                   Remarks: remarks.trim() || "-"
                 });
-
-                // Store the completed task ID and show attachment modal
                 currentTaskId = t.id;
                 showAttachmentModal();
               }
               loadTasks();
             } catch (err) {
-              alert("Failed: " + err.message);
+              alert("Action failed: " + err.message);
             }
-          };
+          });
         });
       });
     }
 
-    function toggleView(viewType) {
-      if (viewType === 'table') {
-        document.getElementById('taskTableView').style.display = 'table';
-        document.getElementById('kanbanView').style.display = 'none';
-        document.getElementById('tableViewBtn').classList.add('active');
-        document.getElementById('kanbanViewBtn').classList.remove('active');
-      } else {
-        document.getElementById('taskTableView').style.display = 'none';
-        document.getElementById('kanbanView').style.display = 'block';
-        document.getElementById('tableViewBtn').classList.remove('active');
-        document.getElementById('kanbanViewBtn').classList.add('active');
-      }
-    }
-
-    function showAttachmentModal() {
-      document.getElementById('attachmentModal').style.display = 'block';
-    }
-
-    function closeModal() {
-      document.getElementById('attachmentModal').style.display = 'none';
-      document.getElementById('fileInput').value = '';
-      document.getElementById('attachmentPreview').style.display = 'none';
-      document.getElementById('uploadedImages').innerHTML = '';
-      loadTasks(); // Refresh the task list
-    }
-
-    // Handle file selection for preview
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-      const preview = document.getElementById('attachmentPreview');
-      const uploadedImages = document.getElementById('uploadedImages');
-      
-      uploadedImages.innerHTML = '';
-      
-      if (this.files && this.files.length > 0) {
-        Array.from(this.files).forEach(file => {
-          if (file.type.match('image.*')) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-              const img = document.createElement('img');
-              img.src = e.target.result;
-              uploadedImages.appendChild(img);
-            }
-            reader.readAsDataURL(file);
-          }
-        });
-      }
-    });
-
-    async function uploadImages() {
-      const files = document.getElementById('fileInput').files;
-      
-      if (files.length === 0) {
-        closeModal();
-        return;
-      }
-      
-      try {
-        // Upload each file to Cloudinary
-        const uploadPromises = [];
-        
-        for (let i = 0; i < files.length; i++) {
-          const formData = new FormData();
-          formData.append('file', files[i]);
-          formData.append('upload_preset', cloudinaryConfig.uploadPreset);
-          
-          const uploadPromise = fetch(`https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`, {
-            method: 'POST',
-            body: formData
-          })
-          .then(response => response.json())
-          .then(data => {
-            return data.secure_url;
-          });
-          
-          uploadPromises.push(uploadPromise);
-        }
-        
-        // Wait for all uploads to complete
-        const imageUrls = await Promise.all(uploadPromises);
-        
-        // Save URLs to Firebase
-        if (currentTaskId) {
-          const taskRef = db.collection("tasks").doc(currentTaskId);
-          const taskDoc = await taskRef.get();
-          const currentAttachments = taskDoc.data().attachments || [];
-          
-          await taskRef.update({
-            attachments: [...currentAttachments, ...imageUrls]
-          });
-        }
-        
-        alert('Images uploaded successfully!');
-        closeModal();
-      } catch (error) {
-        console.error('Error uploading images:', error);
-        alert('Failed to upload images. Please try again.');
-      }
-    }
-
-    async function loadTasks() {
-      try {
-        const snap = await db.collection("tasks")
-          .where("Status", "in", ["Not Started", "In Progress", "Pending"])
-          .get();
-        const tasks = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        if (tasks.length === 0) {
-          taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No tasks found.</td></tr>`;
-          document.getElementById('kanban-not-started').innerHTML = '<p>No tasks</p>';
-          document.getElementById('kanban-in-progress').innerHTML = '<p>No tasks</p>';
-          document.getElementById('kanban-pending').innerHTML = '<p>No tasks</p>';
-        } else {
+    function loadTasks() {
+      db.collection("tasks").where("Status", "in", ["Not Started", "In Progress", "Pending"])
+        .get()
+        .then(snapshot => {
+          const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           renderTasks(tasks);
-        }
-      } catch (err) {
-        console.error("Error loading tasks:", err);
-        taskBody.innerHTML = `<tr><td colspan="7" style="color:red;">Error loading tasks: ${err.message}</td></tr>`;
-      }
+        })
+        .catch(err => {
+          console.error("Error loading:", err);
+          document.getElementById("task-body").innerHTML = `<tr><td colspan="7">Error loading tasks: ${err.message}</td></tr>`;
+        });
     }
 
     window.onload = () => {
-      taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Loading tasks...</td></tr>`;
+      document.getElementById("task-body").innerHTML = `<tr><td colspan="7">Loading...</td></tr>`;
       loadTasks();
-    };
-
-    document.getElementById('ownerFilter').addEventListener('input', () => {
-      const filterValue = document.getElementById('ownerFilter').value.trim().toLowerCase();
-      const filtered = filterValue
-        ? allTasks.filter(task => (task.Owner || "").toLowerCase().includes(filterValue))
-        : allTasks;
-      renderTableView(filtered);
-      renderKanbanView(filtered);
-    });
-  </script>
+      document.getElementById('ownerFilter').addEventListener('input', () => {
+        const f = document.getElementById('ownerFilter').value.trim().toLowerCase();
+        const filtered = f ? allTasks.filter(t => (t.Owner || "").toLowerCase().includes(f)) : allTasks;
+        renderTasks(filtered);
+      });
+    };  </script>
 </body>
 </html>
