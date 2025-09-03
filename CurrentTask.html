@@ -26,14 +26,41 @@
     .btn-complete { background: #27ae60; }
     .highlight { border: 2px solid #fff; box-shadow: 0 0 8px rgba(255, 255, 255, 0.6); }
     @keyframes fadeIn { from { opacity:0; transform: scale(0.95); } to { opacity:1; transform: scale(1); } }
+    
+    /* Kanban View Styles */
+    .view-toggle { margin: 15px 0; text-align: center; }
+    .view-toggle button { padding: 8px 16px; margin: 0 5px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .view-toggle button.active { background: #2c3e50; }
+    .kanban-container { display: none; margin-top: 20px; }
+    .kanban-columns { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 20px; }
+    .kanban-column { flex: 1; min-width: 300px; background: #f8f9fa; border-radius: 8px; padding: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .kanban-column h3 { margin-top: 0; padding-bottom: 10px; border-bottom: 2px solid #ddd; }
+    .kanban-card { background: white; margin: 10px 0; padding: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); cursor: grab; }
+    .kanban-card:active { cursor: grabbing; }
+    .kanban-card h4 { margin: 0 0 8px 0; }
+    .kanban-card p { margin: 5px 0; }
+    .kanban-card .status { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 12px; color: white; }
+    
+    /* Attachment Modal Styles */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; }
+    .modal-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 500px; }
+    .close-modal { float: right; font-size: 24px; cursor: pointer; }
+    .attachment-preview { max-width: 100%; max-height: 200px; margin: 10px 0; display: none; }
+    .uploaded-images { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+    .uploaded-images img { max-width: 100px; max-height: 100px; object-fit: cover; border-radius: 4px; }
   </style>
 </head>
 <body>
 
   <button class="close-btn" onclick="window.history.back()">Back</button>
   <h2>Current Task Details</h2>
+  
+  <div class="view-toggle">
+    <button id="tableViewBtn" class="active" onclick="toggleView('table')">Table View</button>
+    <button id="kanbanViewBtn" onclick="toggleView('kanban')">Kanban View</button>
+  </div>
 
-  <table class="task-table">
+  <table class="task-table" id="taskTableView">
     <thead>
       <tr>
         <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
@@ -42,9 +69,45 @@
     <tbody id="task-body"></tbody>
   </table>
 
+  <div class="kanban-container" id="kanbanView">
+    <div class="kanban-columns">
+      <div class="kanban-column" data-status="not-started">
+        <h3>Not Started</h3>
+        <div class="kanban-cards" id="kanban-not-started"></div>
+      </div>
+      <div class="kanban-column" data-status="in-progress">
+        <h3>In Progress</h3>
+        <div class="kanban-cards" id="kanban-in-progress"></div>
+      </div>
+      <div class="kanban-column" data-status="pending">
+        <h3>Pending</h3>
+        <div class="kanban-cards" id="kanban-pending"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Attachment Modal -->
+  <div id="attachmentModal" class="modal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeModal()">&times;</span>
+      <h3>Add Attachments</h3>
+      <p>Would you like to add attachments to this task?</p>
+      <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+      <button onclick="document.getElementById('fileInput').click()">Select Images</button>
+      <img id="attachmentPreview" class="attachment-preview" alt="Preview">
+      <div id="uploadedImages" class="uploaded-images"></div>
+      <div style="margin-top: 15px;">
+        <button onclick="uploadImages()" style="background: #27ae60; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">Upload Images</button>
+        <button onclick="closeModal()" style="background: #e74c3c; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">Skip</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <!-- Cloudinary SDK -->
+  <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
   <script>
   // Initialize Firebase
   firebase.initializeApp({
@@ -57,6 +120,15 @@
   });
   const db = firebase.firestore();
 
+  // Cloudinary configuration
+  const cloudinaryConfig = {
+    cloudName: 'your_cloud_name', // Replace with your Cloudinary cloud name
+    uploadPreset: 'your_upload_preset' // Replace with your Cloudinary upload preset
+  };
+
+  // Global variables
+  let currentTasks = [];
+  let currentTaskId = null;
   const taskBody = document.getElementById("task-body");
   const statusLabels = {
     "not-started": {label:"Not Started", class:"not-started"},
@@ -75,7 +147,6 @@
   function calcTimeDetails(sessions = []) {
     let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
     
-    // Ensure sessions is an array before calling forEach
     if (Array.isArray(sessions)) {
       sessions.forEach(sess => {
         const startMs = sess.start?.toDate().getTime(),
@@ -111,13 +182,17 @@
   }
 
   function renderTasks(tasks) {
+    currentTasks = tasks;
+    renderTableView(tasks);
+    renderKanbanView(tasks);
+  }
+
+  function renderTableView(tasks) {
     taskBody.innerHTML = "";
     tasks.forEach((task, idx) => {
       const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
       const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions);
-
-      // Use "No Owner" if task.Owner is undefined or missing
-      const ownerName = task.Owner ? task.Owner : "No Owner"; // Default to "No Owner" if missing
+      const ownerName = task.Owner ? task.Owner : "No Owner";
 
       const tr = document.createElement("tr");
       tr.onclick = () => toggleComboBox(idx);
@@ -127,7 +202,7 @@
         <td>${task["TYPE OF WORK"]}</td>
         <td>${task["Due date"]}</td>
         <td class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</td>
-        <td>${ownerName}</td>  <!-- Display Owner Name or "No Owner" -->
+        <td>${ownerName}</td>
         <td>${formatMs(totalWorkMs)}</td>
       `;
       taskBody.appendChild(tr);
@@ -147,6 +222,89 @@
       taskBody.appendChild(cr);
     });
     attachActions(tasks);
+  }
+
+  function renderKanbanView(tasks) {
+    // Clear all kanban columns
+    document.getElementById('kanban-not-started').innerHTML = '';
+    document.getElementById('kanban-in-progress').innerHTML = '';
+    document.getElementById('kanban-pending').innerHTML = '';
+    
+    tasks.forEach((task, idx) => {
+      const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
+      const { totalWorkMs } = calcTimeDetails(task.workSessions);
+      const ownerName = task.Owner ? task.Owner : "No Owner";
+      
+      const card = document.createElement('div');
+      card.className = 'kanban-card';
+      card.draggable = true;
+      card.dataset.id = task.id;
+      card.dataset.index = idx;
+      card.innerHTML = `
+        <h4>${task["TYPE OF WORK"]}</h4>
+        <p><strong>Company:</strong> ${task["Existing Company Name"]}</p>
+        <p><strong>Due:</strong> ${task["Due date"]}</p>
+        <p><strong>Owner:</strong> ${ownerName}</p>
+        <p><strong>Worked:</strong> ${formatMs(totalWorkMs)}</p>
+        <span class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</span>
+      `;
+      
+      // Add to appropriate column
+      document.getElementById(`kanban-${sk}`).appendChild(card);
+      
+      // Add drag events
+      card.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', task.id);
+        setTimeout(() => card.classList.add('dragging'), 0);
+      });
+      
+      card.addEventListener('dragend', () => {
+        card.classList.remove('dragging');
+      });
+    });
+    
+    // Make columns droppable
+    document.querySelectorAll('.kanban-column').forEach(column => {
+      column.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        column.classList.add('drag-over');
+      });
+      
+      column.addEventListener('dragleave', () => {
+        column.classList.remove('drag-over');
+      });
+      
+      column.addEventListener('drop', (e) => {
+        e.preventDefault();
+        column.classList.remove('drag-over');
+        
+        const taskId = e.dataTransfer.getData('text/plain');
+        const newStatus = column.dataset.status;
+        
+        // Update task status in Firebase
+        updateTaskStatus(taskId, newStatus);
+      });
+    });
+  }
+
+  async function updateTaskStatus(taskId, newStatus) {
+    try {
+      const statusMap = {
+        'not-started': 'Not Started',
+        'in-progress': 'In Progress',
+        'pending': 'Pending'
+      };
+      
+      await db.collection("tasks").doc(taskId).update({
+        Status: statusMap[newStatus]
+      });
+      
+      // Reload tasks
+      loadUserTasks();
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      alert("Failed to update task status");
+    }
   }
 
   function attachActions(tasks) {
@@ -177,49 +335,49 @@
               await ref.update({ Status: "In Progress", workSessions: sess });
               alert("Resumed");
             }
-if (btn.classList.contains("btn-complete")) {
-  const i = sess.findIndex(s => !s.end);
-  if (i > -1) sess[i].end = ts;
+            if (btn.classList.contains("btn-complete")) {
+              const i = sess.findIndex(s => !s.end);
+              if (i > -1) sess[i].end = ts;
 
-  let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
-  sess.forEach(s => {
-    const startMs = s.start?.toDate?.().getTime();
-    const endMs = s.end?.toDate?.().getTime();
-    if (startMs && endMs) {
-      totalWorkMs += endMs - startMs;
-      if (lastEnd !== null) {
-        const pause = startMs - lastEnd;
-        if (pause > 0) {
-          totalPauseMs += pause;
-          pauseCount++;
-        }
-      }
-      lastEnd = endMs;
-    }
-  });
+              let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
+              sess.forEach(s => {
+                const startMs = s.start?.toDate?.().getTime();
+                const endMs = s.end?.toDate?.().getTime();
+                if (startMs && endMs) {
+                  totalWorkMs += endMs - startMs;
+                  if (lastEnd !== null) {
+                    const pause = startMs - lastEnd;
+                    if (pause > 0) {
+                      totalPauseMs += pause;
+                      pauseCount++;
+                    }
+                  }
+                  lastEnd = endMs;
+                }
+              });
 
-  // ✅ Prompt user for remarks
-  const userRemarks = prompt("Enter remarks for completing this task:", t.Remarks || "");
-  if (userRemarks === null) return; // user cancelled
+              const userRemarks = prompt("Enter remarks for completing this task:", t.Remarks || "");
+              if (userRemarks === null) return;
 
-  const startTime = sess[0]?.start || ts;
-  const endTime = sess.at(-1)?.end || ts;
+              const startTime = sess[0]?.start || ts;
+              const endTime = sess.at(-1)?.end || ts;
 
-  await ref.update({
-    Status: "Complete",
-    taskStart: startTime,
-    taskEnd: endTime,
-    workSessions: sess,
-    TimeStarted: startTime.toDate().toLocaleString(),
-    TimeEnd: endTime.toDate().toLocaleString(),
-    TotalWorkHours: formatMs(totalWorkMs),
-    TotalPauseHours: formatMs(totalPauseMs),
-    Remarks: userRemarks || "-"
-  });
+              await ref.update({
+                Status: "Complete",
+                taskStart: startTime,
+                taskEnd: endTime,
+                workSessions: sess,
+                TimeStarted: startTime.toDate().toLocaleString(),
+                TimeEnd: endTime.toDate().toLocaleString(),
+                TotalWorkHours: formatMs(totalWorkMs),
+                TotalPauseHours: formatMs(totalPauseMs),
+                Remarks: userRemarks || "-"
+              });
 
-  alert("Completed with remarks saved");
-}
-
+              // Store the completed task ID and show attachment modal
+              currentTaskId = t.id;
+              showAttachmentModal();
+            }
 
             loadUserTasks();
           } catch {
@@ -230,6 +388,105 @@ if (btn.classList.contains("btn-complete")) {
     });
   }
 
+  function toggleView(viewType) {
+    if (viewType === 'table') {
+      document.getElementById('taskTableView').style.display = 'table';
+      document.getElementById('kanbanView').style.display = 'none';
+      document.getElementById('tableViewBtn').classList.add('active');
+      document.getElementById('kanbanViewBtn').classList.remove('active');
+    } else {
+      document.getElementById('taskTableView').style.display = 'none';
+      document.getElementById('kanbanView').style.display = 'block';
+      document.getElementById('tableViewBtn').classList.remove('active');
+      document.getElementById('kanbanViewBtn').classList.add('active');
+    }
+  }
+
+  function showAttachmentModal() {
+    document.getElementById('attachmentModal').style.display = 'block';
+  }
+
+  function closeModal() {
+    document.getElementById('attachmentModal').style.display = 'none';
+    document.getElementById('fileInput').value = '';
+    document.getElementById('attachmentPreview').style.display = 'none';
+    document.getElementById('uploadedImages').innerHTML = '';
+    loadUserTasks(); // Refresh the task list
+  }
+
+  // Handle file selection for preview
+  document.getElementById('fileInput').addEventListener('change', function(e) {
+    const preview = document.getElementById('attachmentPreview');
+    const uploadedImages = document.getElementById('uploadedImages');
+    
+    uploadedImages.innerHTML = '';
+    
+    if (this.files && this.files.length > 0) {
+      Array.from(this.files).forEach(file => {
+        if (file.type.match('image.*')) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            uploadedImages.appendChild(img);
+          }
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+  });
+
+  async function uploadImages() {
+    const files = document.getElementById('fileInput').files;
+    
+    if (files.length === 0) {
+      closeModal();
+      return;
+    }
+    
+    try {
+      // Upload each file to Cloudinary
+      const uploadPromises = [];
+      
+      for (let i = 0; i < files.length; i++) {
+        const formData = new FormData();
+        formData.append('file', files[i]);
+        formData.append('upload_preset', cloudinaryConfig.uploadPreset);
+        
+        const uploadPromise = fetch(`https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`, {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          return data.secure_url;
+        });
+        
+        uploadPromises.push(uploadPromise);
+      }
+      
+      // Wait for all uploads to complete
+      const imageUrls = await Promise.all(uploadPromises);
+      
+      // Save URLs to Firebase
+      if (currentTaskId) {
+        const taskRef = db.collection("tasks").doc(currentTaskId);
+        const taskDoc = await taskRef.get();
+        const currentAttachments = taskDoc.data().attachments || [];
+        
+        await taskRef.update({
+          attachments: [...currentAttachments, ...imageUrls]
+        });
+      }
+      
+      alert('Images uploaded successfully!');
+      closeModal();
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      alert('Failed to upload images. Please try again.');
+    }
+  }
+
   // Loading tasks for the logged-in user
   window.onload = async () => {
     taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">Loading tasks...</td></tr>`;
@@ -238,7 +495,7 @@ if (btn.classList.contains("btn-complete")) {
 
   // Function to load tasks based on logged-in username
   async function loadUserTasks() {
-    const username = sessionStorage.getItem("username");  // Get the username from sessionStorage
+    const username = sessionStorage.getItem("username");
 
     if (!username) {
       taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No user session found. Please login.</td></tr>`;
@@ -247,8 +504,8 @@ if (btn.classList.contains("btn-complete")) {
 
     try {
       const snap = await db.collection("tasks")
-        .where("Owner", "==", username)  // Match the 'Owner' field with the logged-in username
-        .where("Status", "in", ["Not Started", "In Progress", "Pending"]) // Exclude 'Complete'
+        .where("Owner", "==", username)
+        .where("Status", "in", ["Not Started", "In Progress", "Pending"])
         .get();
 
       const arr = [];
@@ -259,11 +516,14 @@ if (btn.classList.contains("btn-complete")) {
 
       if (arr.length === 0) {
         taskBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No tasks found.</td></tr>`;
+        document.getElementById('kanban-not-started').innerHTML = '<p>No tasks</p>';
+        document.getElementById('kanban-in-progress').innerHTML = '<p>No tasks</p>';
+        document.getElementById('kanban-pending').innerHTML = '<p>No tasks</p>';
       } else {
         renderTasks(arr);
       }
     } catch (err) {
-      console.error("Error loading tasks:", err);  // Log the full error to the console
+      console.error("Error loading tasks:", err);
       taskBody.innerHTML = `<tr><td colspan="7" style="color:red;">Error loading tasks: ${err.message}</td></tr>`;
     }
   }
