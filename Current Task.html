@@ -216,11 +216,6 @@
       color: #856404;
     }
     
-    .status-complete {
-      background: #d4edda;
-      color: #155724;
-    }
-    
     .action-buttons {
       display: flex;
       gap: 8px;
@@ -359,6 +354,16 @@
       color: #6c757d;
     }
     
+    .drag-over {
+      background-color: #e3f2fd !important;
+      border: 2px dashed #2196F3 !important;
+    }
+    
+    .dragging {
+      opacity: 0.5;
+      transform: scale(0.98);
+    }
+    
     @media (max-width: 768px) {
       .controls {
         flex-direction: column;
@@ -394,7 +399,6 @@
           <option value="Not Started">Not Started</option>
           <option value="In Progress">In Progress</option>
           <option value="Pending">Pending</option>
-          <option value="Complete">Complete</option>
         </select>
         <button onclick="clearFilters()">Clear Filters</button>
       </div>
@@ -419,8 +423,8 @@
         <div class="value" id="pendingTasks">0</div>
       </div>
       <div class="stat-card">
-        <h3>COMPLETED TODAY</h3>
-        <div class="value" id="completedTasks">0</div>
+        <h3>NOT STARTED</h3>
+        <div class="value" id="notStartedTasks">0</div>
       </div>
     </div>
     
@@ -446,21 +450,17 @@
 
     <div class="kanban-container" id="kanbanView">
       <div class="kanban-columns">
-        <div class="kanban-column">
+        <div class="kanban-column" data-status="not-started">
           <h3>Not Started</h3>
           <div class="kanban-cards" id="kanban-not-started"></div>
         </div>
-        <div class="kanban-column">
+        <div class="kanban-column" data-status="in-progress">
           <h3>In Progress</h3>
           <div class="kanban-cards" id="kanban-in-progress"></div>
         </div>
-        <div class="kanban-column">
+        <div class="kanban-column" data-status="pending">
           <h3>Pending</h3>
           <div class="kanban-cards" id="kanban-pending"></div>
-        </div>
-        <div class="kanban-column">
-          <h3>Completed</h3>
-          <div class="kanban-cards" id="kanban-complete"></div>
         </div>
       </div>
     </div>
@@ -477,37 +477,85 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  
   <script>
-    // Firebase Init
-    firebase.initializeApp({
-      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-      authDomain: "task-manager-602da.firebaseapp.com",
-      projectId: "task-manager-602da",
-      storageBucket: "task-manager-602da.appspot.com",
-      messagingSenderId: "438978699329",
-      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
-    });
+    // Sample data for demonstration
+    const sampleTasks = [
+      {
+        id: 'task1',
+        SINO: '001',
+        'Existing Company Name': 'Apple Inc.',
+        'TYPE OF WORK': 'UI Design Implementation',
+        'Due date': '2023-12-15',
+        Status: 'Not Started',
+        Owner: 'John Doe',
+        workSessions: [],
+        Remarks: ''
+      },
+      {
+        id: 'task2',
+        SINO: '002',
+        'Existing Company Name': 'Apple Inc.',
+        'TYPE OF WORK': 'API Integration',
+        'Due date': '2023-12-10',
+        Status: 'In Progress',
+        Owner: 'Jane Smith',
+        workSessions: [
+          { start: { toDate: () => new Date(Date.now() - 86400000) }, end: { toDate: () => new Date(Date.now() - 85400000) } },
+          { start: { toDate: () => new Date(Date.now() - 3600000) }, end: null }
+        ],
+        Remarks: 'Working on authentication'
+      },
+      {
+        id: 'task3',
+        SINO: '003',
+        'Existing Company Name': 'Apple Retail',
+        'TYPE OF WORK': 'Inventory Management',
+        'Due date': '2023-12-05',
+        Status: 'Pending',
+        Owner: 'Mike Johnson',
+        workSessions: [
+          { start: { toDate: () => new Date(Date.now() - 172800000) }, end: { toDate: () => new Date(Date.now() - 171800000) } }
+        ],
+        Remarks: 'Waiting for supplier data'
+      },
+      {
+        id: 'task4',
+        SINO: '004',
+        'Existing Company Name': 'Apple Services',
+        'TYPE OF WORK': 'User Testing',
+        'Due date': '2023-12-20',
+        Status: 'Not Started',
+        Owner: 'Sarah Wilson',
+        workSessions: [],
+        Remarks: ''
+      },
+      {
+        id: 'task5',
+        SINO: '005',
+        'Existing Company Name': 'Apple Inc.',
+        'TYPE OF WORK': 'Database Optimization',
+        'Due date': '2023-12-08',
+        Status: 'In Progress',
+        Owner: 'Robert Brown',
+        workSessions: [
+          { start: { toDate: () => new Date(Date.now() - 10800000) }, end: null }
+        ],
+        Remarks: 'Indexing in progress'
+      }
+    ];
 
-    const db = firebase.firestore();
-    const taskBody = document.getElementById("task-body");
     let allTasks = [];
     let currentTaskId = null;
+    let currentDraggedElement = null;
 
     const statusLabels = {
       "not-started": { label: "Not Started", class: "status-not-started" },
       "in-progress": { label: "In Progress", class: "status-in-progress" },
-      "pending": { label: "Pending", class: "status-pending" },
-      "complete": { label: "Complete", class: "status-complete" }
+      "pending": { label: "Pending", class: "status-pending" }
     };
 
-    const now = () => firebase.firestore.Timestamp.now();
-
     function formatMs(ms) {
-      if (!ms) return "00:00:00";
+      if (!ms || isNaN(ms)) return "00:00:00";
       const s = Math.floor(ms / 1000);
       const h = Math.floor(s / 3600),
             m = Math.floor((s % 3600) / 60),
@@ -530,6 +578,17 @@
             }
           }
           lastEnd = endMs;
+        } else if (start && !end) {
+          // Currently running session
+          const startMs = start.getTime();
+          totalWorkMs += Date.now() - startMs;
+          if (lastEnd !== null) {
+            const pause = startMs - lastEnd;
+            if (pause > 0) {
+              totalPauseMs += pause;
+              pauseCount++;
+            }
+          }
         }
       });
       return {
@@ -545,15 +604,7 @@
       document.getElementById('totalTasks').textContent = tasks.length;
       document.getElementById('inProgressTasks').textContent = tasks.filter(t => t.Status === 'In Progress').length;
       document.getElementById('pendingTasks').textContent = tasks.filter(t => t.Status === 'Pending').length;
-      
-      const today = new Date().toDateString();
-      const completedToday = tasks.filter(t => {
-        if (t.Status !== 'Complete') return false;
-        if (t.taskEnd && t.taskEnd.toDate().toDateString() === today) return true;
-        return false;
-      }).length;
-      
-      document.getElementById('completedTasks').textContent = completedToday;
+      document.getElementById('notStartedTasks').textContent = tasks.filter(t => t.Status === 'Not Started').length;
     }
 
     function renderTasks(tasks) {
@@ -564,13 +615,19 @@
     }
 
     function renderTableView(tasks) {
+      const taskBody = document.getElementById("task-body");
+      if (!taskBody) {
+        console.error("Task body element not found");
+        return;
+      }
+      
       if (tasks.length === 0) {
         taskBody.innerHTML = `<tr><td colspan="8" style="text-align:center;">No tasks found.</td></tr>`;
         return;
       }
       
       taskBody.innerHTML = "";
-      tasks.forEach((task, idx) => {
+      tasks.forEach((task) => {
         const sk = (task.Status || "not-started").toLowerCase().replace(/\s+/g, "-");
         const { totalWorkMs } = calcTimeDetails(task.workSessions || []);
         
@@ -602,14 +659,22 @@
 
     function renderKanbanView(tasks) {
       // Clear all kanban columns
-      document.getElementById('kanban-not-started').innerHTML = '';
-      document.getElementById('kanban-in-progress').innerHTML = '';
-      document.getElementById('kanban-pending').innerHTML = '';
-      document.getElementById('kanban-complete').innerHTML = '';
+      const notStartedCol = document.getElementById('kanban-not-started');
+      const inProgressCol = document.getElementById('kanban-in-progress');
+      const pendingCol = document.getElementById('kanban-pending');
+      
+      if (!notStartedCol || !inProgressCol || !pendingCol) {
+        console.error("Kanban column elements not found");
+        return;
+      }
+      
+      notStartedCol.innerHTML = '';
+      inProgressCol.innerHTML = '';
+      pendingCol.innerHTML = '';
       
       if (tasks.length === 0) {
         const emptyMsg = '<div class="kanban-card">No tasks found</div>';
-        document.getElementById('kanban-not-started').innerHTML = emptyMsg;
+        notStartedCol.innerHTML = emptyMsg;
         return;
       }
       
@@ -621,6 +686,7 @@
         card.className = 'kanban-card';
         card.draggable = true;
         card.dataset.id = task.id;
+        card.dataset.status = sk;
         card.innerHTML = `
           <h4>${task["TYPE OF WORK"] || "No task description"}</h4>
           <p><strong>Company:</strong> ${task["Existing Company Name"] || "N/A"}</p>
@@ -640,47 +706,49 @@
         `;
         
         // Add to appropriate column
-        document.getElementById(`kanban-${sk}`).appendChild(card);
+        if (sk === 'not-started') notStartedCol.appendChild(card);
+        else if (sk === 'in-progress') inProgressCol.appendChild(card);
+        else if (sk === 'pending') pendingCol.appendChild(card);
       });
       
       // Attach event listeners to buttons
       attachButtonListeners();
       
-      // Make cards draggable
+      // Setup drag and drop
       setupDragAndDrop();
     }
 
     function attachButtonListeners() {
       // Start button
       document.querySelectorAll('.btn-start').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.onclick = (e) => {
           const taskId = e.target.dataset.id;
           startTask(taskId);
-        });
+        };
       });
       
       // Pause button
       document.querySelectorAll('.btn-pause').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.onclick = (e) => {
           const taskId = e.target.dataset.id;
           pauseTask(taskId);
-        });
+        };
       });
       
       // Complete button
       document.querySelectorAll('.btn-complete').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.onclick = (e) => {
           const taskId = e.target.dataset.id;
           completeTask(taskId);
-        });
+        };
       });
       
       // Details button
       document.querySelectorAll('.btn-details').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.onclick = (e) => {
           const taskId = e.target.dataset.id;
           showTaskDetails(taskId);
-        });
+        };
       });
     }
 
@@ -689,123 +757,153 @@
       const columns = document.querySelectorAll('.kanban-column');
       
       cards.forEach(card => {
-        card.addEventListener('dragstart', () => {
-          card.classList.add('dragging');
+        card.addEventListener('dragstart', (e) => {
+          currentDraggedElement = card;
+          setTimeout(() => {
+            card.classList.add('dragging');
+          }, 0);
+          
+          // Set data for drag operation
+          e.dataTransfer.setData('text/plain', card.dataset.id);
+          e.dataTransfer.effectAllowed = 'move';
         });
         
         card.addEventListener('dragend', () => {
           card.classList.remove('dragging');
+          currentDraggedElement = null;
+          
+          // Remove drag-over class from all columns
+          columns.forEach(col => {
+            col.classList.remove('drag-over');
+          });
         });
       });
       
       columns.forEach(column => {
-        column.addEventListener('dragover', e => {
+        column.addEventListener('dragover', (e) => {
           e.preventDefault();
-          const afterElement = getDragAfterElement(column, e.clientY);
-          const draggable = document.querySelector('.dragging');
-          if (afterElement == null) {
-            column.appendChild(draggable);
-          } else {
-            column.insertBefore(draggable, afterElement);
+          column.classList.add('drag-over');
+        });
+        
+        column.addEventListener('dragleave', () => {
+          column.classList.remove('drag-over');
+        });
+        
+        column.addEventListener('drop', (e) => {
+          e.preventDefault();
+          column.classList.remove('drag-over');
+          
+          if (currentDraggedElement) {
+            const taskId = currentDraggedElement.dataset.id;
+            const newStatus = column.dataset.status;
+            
+            // Update task status
+            updateTaskStatus(taskId, newStatus);
           }
         });
       });
     }
 
-    function getDragAfterElement(column, y) {
-      const draggableElements = [...column.querySelectorAll('.kanban-card:not(.dragging)')];
+    function startTask(taskId) {
+      const task = allTasks.find(t => t.id === taskId);
+      if (!task) return;
       
-      return draggableElements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-        if (offset < 0 && offset > closest.offset) {
-          return { offset: offset, element: child };
-        } else {
-          return closest;
-        }
-      }, { offset: Number.NEGATIVE_INFINITY }).element;
+      // Update task status
+      task.Status = 'In Progress';
+      if (!task.workSessions) task.workSessions = [];
+      task.workSessions.push({ 
+        start: { toDate: () => new Date() }, 
+        end: null 
+      });
+      
+      // Re-render views
+      renderTasks(allTasks);
+      
+      // In a real app, you would save to Firebase here
+      console.log(`Task ${taskId} started`);
     }
 
-    async function startTask(taskId) {
-      try {
-        const taskRef = db.collection("tasks").doc(taskId);
-        const taskDoc = await taskRef.get();
-        const taskData = taskDoc.data();
-        
-        const sessions = taskData.workSessions || [];
-        sessions.push({ start: now(), end: null });
-        
-        await taskRef.update({
-          Status: "In Progress",
-          workSessions: sessions
+    function pauseTask(taskId) {
+      const task = allTasks.find(t => t.id === taskId);
+      if (!task) return;
+      
+      // Update task status
+      task.Status = 'Pending';
+      if (task.workSessions && task.workSessions.length > 0) {
+        const lastSession = task.workSessions[task.workSessions.length - 1];
+        if (lastSession && !lastSession.end) {
+          lastSession.end = { toDate: () => new Date() };
+        }
+      }
+      
+      // Re-render views
+      renderTasks(allTasks);
+      
+      // In a real app, you would save to Firebase here
+      console.log(`Task ${taskId} paused`);
+    }
+
+    function completeTask(taskId) {
+      const task = allTasks.find(t => t.id === taskId);
+      if (!task) return;
+      
+      // Update task status
+      task.Status = 'Complete';
+      if (task.workSessions && task.workSessions.length > 0) {
+        const lastSession = task.workSessions[task.workSessions.length - 1];
+        if (lastSession && !lastSession.end) {
+          lastSession.end = { toDate: () => new Date() };
+        }
+      }
+      
+      // Remove from view since we're not showing complete tasks
+      allTasks = allTasks.filter(t => t.id !== taskId);
+      
+      // Re-render views
+      renderTasks(allTasks);
+      
+      // In a real app, you would save to Firebase here
+      console.log(`Task ${taskId} completed`);
+    }
+
+    function updateTaskStatus(taskId, statusKey) {
+      const statusMap = {
+        'not-started': 'Not Started',
+        'in-progress': 'In Progress',
+        'pending': 'Pending'
+      };
+      
+      const newStatus = statusMap[statusKey];
+      if (!newStatus) return;
+      
+      const task = allTasks.find(t => t.id === taskId);
+      if (!task) return;
+      
+      // Update task status
+      task.Status = newStatus;
+      
+      // If starting a task, add a work session
+      if (statusKey === 'in-progress' && task.Status !== 'In Progress') {
+        if (!task.workSessions) task.workSessions = [];
+        task.workSessions.push({ 
+          start: { toDate: () => new Date() }, 
+          end: null 
         });
-        
-        loadTasks();
-      } catch (error) {
-        console.error("Error starting task:", error);
-        alert("Failed to start task");
       }
-    }
-
-    async function pauseTask(taskId) {
-      try {
-        const taskRef = db.collection("tasks").doc(taskId);
-        const taskDoc = await taskRef.get();
-        const taskData = taskDoc.data();
-        
-        const sessions = taskData.workSessions || [];
-        const activeSessionIndex = sessions.findIndex(s => s.end === null || s.end === undefined);
-        
-        if (activeSessionIndex !== -1) {
-          sessions[activeSessionIndex].end = now();
-          
-          await taskRef.update({
-            Status: "Pending",
-            workSessions: sessions
-          });
-          
-          loadTasks();
-        } else {
-          alert("No active session to pause");
+      
+      // If pausing a task, end the current session
+      if (statusKey === 'pending' && task.workSessions && task.workSessions.length > 0) {
+        const lastSession = task.workSessions[task.workSessions.length - 1];
+        if (lastSession && !lastSession.end) {
+          lastSession.end = { toDate: () => new Date() };
         }
-      } catch (error) {
-        console.error("Error pausing task:", error);
-        alert("Failed to pause task");
       }
-    }
-
-    async function completeTask(taskId) {
-      try {
-        const taskRef = db.collection("tasks").doc(taskId);
-        const taskDoc = await taskRef.get();
-        const taskData = taskDoc.data();
-        
-        const sessions = taskData.workSessions || [];
-        const activeSessionIndex = sessions.findIndex(s => s.end === null || s.end === undefined);
-        
-        if (activeSessionIndex !== -1) {
-          sessions[activeSessionIndex].end = now();
-        }
-        
-        const { totalWorkMs, totalPauseMs } = calcTimeDetails(sessions);
-        const remarks = prompt("Enter completion remarks:", taskData.Remarks || "");
-        
-        if (remarks === null) return; // User canceled
-        
-        await taskRef.update({
-          Status: "Complete",
-          workSessions: sessions,
-          TotalWorkHours: formatMs(totalWorkMs),
-          TotalPauseHours: formatMs(totalPauseMs),
-          Remarks: remarks,
-          taskEnd: now()
-        });
-        
-        loadTasks();
-      } catch (error) {
-        console.error("Error completing task:", error);
-        alert("Failed to complete task");
-      }
+      
+      // Re-render views
+      renderTasks(allTasks);
+      
+      // In a real app, you would save to Firebase here
+      console.log(`Task ${taskId} status updated to ${newStatus}`);
     }
 
     function showTaskDetails(taskId) {
@@ -834,7 +932,8 @@
           const start = session.start ? session.start.toDate().toLocaleString() : '—';
           const end = session.end ? session.end.toDate().toLocaleString() : '—';
           const duration = session.start && session.end ? 
-            formatMs(session.end.toDate() - session.start.toDate()) : '—';
+            formatMs(session.end.toDate() - session.start.toDate()) : 
+            (session.start && !session.end ? 'In Progress' : '—');
             
           sessionsHTML += `
             <tr>
@@ -887,45 +986,29 @@
     }
 
     function toggleView(viewType) {
+      const tableView = document.getElementById('taskTableView');
+      const kanbanView = document.getElementById('kanbanView');
+      const tableViewBtn = document.getElementById('tableViewBtn');
+      const kanbanViewBtn = document.getElementById('kanbanViewBtn');
+      
       if (viewType === 'table') {
-        document.getElementById('taskTableView').style.display = 'table';
-        document.getElementById('kanbanView').style.display = 'none';
-        document.getElementById('tableViewBtn').classList.add('active');
-        document.getElementById('kanbanViewBtn').classList.remove('active');
+        tableView.style.display = 'table';
+        kanbanView.style.display = 'none';
+        tableViewBtn.classList.add('active');
+        kanbanViewBtn.classList.remove('active');
       } else {
-        document.getElementById('taskTableView').style.display = 'none';
-        document.getElementById('kanbanView').style.display = 'block';
-        document.getElementById('tableViewBtn').classList.remove('active');
-        document.getElementById('kanbanViewBtn').classList.add('active');
+        tableView.style.display = 'none';
+        kanbanView.style.display = 'block';
+        tableViewBtn.classList.remove('active');
+        kanbanViewBtn.classList.add('active');
       }
     }
 
     function clearFilters() {
       document.getElementById('ownerFilter').value = '';
       document.getElementById('statusFilter').value = '';
-      renderTableView(allTasks);
-      renderKanbanView(allTasks);
+      renderTasks(allTasks);
     }
-
-    async function loadTasks() {
-      try {
-        const snap = await db.collection("tasks").get();
-        const tasks = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderTasks(tasks);
-      } catch (err) {
-        console.error("Error loading tasks:", err);
-        taskBody.innerHTML = `<tr><td colspan="8" style="color:red; text-align:center;">Error loading tasks: ${err.message}</td></tr>`;
-      }
-    }
-
-    // Initialize the app
-    window.onload = () => {
-      loadTasks();
-      
-      // Set up filters
-      document.getElementById('ownerFilter').addEventListener('input', filterTasks);
-      document.getElementById('statusFilter').addEventListener('change', filterTasks);
-    };
 
     function filterTasks() {
       const ownerFilter = document.getElementById('ownerFilter').value.toLowerCase();
@@ -946,6 +1029,16 @@
       renderTableView(filtered);
       renderKanbanView(filtered);
     }
+
+    // Initialize the app
+    document.addEventListener('DOMContentLoaded', () => {
+      // Load sample data
+      renderTasks(sampleTasks);
+      
+      // Set up filters
+      document.getElementById('ownerFilter').addEventListener('input', filterTasks);
+      document.getElementById('statusFilter').addEventListener('change', filterTasks);
+    });
   </script>
 </body>
 </html>
