@@ -1027,16 +1027,16 @@
     });
 
     // Modal event handlers
-    createTaskBtn.addEventListener('click', async () => {
+  createTaskBtn.addEventListener('click', async () => {
   // Generate SINO
   const newSINO = await generateSINO();
   document.getElementById('SINO').value = newSINO;
       
-      // Set default values
-      document.getElementById('Owner').value = username;
+  // Set default values
+  document.getElementById('Owner').value = username;
   document.getElementById('Task').value = 'Daily Task';
       
-      / // Load dropdown options with current user's data
+  // Load dropdown options with current user's data
   await loadDropdownOptions();
   
   // Show modal
