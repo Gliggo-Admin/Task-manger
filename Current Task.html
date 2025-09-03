@@ -48,9 +48,27 @@
       gap: 10px;
     }
     
-    .header h1 svg {
-      width: 28px;
-      height: 28px;
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .apple-logo {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #4CD964 0%, #5AC8FA 100%);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .apple-logo-text {
+      font-weight: 700;
+      font-size: 22px;
+      color: white;
     }
     
     .admin-badge {
@@ -77,14 +95,14 @@
       flex-wrap: wrap;
     }
     
-    input, select, button {
+    input, select, button, textarea {
       padding: 10px 14px;
       border: 1px solid #ddd;
       border-radius: 8px;
       font-size: 14px;
     }
     
-    input:focus, select:focus {
+    input:focus, select:focus, textarea:focus {
       outline: none;
       border-color: #007aff;
       box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
@@ -370,6 +388,20 @@
       transform: scale(0.98);
     }
     
+    .remarks-modal textarea {
+      width: 100%;
+      min-height: 120px;
+      margin: 15px 0;
+      resize: vertical;
+    }
+    
+    .remarks-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    
     @media (max-width: 768px) {
       .controls {
         flex-direction: column;
@@ -390,8 +422,12 @@
   <div class="container">
     <div class="header">
       <h1>
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
-        Gliggo Task Management
+        <div class="logo-container">
+          <div class="apple-logo">
+            <div class="apple-logo-text">G</div>
+          </div>
+          Gliggo Task Management
+        </div>
         <span class="admin-badge">ADMIN MODE</span>
       </h1>
       <button class="close-btn" onclick="window.history.back()">Back</button>
@@ -483,6 +519,24 @@
     </div>
   </div>
 
+  <!-- Remarks Modal -->
+  <div id="remarksModal" class="modal remarks-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Complete Task</h2>
+        <span class="close-modal" onclick="closeRemarksModal()">&times;</span>
+      </div>
+      <div>
+        <p>Please provide remarks for completing this task:</p>
+        <textarea id="remarksInput" placeholder="Enter remarks here..."></textarea>
+        <div class="remarks-buttons">
+          <button class="secondary" onclick="closeRemarksModal()">Cancel</button>
+          <button onclick="saveRemarks()">Save & Complete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Firebase configuration
     const firebaseConfig = {
@@ -501,6 +555,7 @@
 
     let allTasks = [];
     let currentDraggedElement = null;
+    let currentTaskIdForRemarks = null;
 
     const statusLabels = {
       "Not Started": { class: "status-not-started" },
@@ -698,7 +753,7 @@
       document.querySelectorAll('.btn-complete').forEach(btn => {
         btn.onclick = (e) => {
           const taskId = e.target.dataset.id;
-          completeTask(taskId);
+          openRemarksModal(taskId);
         };
       });
       
@@ -820,18 +875,60 @@
         });
     }
 
-    function completeTask(taskId) {
-      // Update in Firebase - set status to Complete
-      db.collection('tasks').doc(taskId).update({
-        Status: 'Complete'
-      })
-      .then(() => {
-        console.log(`Task ${taskId} completed`);
-        loadTasksFromFirebase(); // Reload tasks
-      })
-      .catch(error => {
-        console.error("Error updating task: ", error);
-      });
+    function openRemarksModal(taskId) {
+      currentTaskIdForRemarks = taskId;
+      document.getElementById('remarksInput').value = '';
+      document.getElementById('remarksModal').style.display = 'flex';
+    }
+
+    function closeRemarksModal() {
+      document.getElementById('remarksModal').style.display = 'none';
+      currentTaskIdForRemarks = null;
+    }
+
+    function saveRemarks() {
+      const remarks = document.getElementById('remarksInput').value.trim();
+      
+      if (!currentTaskIdForRemarks) {
+        alert('No task selected for completion');
+        return;
+      }
+      
+      const task = allTasks.find(t => t.id === currentTaskIdForRemarks);
+      if (!task) return;
+      
+      // Prepare update data
+      const updatedData = {
+        Status: 'Complete',
+        Remarks: remarks || 'Task completed without remarks'
+      };
+      
+      // End the current session if it exists and is running
+      if (task.workSessions && task.workSessions.length > 0) {
+        const lastSession = task.workSessions[task.workSessions.length - 1];
+        if (lastSession && !lastSession.end) {
+          // Create a copy of workSessions array
+          const updatedSessions = [...task.workSessions];
+          // Update the last session
+          updatedSessions[updatedSessions.length - 1] = {
+            ...lastSession,
+            end: firebase.firestore.Timestamp.now()
+          };
+          updatedData.workSessions = updatedSessions;
+        }
+      }
+      
+      // Update in Firebase
+      db.collection('tasks').doc(currentTaskIdForRemarks).update(updatedData)
+        .then(() => {
+          console.log(`Task ${currentTaskIdForRemarks} completed with remarks`);
+          closeRemarksModal();
+          loadTasksFromFirebase(); // Reload tasks
+        })
+        .catch(error => {
+          console.error("Error updating task: ", error);
+          alert('Error completing task: ' + error.message);
+        });
     }
 
     function updateTaskStatus(taskId, newStatus) {
@@ -1047,6 +1144,11 @@
       const modal = document.getElementById('detailsModal');
       if (event.target === modal) {
         closeDetailsModal();
+      }
+      
+      const remarksModal = document.getElementById('remarksModal');
+      if (event.target === remarksModal) {
+        closeRemarksModal();
       }
     };
   </script>
