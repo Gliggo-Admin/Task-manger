@@ -35,7 +35,6 @@
     .task-table th, .task-table td {
       padding: 12px;
       text-align: left;
-      vertical-align: top;
     }
     .task-table th {
       background: #34495e;
@@ -54,8 +53,6 @@
       color: white;
       border-radius: 4px;
       padding: 6px 10px;
-      width: 120px;
-      text-align: center;
     }
     .status.not-started {
       background: #95a5a6;
@@ -66,9 +63,6 @@
     .status.pending {
       background: #f1c40f;
       color: black;
-    }
-    .status.complete {
-      background: #27ae60;
     }
     .combo-box {
       display: none;
@@ -91,16 +85,6 @@
     .btn-pending { background: #e67e22; }
     .btn-continue { background: #8e44ad; }
     .btn-complete { background: #27ae60; }
-    .btn-moreview {
-      background: #34495e;
-      padding: 6px 12px;
-      font-weight: 600;
-      border-radius: 5px;
-      color: white;
-      cursor: pointer;
-      border: none;
-      margin-top: 8px;
-    }
     .highlight {
       border: 2px solid #fff;
       box-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
@@ -231,20 +215,31 @@
       transform: scale(0.95);
     }
 
-    /* Details expanded styles */
-    .row-details {
-      background: #fafafa;
-      font-size: 14px;
-      color: #444;
+     #reportModal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
     }
-    .work-session {
-      margin-bottom: 6px;
-      border-left: 3px solid #3498db;
-      padding-left: 10px;
-      font-family: monospace;
+    #reportModal .modal-content {
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 500px;
+      margin: 80px auto;
+      position: relative;
     }
-    .work-session.paused {
-      border-color: #e67e22;
+    #reportModal .close-report {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 22px;
+      font-weight: bold;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -263,7 +258,7 @@
   <table class="task-table" id="taskTableView">
     <thead>
       <tr>
-        <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th><th>Actions</th>
+        <th>SINO</th><th>Company</th><th>Task</th><th>Due Date</th><th>Status</th><th>Owner</th><th>Work Hours</th>
       </tr>
     </thead>
     <tbody id="task-body"></tbody>
@@ -303,14 +298,23 @@
     </div>
   </div>
 
+  <!-- Report Modal -->
+  <div id="reportModal">
+    <div class="modal-content">
+      <span class="close-report" onclick="closeReportModal()">&times;</span>
+      <h3>Task Report</h3>
+      <div id="reportDetails"></div>
+    </div>
+  </div>
+
+
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <!-- Cloudinary SDK -->
-  <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
-
+  <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
   <script>
-     // Firebase Init
+    // Firebase Init
     firebase.initializeApp({
       apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
       authDomain: "task-manager-602da.firebaseapp.com",
@@ -320,283 +324,121 @@
       appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
     });
 
-    firebase.initializeApp(firebaseConfig);
+    // Cloudinary configuration
+    const cloudinaryConfig = { cloudName: 'your_cloud_name', uploadPreset: 'your_upload_preset' };
     const db = firebase.firestore();
 
-    // Example tasks data; replace with your data fetching from Firestore
-    let tasks = [
-      {
-        SINO: 1,
-        company: "Apple",
-        task: "Design iPhone UI",
-        dueDate: "2025-12-20",
-        status: "in-progress",
-        ownerName: "Alice",
-        workHours: 8,
-        workSessions: [
-          { type: "start", time: "2025-09-01T09:00:00" },
-          { type: "pause", time: "2025-09-01T12:00:00" },
-          { type: "resume", time: "2025-09-01T13:00:00" },
-          { type: "pause", time: "2025-09-02T11:00:00" },
-          { type: "resume", time: "2025-09-02T12:30:00" }
-        ]
-      },
-      {
-        SINO: 2,
-        company: "Apple",
-        task: "Write Marketing Plan",
-        dueDate: "2025-11-10",
-        status: "not-started",
-        ownerName: "Bob",
-        workHours: 0,
-        workSessions: []
-      },
-      {
-        SINO: 3,
-        company: "Apple",
-        task: "QA Testing",
-        dueDate: "2025-10-30",
-        status: "pending",
-        ownerName: "Charlie",
-        workHours: 3.5,
-        workSessions: [
-          { type: "start", time: "2025-09-01T10:00:00" },
-          { type: "pause", time: "2025-09-01T11:00:00" },
-          { type: "resume", time: "2025-09-01T11:15:00" }
-        ]
-      }
-    ];
+    const now = () => firebase.firestore.Timestamp.now();
 
-    const taskBody = document.getElementById("task-body");
-    const ownerFilter = document.getElementById("ownerFilter");
+    function formatMs(ms) {
+      const h = Math.floor(ms / 3600000);
+      const m = Math.floor((ms % 3600000) / 60000);
+      const s = Math.floor((ms % 60000) / 1000);
+      return `${h}h ${m}m ${s}s`;
+    }
 
-    // Render tasks in table
-    function renderTasks(filterOwner = "") {
-      taskBody.innerHTML = "";
-      const filteredTasks = tasks.filter(task =>
-        task.ownerName.toLowerCase().includes(filterOwner.toLowerCase())
-      );
+    function calcTimeDetails(sessions = []) {
+      let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
+      sessions.forEach(sess => {
+        const start = sess.start?.toDate?.(), end = sess.end?.toDate?.();
+        if (start && end) {
+          const startMs = start.getTime(), endMs = end.getTime();
+          totalWorkMs += endMs - startMs;
+          if (lastEnd && startMs > lastEnd) {
+            totalPauseMs += (startMs - lastEnd);
+            pauseCount++;
+          }
+          lastEnd = endMs;
+        }
+      });
+      return { totalWorkMs, totalPauseMs, pauseCount };
+    }
 
-      filteredTasks.forEach((task, index) => {
+    function openReportModal(task) {
+      const { totalWorkMs, totalPauseMs, pauseCount } = calcTimeDetails(task.workSessions || []);
+      const container = document.getElementById("reportDetails");
+      container.innerHTML = `
+        <p><strong>Task:</strong> ${task["TYPE OF WORK"]}</p>
+        <p><strong>Owner:</strong> ${task.Owner}</p>
+        <p><strong>Start:</strong> ${task.taskStart?.toDate().toLocaleString() || "N/A"}</p>
+        <p><strong>End:</strong> ${task.taskEnd?.toDate().toLocaleString() || "N/A"}</p>
+        <p><strong>Total Work:</strong> ${formatMs(totalWorkMs)}</p>
+        <p><strong>Total Pause:</strong> ${formatMs(totalPauseMs)}</p>
+        <p><strong>Pause Count:</strong> ${pauseCount}</p>
+        <hr>
+        <p><strong>Remarks:</strong> ${task.Remarks || '-'}</p>
+      `;
+      document.getElementById("reportModal").style.display = "block";
+    }
+
+    function closeReportModal() {
+      document.getElementById("reportModal").style.display = "none";
+    }
+
+    // Modify your rendering to include the View More button
+    function renderTasks(tasks) {
+      const tbody = document.getElementById("task-body");
+      tbody.innerHTML = "";
+      tasks.forEach((task, idx) => {
         const tr = document.createElement("tr");
+        const { totalWorkMs } = calcTimeDetails(task.workSessions || []);
         tr.innerHTML = `
           <td>${task.SINO}</td>
-          <td>${task.company}</td>
-          <td>${task.task}</td>
-          <td>${task.dueDate}</td>
-          <td class="status ${task.status.replace(/\s/g, '-')}">${capitalize(task.status)}</td>
-          <td>${task.ownerName}</td>
-          <td>${task.workHours.toFixed(1)}</td>
-          <td>
-            <button class="btn-moreview" onclick="toggleMoreView(${task.SINO})">More View</button>
-            <div class="combo-box" id="combo-${task.SINO}">
-              ${getActionButtons(task.status, task.SINO)}
-            </div>
-          </td>
+          <td>${task["Existing Company Name"]}</td>
+          <td>${task["TYPE OF WORK"]}</td>
+          <td>${task["Due date"]}</td>
+          <td>${task.Status}</td>
+          <td>${task.Owner || "No Owner"}</td>
+          <td>${formatMs(totalWorkMs)}</td>
+          <td><button onclick='openReportModal(${JSON.stringify(task)})'>View More</button></td>
         `;
-        taskBody.appendChild(tr);
-
-        // More view detail row
-        const detailRow = document.createElement("tr");
-        detailRow.classList.add("row-details");
-        detailRow.style.display = "none";
-        detailRow.id = `details-${task.SINO}`;
-        const detailTd = document.createElement("td");
-        detailTd.colSpan = 8;
-        detailTd.innerHTML = getWorkSessionDetailsHTML(task.workSessions);
-        detailRow.appendChild(detailTd);
-        taskBody.appendChild(detailRow);
+        tbody.appendChild(tr);
       });
     }
 
-    // Capitalize first letter of string
-    function capitalize(str) {
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    }
+    async function updateTaskStatus(taskId, newStatusKey) {
+      const taskRef = db.collection("tasks").doc(taskId);
+      const doc = await taskRef.get();
+      const data = doc.data();
+      if (!data) return;
 
-    // Action buttons depending on status
-    function getActionButtons(status, SINO) {
-      switch (status) {
-        case "not-started":
-          return `<button class="btn-start" onclick="startTask(${SINO})">Start</button>`;
-        case "in-progress":
-          return `
-            <button class="btn-pending" onclick="setPending(${SINO})">Pending</button>
-            <button class="btn-complete" onclick="completeTask(${SINO})">Complete</button>
-          `;
-        case "pending":
-          return `
-            <button class="btn-continue" onclick="continueTask(${SINO})">Continue</button>
-            <button class="btn-complete" onclick="completeTask(${SINO})">Complete</button>
-          `;
-        default:
-          return "";
-      }
-    }
+      const sessions = [...(data.workSessions || [])];
+      const ts = now();
 
-    // Toggle More View for a task
-    function toggleMoreView(SINO) {
-      const comboBox = document.getElementById(`combo-${SINO}`);
-      const detailsRow = document.getElementById(`details-${SINO}`);
-      if (comboBox.style.display === "block") {
-        comboBox.style.display = "none";
-        detailsRow.style.display = "none";
-      } else {
-        // Close others
-        document.querySelectorAll(".combo-box").forEach(el => el.style.display = "none");
-        document.querySelectorAll(".row-details").forEach(el => el.style.display = "none");
-
-        comboBox.style.display = "block";
-        detailsRow.style.display = "table-row";
-      }
-    }
-
-    // Format Work Sessions details HTML
-    function getWorkSessionDetailsHTML(workSessions) {
-      if (!workSessions || workSessions.length === 0) {
-        return "<i>No work session details available</i>";
+      if (newStatusKey === "in-progress") {
+        if (!data.taskStart) {
+          data.taskStart = ts;
+        }
+        if (!sessions.some(s => !s.end)) {
+          sessions.push({ start: ts, end: null });
+        }
+      } else if (newStatusKey === "pending") {
+        const i = sessions.findIndex(s => !s.end);
+        if (i >= 0) {
+          sessions[i].end = ts;
+        }
       }
 
-      let html = `<strong>Work Session Details:</strong><br/>`;
-      workSessions.forEach((session, i) => {
-        const dt = new Date(session.time);
-        const timeStr = dt.toLocaleString();
-        let label = session.type.charAt(0).toUpperCase() + session.type.slice(1);
-        if (session.type === "pause") label += " Time";
-        if (session.type === "resume") label += " Time";
-        html += `<div class="work-session ${session.type === "pause" ? "paused" : ""}">${label}: ${timeStr}</div>`;
+      await taskRef.update({
+        Status: newStatusKey.charAt(0).toUpperCase() + newStatusKey.slice(1).replace('-', ' '),
+        taskStart: data.taskStart,
+        workSessions: sessions
       });
-      return html;
+
+      loadTasks();
     }
 
-    // Action button functions (implement your logic here)
-    function startTask(SINO) {
-      alert(`Start Task: ${SINO}`);
-      // Add logic to update Firestore and UI
-    }
-    function setPending(SINO) {
-      alert(`Set Pending: ${SINO}`);
-      // Add logic
-    }
-    function continueTask(SINO) {
-      alert(`Continue Task: ${SINO}`);
-      // Add logic
-    }
-    function completeTask(SINO) {
-      alert(`Complete Task: ${SINO}`);
-      // Add logic
-    }
-
-    // Owner name filter input event
-    ownerFilter.addEventListener("input", (e) => {
-      renderTasks(e.target.value);
-      renderKanban(e.target.value);
-    });
-
-    // Toggle between Table and Kanban views
-    function toggleView(view) {
-      const tableBtn = document.getElementById("tableViewBtn");
-      const kanbanBtn = document.getElementById("kanbanViewBtn");
-      const tableView = document.getElementById("taskTableView");
-      const kanbanView = document.getElementById("kanbanView");
-
-      if (view === "table") {
-        tableView.style.display = "table";
-        kanbanView.style.display = "none";
-        tableBtn.classList.add("active");
-        kanbanBtn.classList.remove("active");
-      } else {
-        tableView.style.display = "none";
-        kanbanView.style.display = "block";
-        tableBtn.classList.remove("active");
-        kanbanBtn.classList.add("active");
-      }
-    }
-
-    // Render Kanban Cards by status & filtered owner
-    function renderKanban(filterOwner = "") {
-      ["not-started", "in-progress", "pending"].forEach(status => {
-        const container = document.getElementById(`kanban-${status}`);
-        container.innerHTML = "";
-        const filtered = tasks.filter(task => 
-          task.status === status && task.ownerName.toLowerCase().includes(filterOwner.toLowerCase())
-        );
-        filtered.forEach(task => {
-          const card = document.createElement("div");
-          card.className = "kanban-card";
-          card.draggable = true;
-          card.dataset.sino = task.SINO;
-          card.innerHTML = `
-            <h4>${task.task}</h4>
-            <p><strong>Company:</strong> ${task.company}</p>
-            <p><strong>Owner:</strong> ${task.ownerName}</p>
-            <p><strong>Due:</strong> ${task.dueDate}</p>
-            <span class="status ${task.status.replace(/\s/g, '-')}">${capitalize(task.status)}</span>
-          `;
-          container.appendChild(card);
+    function loadTasks() {
+      db.collection("tasks")
+        .where("Status", "in", ["Not Started", "In Progress", "Pending"])
+        .get()
+        .then(snapshot => {
+          const tasks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          renderTasks(tasks);
         });
-      });
     }
 
-    // Initial render
-    renderTasks();
-    renderKanban();
-
-    // Drag & Drop Kanban cards (basic)
-    let draggedCard = null;
-
-    document.querySelectorAll(".kanban-column").forEach(column => {
-      column.addEventListener("dragstart", e => {
-        if (e.target.classList.contains("kanban-card")) {
-          draggedCard = e.target;
-          e.target.classList.add("dragging");
-        }
-      });
-      column.addEventListener("dragend", e => {
-        if (draggedCard) draggedCard.classList.remove("dragging");
-        draggedCard = null;
-      });
-      column.addEventListener("dragover", e => {
-        e.preventDefault();
-        if (draggedCard) {
-          e.currentTarget.classList.add("drag-over");
-        }
-      });
-      column.addEventListener("dragleave", e => {
-        e.currentTarget.classList.remove("drag-over");
-      });
-      column.addEventListener("drop", e => {
-        e.preventDefault();
-        if (draggedCard) {
-          const newStatus = e.currentTarget.dataset.status;
-          const SINO = parseInt(draggedCard.dataset.sino);
-          updateTaskStatus(SINO, newStatus);
-          e.currentTarget.querySelector(".kanban-cards").appendChild(draggedCard);
-          e.currentTarget.classList.remove("drag-over");
-        }
-      });
-    });
-
-    // Update task status and re-render
-    function updateTaskStatus(SINO, newStatus) {
-      const task = tasks.find(t => t.SINO === SINO);
-      if (task && task.status !== newStatus) {
-        task.status = newStatus;
-        alert(`Task #${SINO} status changed to ${capitalize(newStatus)}`);
-        renderTasks(ownerFilter.value);
-        renderKanban(ownerFilter.value);
-      }
-    }
-
-    // Modal and attachment handling (simplified)
-    function closeModal() {
-      document.getElementById('attachmentModal').style.display = 'none';
-      document.getElementById('fileInput').value = '';
-      document.getElementById('attachmentPreview').style.display = 'none';
-      document.getElementById('uploadedImages').innerHTML = '';
-    }
-    // More upload logic can be added here...
-
+    window.onload = loadTasks;
   </script>
 </body>
 </html>
