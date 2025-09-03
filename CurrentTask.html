@@ -318,26 +318,62 @@
       }
     }, { offset: Number.NEGATIVE_INFINITY }).element;
   }
+async function updateTaskStatus(taskId, newStatus) {
+  try {
+    const statusMap = {
+      'not-started': 'Not Started',
+      'in-progress': 'In Progress',
+      'pending': 'Pending'
+    };
 
-  async function updateTaskStatus(taskId, newStatus) {
-    try {
-      const statusMap = {
-        'not-started': 'Not Started',
-        'in-progress': 'In Progress',
-        'pending': 'Pending'
-      };
-      
-      await db.collection("tasks").doc(taskId).update({
-        Status: statusMap[newStatus]
-      });
-      
-      // Reload tasks
-      loadUserTasks();
-    } catch (error) {
-      console.error("Error updating task status:", error);
-      alert("Failed to update task status");
+    const taskRef = db.collection("tasks").doc(taskId);
+    const doc = await taskRef.get();
+    const data = doc.data();
+
+    if (!doc.exists) throw new Error("Task not found");
+
+    const prevStatus = (data.Status || "").toLowerCase().replace(/\s+/g, "-");
+    const sessions = Array.isArray(data.workSessions) ? [...data.workSessions] : [];
+    const nowTs = now();
+
+    // 1. In Progress → Pending: close current session
+    if (prevStatus === 'in-progress' && newStatus === 'pending') {
+      const i = sessions.findIndex(s => !s.end);
+      if (i >= 0) {
+        sessions[i].end = nowTs;
+      }
     }
+
+    // 2. Pending → In Progress: start new session
+    if (prevStatus === 'pending' && newStatus === 'in-progress') {
+      const running = sessions.some(s => !s.end);
+      if (!running) {
+        sessions.push({ start: nowTs, end: null });
+      }
+    }
+
+    // 3. Not Started → In Progress: first session
+    if (prevStatus === 'not-started' && newStatus === 'in-progress') {
+      if (!sessions.length) {
+        sessions.push({ start: nowTs, end: null });
+      }
+    }
+
+    // 4. Update Firestore
+    await taskRef.update({
+      Status: statusMap[newStatus],
+      workSessions: sessions,
+      taskStart: data.taskStart || sessions[0]?.start || nowTs
+    });
+
+    // 5. Refresh UI
+    loadUserTasks();
+
+  } catch (error) {
+    console.error("Error updating task status:", error);
+    alert("Failed to update task status");
   }
+}
 
   function attachActions(tasks) {
     document.querySelectorAll(".combo-box").forEach((cr, idx) => {
