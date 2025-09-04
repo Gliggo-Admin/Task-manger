@@ -523,7 +523,7 @@
     </label><br/><br/>
 
 
-<!-- WORK FOR with period logic -->
+<!-- WORK FOR with period logic - ALWAYS VISIBLE -->
 <label for="workFor">WORK FOR:</label>
 <select name="WORK FOR" id="workFor">
   <option value="">--Choose--</option>
@@ -535,8 +535,8 @@
   <option value="Custom">Custom</option>
 </select>
 
-<label for="period" style="display: none;">Enter Period/Year:</label>
-<input type="text" name="Period" id="period" style="display: none;" placeholder="Enter period (e.g., Q1 2023, Jan-Mar 2023)">
+<label for="period">Period/Year:</label>
+<input type="text" name="Period" id="period" placeholder="Enter period (e.g., 2023, Q1 2023, Jan-Mar 2023)">
 <br/><br/>
 
     <!-- Due Date - FIXED field name -->
@@ -1181,35 +1181,55 @@ async function loadDropdownOptions() {
   }
 }
 
-// Handle WORK FOR dropdown change to show/hide period input
+// Handle WORK FOR dropdown change to update period placeholder
 document.getElementById('workFor').addEventListener('change', function(e) {
   const periodInput = document.getElementById('period');
-  const periodLabel = document.querySelector('label[for="period"]');
   
-  if (e.target.value === 'Custom') {
-    periodInput.style.display = 'block';
-    periodLabel.style.display = 'block';
-    periodInput.required = true;
-    periodInput.placeholder = 'Enter period (e.g., Q1 2023, Jan-Mar 2023)';
-  } else {
-    periodInput.style.display = 'none';
-    periodLabel.style.display = 'none';
-    periodInput.required = false;
-    periodInput.value = '';
+  // Set appropriate placeholder based on selection
+  switch(e.target.value) {
+    case 'Yearly':
+      periodInput.placeholder = 'Enter year (e.g., 2023)';
+      break;
+    case 'Monthly':
+      periodInput.placeholder = 'Enter month and year (e.g., Jan 2023)';
+      break;
+    case 'Quarterly':
+      periodInput.placeholder = 'Enter quarter and year (e.g., Q1 2023)';
+      break;
+    case 'Bi-weekly':
+      periodInput.placeholder = 'Enter bi-weekly period (e.g., 1-15 Jan 2023)';
+      break;
+    case 'Weekly':
+      periodInput.placeholder = 'Enter week and year (e.g., Week 5, 2023)';
+      break;
+    case 'Custom':
+      periodInput.placeholder = 'Enter custom period (e.g., Jan-Mar 2023)';
+      break;
+    default:
+      periodInput.placeholder = 'Enter period';
   }
+  
+  // Make period field required for all options except empty selection
+  periodInput.required = e.target.value !== '';
 });
 
-// Initialize the period field state on page load
+// Initialize the period field on page load
 document.addEventListener('DOMContentLoaded', function() {
-  const periodInput = document.getElementById('period');
-  const periodLabel = document.querySelector('label[for="period"]');
   const workForSelect = document.getElementById('workFor');
+  const periodInput = document.getElementById('period');
   
-  // Hide period field initially if not "Custom"
-  if (workForSelect.value !== 'Custom') {
-    periodInput.style.display = 'none';
-    periodLabel.style.display = 'none';
+  // Set initial placeholder
+  if (workForSelect.value) {
+    workForSelect.dispatchEvent(new Event('change'));
+  } else {
+    periodInput.placeholder = 'Select WORK FOR first';
+    periodInput.disabled = true;
   }
+  
+  // Enable period input when a WORK FOR option is selected
+  workForSelect.addEventListener('change', function() {
+    periodInput.disabled = !this.value;
+  });
   
   // Your other initialization code
   loadTasks();
