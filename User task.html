@@ -523,21 +523,21 @@
     </label><br/><br/>
 
 
-    <!-- WORK FOR with period logic -->
-    <label for="workFor">WORK FOR:</label>
-    <select name="WORK FOR" id="workFor">
-      <option value="">--Choose--</option>
-      <option value="Yearly">Yearly</option>
-      <option value="Monthly">Monthly</option>
-      <option value="Quarterly">Quarterly</option>
-      <option value="Bi-weekly">Bi-weekly</option>
-      <option value="Weekly">Weekly</option>
-      <option value="Custom">Custom</option>
-    </select>
+<!-- WORK FOR with period logic -->
+<label for="workFor">WORK FOR:</label>
+<select name="WORK FOR" id="workFor">
+  <option value="">--Choose--</option>
+  <option value="Yearly">Yearly</option>
+  <option value="Monthly">Monthly</option>
+  <option value="Quarterly">Quarterly</option>
+  <option value="Bi-weekly">Bi-weekly</option>
+  <option value="Weekly">Weekly</option>
+  <option value="Custom">Custom</option>
+</select>
 
-    <label for="period" style="display: none;">Period:</label>
-    <input type="text" name="Period" id="period" style="display: none;" placeholder="Enter period">
-    <br/><br/>
+<label for="period" style="display: none;">Enter Period/Year:</label>
+<input type="text" name="Period" id="period" style="display: none;" placeholder="Enter period (e.g., Q1 2023, Jan-Mar 2023)">
+<br/><br/>
 
     <!-- Due Date - FIXED field name -->
     <label>Due Date:<br/>
@@ -1125,8 +1125,8 @@
       }
     });
 
-    // Load dropdown options from existing tasks
-   // Load dropdown options from current user's tasks only
+
+// Load dropdown options from current user's tasks only
 async function loadDropdownOptions() {
   try {
     // Only get tasks for the current user
@@ -1181,48 +1181,40 @@ async function loadDropdownOptions() {
   }
 }
 
-    // Handle WORK FOR dropdown change
-    // Handle WORK FOR dropdown change
 // Handle WORK FOR dropdown change to show/hide period input
-    document.getElementById('workFor').addEventListener('change', function(e) {
-      const periodInput = document.getElementById('period');
-      const periodLabel = document.querySelector('label[for="period"]');
-      
-      if (e.target.value === 'Custom') {
-        periodInput.style.display = 'block';
-        periodLabel.style.display = 'block';
-        periodInput.required = true;
-      } else {
-        periodInput.style.display = 'none';
-        periodLabel.style.display = 'none';
-        periodInput.required = false;
-        periodInput.value = '';
-        
-        // Set period value based on selection (optional)
-        const periodValue = e.target.value;
-        if (periodValue) {
-          // You might want to set a hidden field or handle this differently
-          console.log('Selected period:', periodValue);
-        }
-      }
-    });
+document.getElementById('workFor').addEventListener('change', function(e) {
+  const periodInput = document.getElementById('period');
+  const periodLabel = document.querySelector('label[for="period"]');
+  
+  if (e.target.value === 'Custom') {
+    periodInput.style.display = 'block';
+    periodLabel.style.display = 'block';
+    periodInput.required = true;
+    periodInput.placeholder = 'Enter period (e.g., Q1 2023, Jan-Mar 2023)';
+  } else {
+    periodInput.style.display = 'none';
+    periodLabel.style.display = 'none';
+    periodInput.required = false;
+    periodInput.value = '';
+  }
+});
 
 // Initialize the period field state on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      const periodInput = document.getElementById('period');
-      const periodLabel = document.querySelector('label[for="period"]');
-      const workForSelect = document.getElementById('workFor');
-      
-      // Hide period field initially if not "Custom"
-      if (workForSelect.value !== 'Custom') {
-        periodInput.style.display = 'none';
-        periodLabel.style.display = 'none';
-      }
-      
-      // Your other initialization code
-      loadTasks();
-      loadDropdownOptions();
-    });
+document.addEventListener('DOMContentLoaded', function() {
+  const periodInput = document.getElementById('period');
+  const periodLabel = document.querySelector('label[for="period"]');
+  const workForSelect = document.getElementById('workFor');
+  
+  // Hide period field initially if not "Custom"
+  if (workForSelect.value !== 'Custom') {
+    periodInput.style.display = 'none';
+    periodLabel.style.display = 'none';
+  }
+  
+  // Your other initialization code
+  loadTasks();
+  loadDropdownOptions();
+});
   </script>
 </body>
 </html>
