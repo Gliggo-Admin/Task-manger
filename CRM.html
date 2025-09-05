@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elegant CRM Dashboard</title>
+    <title>Complete CRM Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -615,6 +615,178 @@
             color: var(--success);
         }
 
+        /* Team Members Section */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .team-member-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .team-member-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0 auto 1rem;
+        }
+
+        .team-member-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .team-member-role {
+            color: var(--secondary);
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .team-member-stats {
+            display: flex;
+            justify-content: space-around;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 1rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .stat-label {
+            color: var(--secondary);
+            font-size: 0.8rem;
+        }
+
+        /* Analytics Section */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-header h3 {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chart-action {
+            padding: 0.5rem;
+            border-radius: 6px;
+            background: var(--light);
+            color: var(--secondary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .chart-action:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .chart-placeholder {
+            height: 300px;
+            background: #f8fafc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        /* Reports Section */
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .report-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .report-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .report-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .report-description {
+            color: var(--secondary);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .report-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--secondary);
+            font-size: 0.8rem;
+        }
+
         /* Modal Styles */
         .modal {
             display: none;
@@ -754,6 +926,15 @@
             background: #e2e8f0;
         }
 
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
         /* Responsive Design */
         @media (max-width: 1200px) {
             .sidebar {
@@ -772,6 +953,10 @@
             .search-bar {
                 width: 300px;
             }
+
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 992px) {
@@ -789,6 +974,11 @@
             }
             
             .task-detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .team-grid,
+            .reports-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -839,14 +1029,14 @@
             </div>
 
             <div class="nav-menu">
-                <a href="#" class="nav-item active">
+                <a href="#" class="nav-item active" data-section="dashboard">
                     <div class="nav-icon">
                         <i class="fas fa-home"></i>
                     </div>
                     <span class="nav-text">Dashboard</span>
                 </a>
                 
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-section="companies">
                     <div class="nav-icon">
                         <i class="fas fa-building"></i>
                     </div>
@@ -854,7 +1044,7 @@
                     <span class="nav-badge">24</span>
                 </a>
                 
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-section="tasks">
                     <div class="nav-icon">
                         <i class="fas fa-tasks"></i>
                     </div>
@@ -862,14 +1052,14 @@
                     <span class="nav-badge">142</span>
                 </a>
                 
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-section="team">
                     <div class="nav-icon">
                         <i class="fas fa-users"></i>
                     </div>
                     <span class="nav-text">Team</span>
                 </a>
                 
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-section="calendar">
                     <div class="nav-icon">
                         <i class="fas fa-calendar"></i>
                     </div>
@@ -880,14 +1070,14 @@
                 
                 <div class="nav-title">Reports</div>
                 
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-section="analytics">
                     <div class="nav-icon">
                         <i class="fas fa-chart-bar"></i>
                     </div>
                     <span class="nav-text">Analytics</span>
                 </a>
                 
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-section="reports">
                     <div class="nav-icon">
                         <i class="fas fa-file-alt"></i>
                     </div>
@@ -898,14 +1088,14 @@
                 
                 <div class="nav-title">Settings</div>
                 
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-section="settings">
                     <div class="nav-icon">
                         <i class="fas fa-cog"></i>
                     </div>
                     <span class="nav-text">Settings</span>
                 </a>
                 
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-section="help">
                     <div class="nav-icon">
                         <i class="fas fa-question-circle"></i>
                     </div>
@@ -946,87 +1136,445 @@
 
             <!-- Content Area -->
             <div class="content">
-                <h1 class="page-title">Company Task Dashboard</h1>
-                <p class="page-description">Manage all company tasks and track progress in one place</p>
+                <!-- Dashboard Section -->
+                <div class="content-section active" id="dashboard-section">
+                    <h1 class="page-title">Company Task Dashboard</h1>
+                    <p class="page-description">Manage all company tasks and track progress in one place</p>
 
-                <!-- Stats Cards -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon blue">
-                            <i class="fas fa-building"></i>
+                    <!-- Stats Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon blue">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="totalCompanies">0</h3>
+                                <p>Total Companies</p>
+                            </div>
                         </div>
-                        <div class="stat-content">
-                            <h3 id="totalCompanies">0</h3>
-                            <p>Total Companies</p>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon green">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="totalTasks">0</h3>
+                                <p>Total Tasks</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon orange">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="completedTasks">0</h3>
+                                <p>Completed Tasks</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon red">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="pendingTasks">0</h3>
+                                <p>Pending Tasks</p>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon green">
-                            <i class="fas fa-tasks"></i>
+
+                    <!-- Filters -->
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Search Company</label>
+                            <input type="search" id="searchCompany" placeholder="Company name...">
                         </div>
-                        <div class="stat-content">
-                            <h3 id="totalTasks">0</h3>
-                            <p>Total Tasks</p>
+                        
+                        <div class="filter-group">
+                            <label>Search Owner</label>
+                            <input type="search" id="searchOwner" placeholder="Owner name...">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Status Filter</label>
+                            <select id="statusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="Not Started">Not Started</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Complete">Complete</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-actions">
+                            <button class="btn btn-outline">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <button class="btn btn-primary" id="refreshBtn">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
                         </div>
                     </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon orange">
-                            <i class="fas fa-check-circle"></i>
+
+                    <!-- Company Cards -->
+                    <div class="company-cards" id="companyCards">
+                        <!-- Company cards will be dynamically inserted here -->
+                    </div>
+                </div>
+
+                <!-- Companies Section -->
+                <div class="content-section" id="companies-section">
+                    <h1 class="page-title">Companies</h1>
+                    <p class="page-description">Manage all companies in your portfolio</p>
+
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Search Companies</label>
+                            <input type="search" placeholder="Company name...">
                         </div>
-                        <div class="stat-content">
-                            <h3 id="completedTasks">0</h3>
-                            <p>Completed Tasks</p>
+                        
+                        <div class="filter-group">
+                            <label>Industry</label>
+                            <select>
+                                <option value="">All Industries</option>
+                                <option value="Technology">Technology</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Retail">Retail</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-actions">
+                            <button class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add Company
+                            </button>
                         </div>
                     </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon red">
-                            <i class="fas fa-clock"></i>
+
+                    <div class="company-cards">
+                        <!-- Sample Company Cards -->
+                        <div class="company-card">
+                            <div class="company-header">
+                                <div class="company-header-info">
+                                    <h3>TechNova Solutions</h3>
+                                    <span class="company-tasks-count">8 tasks</span>
+                                </div>
+                                <div class="company-header-actions">
+                                    <div class="company-action">
+                                        <i class="fas fa-edit"></i>
+                                    </div>
+                                    <div class="company-action">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="stat-content">
-                            <h3 id="pendingTasks">0</h3>
-                            <p>Pending Tasks</p>
+
+                        <div class="company-card">
+                            <div class="company-header">
+                                <div class="company-header-info">
+                                    <h3>Global Retail Inc.</h3>
+                                    <span class="company-tasks-count">5 tasks</span>
+                                </div>
+                                <div class="company-header-actions">
+                                    <div class="company-action">
+                                        <i class="fas fa-edit"></i>
+                                    </div>
+                                    <div class="company-action">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="company-card">
+                            <div class="company-header">
+                                <div class="company-header-info">
+                                    <h3>MediHealth Group</h3>
+                                    <span class="company-tasks-count">12 tasks</span>
+                                </div>
+                                <div class="company-header-actions">
+                                    <div class="company-action">
+                                        <i class="fas fa-edit"></i>
+                                    </div>
+                                    <div class="company-action">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Filters -->
-                <div class="filters">
-                    <div class="filter-group">
-                        <label>Search Company</label>
-                        <input type="search" id="searchCompany" placeholder="Company name...">
+                <!-- Team Section -->
+                <div class="content-section" id="team-section">
+                    <h1 class="page-title">Team Members</h1>
+                    <p class="page-description">Manage your team and their responsibilities</p>
+
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Search Team</label>
+                            <input type="search" placeholder="Team member name...">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Role</label>
+                            <select>
+                                <option value="">All Roles</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Manager">Manager</option>
+                                <option value="Employee">Employee</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-actions">
+                            <button class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add Member
+                            </button>
+                        </div>
                     </div>
-                    
-                    <div class="filter-group">
-                        <label>Search Owner</label>
-                        <input type="search" id="searchOwner" placeholder="Owner name...">
-                    </div>
-                    
-                    <div class="filter-group">
-                        <label>Status Filter</label>
-                        <select id="statusFilter">
-                            <option value="">All Statuses</option>
-                            <option value="Not Started">Not Started</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Complete">Complete</option>
-                        </select>
-                    </div>
-                    
-                    <div class="filter-actions">
-                        <button class="btn btn-outline">
-                            <i class="fas fa-filter"></i> Filter
-                        </button>
-                        <button class="btn btn-primary" id="refreshBtn">
-                            <i class="fas fa-sync"></i> Refresh
-                        </button>
+
+                    <div class="team-grid">
+                        <!-- Team Member Cards -->
+                        <div class="team-member-card">
+                            <div class="team-member-avatar">JD</div>
+                            <div class="team-member-name">John Doe</div>
+                            <div class="team-member-role">Administrator</div>
+                            <div class="team-member-stats">
+                                <div class="stat">
+                                    <div class="stat-value">24</div>
+                                    <div class="stat-label">Tasks</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">18</div>
+                                    <div class="stat-label">Complete</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">6</div>
+                                    <div class="stat-label">Pending</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="team-member-card">
+                            <div class="team-member-avatar">SM</div>
+                            <div class="team-member-name">Sarah Miller</div>
+                            <div class="team-member-role">Project Manager</div>
+                            <div class="team-member-stats">
+                                <div class="stat">
+                                    <div class="stat-value">32</div>
+                                    <div class="stat-label">Tasks</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">25</div>
+                                    <div class="stat-label">Complete</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">7</div>
+                                    <div class="stat-label">Pending</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="team-member-card">
+                            <div class="team-member-avatar">RJ</div>
+                            <div class="team-member-name">Robert Johnson</div>
+                            <div class="team-member-role">Developer</div>
+                            <div class="team-member-stats">
+                                <div class="stat">
+                                    <div class="stat-value">19</div>
+                                    <div class="stat-label">Tasks</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">15</div>
+                                    <div class="stat-label">Complete</div>
+                                </div>
+                                <div class="stat">
+                                    <div class="stat-value">4</div>
+                                    <div class="stat-label">Pending</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Company Cards -->
-                <div class="company-cards" id="companyCards">
-                    <!-- Company cards will be dynamically inserted here -->
+                <!-- Analytics Section -->
+                <div class="content-section" id="analytics-section">
+                    <h1 class="page-title">Analytics</h1>
+                    <p class="page-description">Track performance and productivity metrics</p>
+
+                    <div class="analytics-grid">
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h3>Task Completion Rate</h3>
+                                <div class="chart-actions">
+                                    <div class="chart-action">
+                                        <i class="fas fa-download"></i>
+                                    </div>
+                                    <div class="chart-action">
+                                        <i class="fas fa-expand"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-placeholder">
+                                Task Completion Chart Visualization
+                            </div>
+                        </div>
+
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <h3>Team Performance</h3>
+                                <div class="chart-actions">
+                                    <div class="chart-action">
+                                        <i class="fas fa-download"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-placeholder">
+                                Team Performance Chart
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon blue">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>84%</h3>
+                                <p>On-Time Completion</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon green">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>76%</h3>
+                                <p>Overall Productivity</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon orange">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>92%</h3>
+                                <p>Team Availability</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon red">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>8</h3>
+                                <p>Overdue Tasks</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Section -->
+                <div class="content-section" id="reports-section">
+                    <h1 class="page-title">Reports</h1>
+                    <p class="page-description">Access and generate detailed reports</p>
+
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Date Range</label>
+                            <select>
+                                <option value="">Last 7 Days</option>
+                                <option value="30">Last 30 Days</option>
+                                <option value="90">Last 90 Days</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Report Type</label>
+                            <select>
+                                <option value="">All Reports</option>
+                                <option value="performance">Performance</option>
+                                <option value="task">Task Reports</option>
+                                <option value="financial">Financial</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-actions">
+                            <button class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Generate Report
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="reports-grid">
+                        <!-- Report Cards -->
+                        <div class="report-card">
+                            <div class="report-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="report-name">Performance Report</div>
+                            <div class="report-description">Detailed analysis of team performance and task completion rates</div>
+                            <div class="report-meta">
+                                <span>Updated: Today</span>
+                                <span>PDF</span>
+                            </div>
+                        </div>
+
+                        <div class="report-card">
+                            <div class="report-icon">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="report-name">Task Summary</div>
+                            <div class="report-description">Comprehensive overview of all tasks and their statuses</div>
+                            <div class="report-meta">
+                                <span>Updated: Yesterday</span>
+                                <span>Excel</span>
+                            </div>
+                        </div>
+
+                        <div class="report-card">
+                            <div class="report-icon">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="report-name">Financial Report</div>
+                            <div class="report-description">Revenue, expenses, and profitability analysis</div>
+                            <div class="report-meta">
+                                <span>Updated: 2 days ago</span>
+                                <span>PDF</span>
+                            </div>
+                        </div>
+
+                        <div class="report-card">
+                            <div class="report-icon">
+                                <i class="fas fa-user-clock"></i>
+                            </div>
+                            <div class="report-name">Time Tracking</div>
+                            <div class="report-description">Detailed breakdown of time spent on tasks and projects</div>
+                            <div class="report-meta">
+                                <span>Updated: 3 days ago</span>
+                                <span>Excel</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other sections would be added here -->
+                <div class="content-section" id="settings-section">
+                    <h1 class="page-title">Settings</h1>
+                    <p class="page-description">Configure your application settings</p>
+                    <!-- Settings content would go here -->
+                </div>
+
+                <div class="content-section" id="help-section">
+                    <h1 class="page-title">Help & Support</h1>
+                    <p class="page-description">Get help and learn how to use the system</p>
+                    <!-- Help content would go here -->
                 </div>
             </div>
         </div>
@@ -1079,6 +1627,29 @@
         let allTasks = [];
         let filteredTasks = [];
         let companies = {};
+
+        // Navigation functionality
+        const navItems = document.querySelectorAll('.nav-item');
+        const contentSections = document.querySelectorAll('.content-section');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all items
+                navItems.forEach(navItem => navItem.classList.remove('active'));
+                
+                // Add active class to clicked item
+                this.classList.add('active');
+                
+                // Hide all content sections
+                contentSections.forEach(section => section.classList.remove('active'));
+                
+                // Show the selected section
+                const sectionId = this.getAttribute('data-section') + '-section';
+                document.getElementById(sectionId).classList.add('active');
+            });
+        });
 
         async function loadTasks() {
             try {
@@ -1177,7 +1748,7 @@
                             </div>
                         </div>
                         <div class="task-assigned-by">
-                            <div class="assigned-by-img">${assignedByInitials}</div>
+                            <div class="assigned-by-img">${assignedByInitials</div>
                             <div class="assigned-by-details">
                                 <div class="assigned-by-name">${task['Assigned By'] || 'Unknown'}</div>
                                 <div class="assigned-by-role">Assigned By</div>
