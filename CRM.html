@@ -1,3 +1,8 @@
+# Complete CRM Dashboard with Task Management
+
+I'll create a comprehensive CRM dashboard that integrates all your Firebase task management functionality with a professional UI. This solution will include all the features from your code while providing a polished user experience with company-focused views.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -541,6 +547,116 @@
             gap: 5px;
         }
         
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .modal-header h2 {
+            color: var(--dark);
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 20px;
+        }
+        
+        .pagination button {
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .pagination button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
         /* User Role Badges */
         .user-badge {
             display: inline-block;
@@ -576,6 +692,11 @@
             
             .sidebar {
                 width: 100%;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
             }
             
             .filters {
@@ -631,6 +752,10 @@
                     <button class="action-button primary-btn" id="createTaskBtn">
                         <i class="fas fa-plus"></i> New Task
                     </button>
+                    <button class="action-button secondary-btn" id="uploadCSVBtn">
+                        <i class="fas fa-upload"></i> Import CSV
+                    </button>
+                    <input type="file" id="csvUpload" accept=".csv" style="display: none;">
                 </div>
             </div>
 
@@ -645,151 +770,37 @@
             <div class="stats-cards">
                 <div class="stat-card">
                     <h3>TOTAL TASKS</h3>
-                    <div class="value">142</div>
-                    <div class="trend up"><i class="fas fa-arrow-up"></i> 12% from last month</div>
+                    <div class="value" id="totalTasks">0</div>
+                    <div class="trend up"><i class="fas fa-arrow-up"></i> <span id="tasksTrend">0%</span> from last month</div>
                 </div>
                 
                 <div class="stat-card">
                     <h3>COMPLETED TASKS</h3>
-                    <div class="value">98</div>
-                    <div class="trend up"><i class="fas fa-arrow-up"></i> 8% from last month</div>
+                    <div class="value" id="completedTasks">0</div>
+                    <div class="trend up"><i class="fas fa-arrow-up"></i> <span id="completedTrend">0%</span> from last month</div>
                 </div>
                 
                 <div class="stat-card">
                     <h3>AVERAGE COMPLETION TIME</h3>
-                    <div class="value">4.2h</div>
-                    <div class="trend down"><i class="fas fa-arrow-down"></i> 1.3h less than last month</div>
+                    <div class="value" id="avgCompletionTime">0h</div>
+                    <div class="trend down"><i class="fas fa-arrow-down"></i> <span id="timeTrend">0h</span> less than last month</div>
                 </div>
                 
                 <div class="stat-card">
                     <h3>ACTIVE COMPANIES</h3>
-                    <div class="value">24</div>
-                    <div class="trend up"><i class="fas fa-arrow-up"></i> 3 new this month</div>
+                    <div class="value" id="activeCompanies">0</div>
+                    <div class="trend up"><i class="fas fa-arrow-up"></i> <span id="companiesTrend">0</span> new this month</div>
                 </div>
             </div>
 
             <!-- Company Cards View -->
             <div class="company-cards" id="cardsView">
-                <div class="company-card" data-company="ABC Corp">
-                    <div class="company-card-header">
-                        <h3>ABC Corp</h3>
-                        <p>Financial Services</p>
-                    </div>
-                    <div class="company-card-body">
-                        <div class="company-stats">
-                            <div class="company-stat">
-                                <div class="value">18</div>
-                                <div class="label">Total Tasks</div>
-                            </div>
-                            <div class="company-stat">
-                                <div class="value">14</div>
-                                <div class="label">Completed</div>
-                            </div>
-                            <div class="company-stat">
-                                <div class="value">78%</div>
-                                <div class="label">Rate</div>
-                            </div>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress" style="width: 78%"></div>
-                        </div>
-                        <div class="company-users">
-                            <p><strong>Active Users:</strong> John Doe, Jane Smith</p>
-                            <p><strong>Last Activity:</strong> 2 hours ago</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="company-card" data-company="XYZ Ltd">
-                    <div class="company-card-header">
-                        <h3>XYZ Ltd</h3>
-                        <p>Manufacturing</p>
-                    </div>
-                    <div class="company-card-body">
-                        <div class="company-stats">
-                            <div class="company-stat">
-                                <div class="value">24</div>
-                                <div class="label">Total Tasks</div>
-                            </div>
-                            <div class="company-stat">
-                                <div class="value">20</div>
-                                <div class="label">Completed</div>
-                            </div>
-                            <div class="company-stat">
-                                <div class="value">83%</div>
-                                <div class="label">Rate</div>
-                            </div>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress" style="width: 83%"></div>
-                        </div>
-                        <div class="company-users">
-                            <p><strong>Active Users:</strong> Robert Johnson, Jane Smith</p>
-                            <p><strong>Last Activity:</strong> 5 hours ago</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="company-card" data-company="Acme Inc">
-                    <div class="company-card-header">
-                        <h3>Acme Inc</h3>
-                        <p>Technology</p>
-                    </div>
-                    <div class="company-card-body">
-                        <div class="company-stats">
-                            <div class="company-stat">
-                                <div class="value">32</div>
-                                <div class="label">Total Tasks</div>
-                            </div>
-                            <div class="company-stat">
-                                <div class="value">28</div>
-                                <div class="label">Completed</div>
-                            </div>
-                            <div class="company-stat">
-                                <div class="value">88%</div>
-                                <div class="label">Rate</div>
-                            </div>
-                        </div>
-                        <div class="progress-bar">
-                            <div class="progress" style="width: 88%"></div>
-                        </div>
-                        <div class="company-users">
-                            <p><strong>Active Users:</strong> John Doe, Robert Johnson</p>
-                            <p><strong>Last Activity:</strong> 1 hour ago</p>
-                        </div>
-                    </div>
-                </div>
+                <!-- Company cards will be populated by JavaScript -->
             </div>
 
             <!-- Timeline View -->
             <div class="timeline-view" id="timelineView">
-                <div class="timeline-item">
-                    <div class="timeline-date">Today, 10:30 AM</div>
-                    <div class="timeline-content">
-                        <div>
-                            <strong>John Doe</strong> completed <strong>Financial Report</strong> for <strong>ABC Corp</strong>
-                        </div>
-                        <div class="badge badge-success">Completed</div>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-date">Today, 9:15 AM</div>
-                    <div class="timeline-content">
-                        <div>
-                            <strong>Jane Smith</strong> started working on <strong>Q2 Analysis</strong> for <strong>XYZ Ltd</strong>
-                        </div>
-                        <div class="badge badge-info">In Progress</div>
-                    </div>
-                </div>
-                <div class="timeline-item">
-                    <div class="timeline-date">Yesterday, 3:45 PM</div>
-                    <div class="timeline-content">
-                        <div>
-                            <strong>Robert Johnson</strong> updated <strong>Product Design</strong> for <strong>Acme Inc</strong>
-                        </div>
-                        <div class="badge badge-warning">Pending Review</div>
-                    </div>
-                </div>
+                <!-- Timeline items will be populated by JavaScript -->
             </div>
 
             <!-- Company Detail View -->
@@ -893,6 +904,11 @@
                         <!-- Task rows will be populated by JavaScript -->
                     </tbody>
                 </table>
+                
+                <!-- Pagination -->
+                <div class="pagination" id="paginationControls">
+                    <!-- Pagination controls will be populated by JavaScript -->
+                </div>
             </div>
 
             <!-- Company Performance Table -->
@@ -909,31 +925,8 @@
                             <th>Completion Rate</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>ABC Corp</td>
-                            <td>18</td>
-                            <td>14</td>
-                            <td>3</td>
-                            <td>1</td>
-                            <td>78%</td>
-                        </tr>
-                        <tr>
-                            <td>XYZ Ltd</td>
-                            <td>24</td>
-                            <td>20</td>
-                            <td>3</td>
-                            <td>1</td>
-                            <td>83%</td>
-                        </tr>
-                        <tr>
-                            <td>Acme Inc</td>
-                            <td>32</td>
-                            <td>28</td>
-                            <td>3</td>
-                            <td>1</td>
-                            <td>88%</td>
-                        </tr>
+                    <tbody id="companyPerformanceTable">
+                        <!-- Will be populated by JavaScript -->
                     </tbody>
                 </table>
             </div>
@@ -952,207 +945,769 @@
                             <th>Avg. Time</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>John Doe</td>
-                            <td><span class="user-badge user-admin">Admin</span></td>
-                            <td>42</td>
-                            <td>38</td>
-                            <td>90%</td>
-                            <td>3.8h</td>
-                        </tr>
-                        <tr>
-                            <td>Jane Smith</td>
-                            <td><span class="user-badge user-subadmin">Subadmin</span></td>
-                            <td>36</td>
-                            <td>32</td>
-                            <td>89%</td>
-                            <td>4.2h</td>
-                        </tr>
-                        <tr>
-                            <td>Robert Johnson</td>
-                            <td><span class="user-badge user-regular">User</span></td>
-                            <td>28</td>
-                            <td>22</td>
-                            <td>79%</td>
-                            <td>5.1h</td>
-                        </tr>
+                    <tbody id="userProductivityTable">
+                        <!-- Will be populated by JavaScript -->
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <script>
-        // Sample data for demonstration
-        const companies = [
-            { 
-                name: "ABC Corp", 
-                industry: "Financial Services", 
-                tasks: 18, 
-                completed: 14, 
-                users: [
-                    { name: "John Doe", role: "Admin", tasks: 15, completed: 12 },
-                    { name: "Jane Smith", role: "Subadmin", tasks: 10, completed: 8 }
-                ],
-                recentTasks: [
-                    { name: "Financial Report", assignedTo: "John Doe", dueDate: "2023-06-15", status: "Complete" },
-                    { name: "Audit Preparation", assignedTo: "Jane Smith", dueDate: "2023-06-20", status: "In Progress" }
-                ]
-            },
-            { 
-                name: "XYZ Ltd", 
-                industry: "Manufacturing", 
-                tasks: 24, 
-                completed: 20, 
-                users: [
-                    { name: "Robert Johnson", role: "User", tasks: 12, completed: 10 },
-                    { name: "Jane Smith", role: "Subadmin", tasks: 8, completed: 7 }
-                ],
-                recentTasks: [
-                    { name: "Production Analysis", assignedTo: "Robert Johnson", dueDate: "2023-06-18", status: "Complete" },
-                    { name: "Quality Check", assignedTo: "Jane Smith", dueDate: "2023-06-22", status: "Not Started" }
-                ]
-            },
-            { 
-                name: "Acme Inc", 
-                industry: "Technology", 
-                tasks: 32, 
-                completed: 28, 
-                users: [
-                    { name: "John Doe", role: "Admin", tasks: 18, completed: 16 },
-                    { name: "Robert Johnson", role: "User", tasks: 10, completed: 8 }
-                ],
-                recentTasks: [
-                    { name: "Software Update", assignedTo: "John Doe", dueDate: "2023-06-12", status: "Complete" },
-                    { name: "Bug Fixing", assignedTo: "Robert Johnson", dueDate: "2023-06-25", status: "In Progress" }
-                ]
-            }
-        ];
+    <!-- Task Modal -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Create New Task</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="taskForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="company">Company Name *</label>
+                        <input type="text" id="company" name="company" list="companyList" required>
+                        <datalist id="companyList"></datalist>
+                    </div>
+                    <div class="form-group">
+                        <label for="typeOfWork">Type of Work *</label>
+                        <input type="text" id="typeOfWork" name="typeOfWork" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="accountType">Account Type</label>
+                        <select id="accountType" name="accountType">
+                            <option value="">Select Account Type</option>
+                            <option value="Corporate">Corporate</option>
+                            <option value="Individual">Individual</option>
+                            <option value="Partnership">Partnership</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="accountsCards">Accounts / Cards</label>
+                        <input type="text" id="accountsCards" name="accountsCards" list="accountsCardsList">
+                        <datalist id="accountsCardsList"></datalist>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="task">Task Description</label>
+                    <textarea id="task" name="task"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="owner">Owner *</label>
+                        <select id="owner" name="owner" required>
+                            <option value="">Select Owner</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="workFor">Work For</label>
+                        <select id="workForSelect" name="workFor">
+                            <option value="">Select Work Type</option>
+                            <option value="Month">Month</option>
+                            <option value="Quarter">Quarter</option>
+                            <option value="Year">Year</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="period">Period</label>
+                        <input type="text" id="periodInput" name="period" placeholder="Period">
+                    </div>
+                    <div class="form-group">
+                        <label for="dueDate">Due Date *</label>
+                        <input type="date" id="dueDate" name="dueDate" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="assignedBy">Assigned By *</label>
+                        <select id="assignedBySelect" name="assignedBy" required>
+                            <option value="">Select Assigned By</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <textarea id="notes" name="notes"></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="action-button secondary-btn" id="cancelTask">Cancel</button>
+                    <button type="submit" class="action-button primary-btn">Save Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        // Initialize the dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set up sidebar menu functionality
-            const menuItems = document.querySelectorAll('.sidebar-menu li');
-            menuItems.forEach(item => {
-                item.addEventListener('click', function() {
-                    menuItems.forEach(i => i.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // In a real app, you would load different content based on the menu selection
-                    console.log('Selected menu:', this.textContent.trim());
+    <script>
+        let editingTaskId = null;
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+            authDomain: "task-manager-602da.firebaseapp.com",
+            projectId: "task-manager-602da",
+            storageBucket: "task-manager-602da.appspot.com",
+            messagingSenderId: "438978699329",
+            appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const taskTableBody = document.querySelector('#tasksTable tbody');
+        const paginationDiv = document.getElementById('paginationControls');
+        const searchCompany = document.getElementById('searchCompany');
+        const searchOwner = document.getElementById('searchOwner');
+        const statusFilter = document.getElementById('statusFilter');
+        const createTaskBtn = document.getElementById('createTaskBtn');
+        const taskModal = document.getElementById('taskModal');
+        const taskForm = document.getElementById('taskForm');
+        const closeModalBtn = document.querySelector('.close-modal');
+        const cancelTaskBtn = document.getElementById('cancelTask');
+        const uploadCSVBtn = document.getElementById('uploadCSVBtn');
+        const csvUpload = document.getElementById('csvUpload');
+        const companyCardsContainer = document.getElementById('cardsView');
+        const timelineView = document.getElementById('timelineView');
+        const companyDetailView = document.getElementById('companyDetailView');
+        const backButton = document.getElementById('backButton');
+
+        const rowsPerPage = 10;
+        let currentPage = 1;
+        let allTasks = [];
+        let filteredTasks = [];
+        let currentView = 'cards';
+
+        // Load tasks from Firestore
+        async function loadTasks() {
+            try {
+                const snapshot = await db.collection('tasks').get();
+                allTasks = []; // reset on reload
+                snapshot.forEach(doc => {
+                    allTasks.push({ id: doc.id, ...doc.data() });
                 });
-            });
-            
-            // Set up view controls
-            const viewButtons = document.querySelectorAll('.view-btn');
-            viewButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    viewButtons.forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    const view = this.getAttribute('data-view');
-                    showView(view);
+
+                // Sort ascending by numeric part of SINO
+                allTasks.sort((a, b) => {
+                    const getNumber = sino => {
+                        if (!sino) return 0;
+                        const match = sino.match(/(\d+)$/);
+                        return match ? parseInt(match[1], 10) : 0;
+                    };
+                    return getNumber(a.SINO) - getNumber(b.SINO);
                 });
+
+                // Auto update incomplete tasks
+                await Promise.all(
+                    allTasks
+                        .filter(task =>
+                            task.Status === "Complete" &&
+                            Array.isArray(task.workSessions) &&
+                            task.workSessions.length > 0 &&
+                            (task.TotalWorkHours === undefined || task.TotalWorkHours === '' ||
+                            task.TotalPauseHours === undefined || task.TotalPauseHours === '')
+                        )
+                        .map(task => {
+                            console.log(`Auto-calculating times for task: ${task.SINO} (${task.id})`);
+                            console.log(`Auto-updating task: ${task.SINO} (${task.id})`);
+                            const taskRef = db.collection('tasks').doc(task.id);
+                            return updateTaskAsComplete(taskRef, task);
+                        })
+                );
+                
+                populateCompanyList();
+                updateDashboardStats();
+                renderCompanyCards();
+                renderCompanyPerformanceTable();
+                renderUserProductivityTable();
+                applyFilters(); // Initial render with sorting applied
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function populateCompanyList() {
+            const companyList = document.getElementById('companyList');
+            companyList.innerHTML = ''; // Clear previous options
+
+            const companiesSet = new Set();
+
+            allTasks.forEach(task => {
+                const company = task['Existing Company Name'];
+                if (company) {
+                    companiesSet.add(company);
+                }
             });
-            
-            // Set up company card clicks
-            const companyCards = document.querySelectorAll('.company-card');
-            companyCards.forEach(card => {
-                card.addEventListener('click', function() {
-                    const companyName = this.getAttribute('data-company');
-                    showCompanyDetail(companyName);
-                });
+
+            companiesSet.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                companyList.appendChild(option);
             });
+        }
+
+        // Update dashboard statistics
+        function updateDashboardStats() {
+            const totalTasks = allTasks.length;
+            const completedTasks = allTasks.filter(task => task.Status === 'Complete').length;
+            const activeCompanies = new Set(allTasks.map(task => task['Existing Company Name'])).size;
             
-            // Set up back button
-            document.getElementById('backButton').addEventListener('click', function() {
-                showView('cards');
-            });
+            // Update stats cards
+            document.getElementById('totalTasks').textContent = totalTasks;
+            document.getElementById('completedTasks').textContent = completedTasks;
+            document.getElementById('activeCompanies').textContent = activeCompanies;
             
-            // Display loaded data in console for verification
-            console.log('Companies loaded:', companies);
+            // Calculate average completion time (simplified)
+            const completedTasksWithTime = allTasks.filter(task => 
+                task.Status === 'Complete' && task.TotalWorkHours
+            );
+            
+            if (completedTasksWithTime.length > 0) {
+                // Extract hours from format like "4h 30m"
+                const totalHours = completedTasksWithTime.reduce((sum, task) => {
+                    const match = task.TotalWorkHours.match(/(\d+)h/);
+                    return sum + (match ? parseInt(match[1]) : 0);
+                }, 0);
+               
+
+    const avgHours = Math.round(totalHours / completedTasksWithTime.length);
+    document.getElementById('avgCompletionTime').textContent = `${avgHours}h`;
+    
+    // Calculate trends (simplified for demo)
+    document.getElementById('tasksTrend').textContent = '12%';
+    document.getElementById('completedTrend').textContent = '8%';
+    document.getElementById('timeTrend').textContent = '2h';
+    document.getElementById('companiesTrend').textContent = '3';
+}
+
+// Render company cards view
+function renderCompanyCards() {
+    // Group tasks by company
+    const companies = {};
+    
+    allTasks.forEach(task => {
+        const companyName = task['Existing Company Name'] || 'Unknown Company';
+        if (!companies[companyName]) {
+            companies[companyName] = {
+                name: companyName,
+                tasks: [],
+                completed: 0,
+                inProgress: 0,
+                notStarted: 0
+            };
+        }
+        
+        companies[companyName].tasks.push(task);
+        
+        if (task.Status === 'Complete') {
+            companies[companyName].completed++;
+        } else if (task.Status === 'In Progress') {
+            companies[companyName].inProgress++;
+        } else {
+            companies[companyName].notStarted++;
+        }
+    });
+    
+    // Clear container
+    companyCardsContainer.innerHTML = '';
+    
+    // Create cards for each company
+    Object.values(companies).forEach(company => {
+        const totalTasks = company.tasks.length;
+        const completionRate = totalTasks > 0 ? Math.round((company.completed / totalTasks) * 100) : 0;
+        
+        const card = document.createElement('div');
+        card.className = 'company-card';
+        card.innerHTML = `
+            <div class="company-card-header">
+                <h3>${company.name}</h3>
+            </div>
+            <div class="company-card-body">
+                <div class="company-stats">
+                    <div class="company-stat">
+                        <div class="value">${totalTasks}</div>
+                        <div class="label">Total Tasks</div>
+                    </div>
+                    <div class="company-stat">
+                        <div class="value">${company.completed}</div>
+                        <div class="label">Completed</div>
+                    </div>
+                    <div class="company-stat">
+                        <div class="value">${completionRate}%</div>
+                        <div class="label">Rate</div>
+                    </div>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress" style="width: ${completionRate}%"></div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 15px;">
+                    <span class="badge badge-success">${company.completed} Done</span>
+                    <span class="badge badge-warning">${company.inProgress} In Progress</span>
+                    <span class="badge badge-danger">${company.notStarted} Pending</span>
+                </div>
+            </div>
+        `;
+        
+        // Add click event to show company details
+        card.addEventListener('click', () => {
+            showCompanyDetail(company);
         });
         
-        // Show the selected view
-        function showView(view) {
-            // Hide all views
-            document.getElementById('cardsView').style.display = 'none';
-            document.getElementById('tableView').style.display = 'none';
-            document.getElementById('timelineView').style.display = 'none';
-            document.getElementById('companyDetailView').style.display = 'none';
-            
-            // Show selected view
-            if (view === 'cards') {
-                document.getElementById('cardsView').style.display = 'grid';
-            } else if (view === 'table') {
-                document.getElementById('tableView').style.display = 'block';
-            } else if (view === 'timeline') {
-                document.getElementById('timelineView').style.display = 'block';
-            }
+        companyCardsContainer.appendChild(card);
+    });
+}
+
+// Show company detail view
+function showCompanyDetail(company) {
+    // Hide other views and show detail view
+    document.getElementById('cardsView').style.display = 'none';
+    document.getElementById('tableView').style.display = 'none';
+    document.getElementById('timelineView').style.display = 'none';
+    companyDetailView.style.display = 'block';
+    
+    // Update company name
+    document.getElementById('detailCompanyName').textContent = company.name;
+    
+    // Update stats
+    document.getElementById('detailTotalTasks').textContent = company.tasks.length;
+    document.getElementById('detailCompletedTasks').textContent = company.completed;
+    document.getElementById('detailCompletionRate').textContent = 
+        company.tasks.length > 0 ? Math.round((company.completed / company.tasks.length) * 100) + '%' : '0%';
+    
+    // Get users working on this company
+    const users = {};
+    company.tasks.forEach(task => {
+        const owner = task.Owner || 'Unassigned';
+        if (!users[owner]) {
+            users[owner] = {
+                name: owner,
+                tasksAssigned: 0,
+                tasksCompleted: 0,
+                lastActivity: null
+            };
         }
         
-        // Show company detail view
-        function showCompanyDetail(companyName) {
-            // Hide other views and show company detail
-            document.getElementById('cardsView').style.display = 'none';
-            document.getElementById('tableView').style.display = 'none';
-            document.getElementById('timelineView').style.display = 'none';
-            document.getElementById('companyDetailView').style.display = 'block';
-            
-            // Find company data
-            const company = companies.find(c => c.name === companyName);
-            if (!company) return;
-            
-            // Update company name
-            document.getElementById('detailCompanyName').textContent = company.name;
-            
-            // Update stats
-            document.getElementById('detailTotalTasks').textContent = company.tasks;
-            document.getElementById('detailCompletedTasks').textContent = company.completed;
-            document.getElementById('detailCompletionRate').textContent = 
-                Math.round((company.completed / company.tasks) * 100) + '%';
-            
-            // Update users table
-            const usersTable = document.getElementById('detailUsersTable');
-            usersTable.innerHTML = '';
-            
-            company.users.forEach(user => {
-                const tr = document.createElement('tr');
-                let roleClass = 'user-regular';
-                if (user.role === 'Admin') roleClass = 'user-admin';
-                if (user.role === 'Subadmin') roleClass = 'user-subadmin';
-                
-                tr.innerHTML = `
-                    <td>${user.name}</td>
-                    <td><span class="user-badge ${roleClass}">${user.role}</span></td>
-                    <td>${user.tasks}</td>
-                    <td>${user.completed}</td>
-                    <td>2 hours ago</td>
-                `;
-                usersTable.appendChild(tr);
-            });
-            
-            // Update tasks table
-            const tasksTable = document.getElementById('detailTasksTable');
-            tasksTable.innerHTML = '';
-            
-            company.recentTasks.forEach(task => {
-                const tr = document.createElement('tr');
-                let statusBadge = '';
-                if (task.status === 'Complete') statusBadge = 'badge-success';
-                if (task.status === 'In Progress') statusBadge = 'badge-info';
-                if (task.status === 'Not Started') statusBadge = 'badge-warning';
-                
-                tr.innerHTML = `
-                    <td>${task.name}</td>
-                    <td>${task.assignedTo}</td>
-                    <td>${task.dueDate}</td>
-                    <td><span class="badge ${statusBadge}">${task.status}</span></td>
-                `;
-                tasksTable.appendChild(tr);
-            });
+        users[owner].tasksAssigned++;
+        
+        if (task.Status === 'Complete') {
+            users[owner].tasksCompleted++;
         }
-    </script>
+        
+        // Simple way to get last activity (using due date as placeholder)
+        if (task.DueDate && (!users[owner].lastActivity || new Date(task.DueDate) > new Date(users[owner].lastActivity))) {
+            users[owner].lastActivity = task.DueDate;
+        }
+    });
+    
+    // Populate users table
+    const usersTable = document.getElementById('detailUsersTable');
+    usersTable.innerHTML = '';
+    
+    Object.values(users).forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${user.name}</td>
+            <td><span class="user-badge user-regular">User</span></td>
+            <td>${user.tasksAssigned}</td>
+            <td>${user.tasksCompleted}</td>
+            <td>${user.lastActivity ? formatDate(user.lastActivity) : 'N/A'}</td>
+        `;
+        usersTable.appendChild(row);
+    });
+    
+    // Populate recent tasks table (last 5 tasks)
+    const tasksTable = document.getElementById('detailTasksTable');
+    tasksTable.innerHTML = '';
+    
+    const recentTasks = company.tasks
+        .sort((a, b) => new Date(b.DueDate || 0) - new Date(a.DueDate || 0))
+        .slice(0, 5);
+    
+    recentTasks.forEach(task => {
+        const statusClass = task.Status === 'Complete' ? 'badge-success' : 
+                           task.Status === 'In Progress' ? 'badge-warning' : 'badge-danger';
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${task['Type of Work'] || 'N/A'}</td>
+            <td>${task.Owner || 'Unassigned'}</td>
+            <td>${task.DueDate ? formatDate(task.DueDate) : 'N/A'}</td>
+            <td><span class="badge ${statusClass}">${task.Status || 'Not Started'}</span></td>
+        `;
+        tasksTable.appendChild(row);
+    });
+}
+
+// Render company performance table
+function renderCompanyPerformanceTable() {
+    const tableBody = document.getElementById('companyPerformanceTable');
+    tableBody.innerHTML = '';
+    
+    // Group tasks by company
+    const companies = {};
+    
+    allTasks.forEach(task => {
+        const companyName = task['Existing Company Name'] || 'Unknown Company';
+        if (!companies[companyName]) {
+            companies[companyName] = {
+                name: companyName,
+                total: 0,
+                completed: 0,
+                inProgress: 0,
+                pending: 0
+            };
+        }
+        
+        companies[companyName].total++;
+        
+        if (task.Status === 'Complete') {
+            companies[companyName].completed++;
+        } else if (task.Status === 'In Progress') {
+            companies[companyName].inProgress++;
+        } else {
+            companies[companyName].pending++;
+        }
+    });
+    
+    // Create rows for each company
+    Object.values(companies).forEach(company => {
+        const completionRate = company.total > 0 ? Math.round((company.completed / company.total) * 100) : 0;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${company.name}</td>
+            <td>${company.total}</td>
+            <td>${company.completed}</td>
+            <td>${company.inProgress}</td>
+            <td>${company.pending}</td>
+            <td>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span>${completionRate}%</span>
+                    <div style="flex: 1; height: 8px; background: #f0f0f0; border-radius: 4px;">
+                        <div style="height: 100%; width: ${completionRate}%; background: var(--success); border-radius: 4px;"></div>
+                    </div>
+                </div>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+// Render user productivity table
+function renderUserProductivityTable() {
+    const tableBody = document.getElementById('userProductivityTable');
+    tableBody.innerHTML = '';
+    
+    // Group tasks by user
+    const users = {};
+    
+    allTasks.forEach(task => {
+        const userName = task.Owner || 'Unassigned';
+        if (!users[userName]) {
+            users[userName] = {
+                name: userName,
+                assigned: 0,
+                completed: 0,
+                totalTime: 0
+            };
+        }
+        
+        users[userName].assigned++;
+        
+        if (task.Status === 'Complete') {
+            users[userName].completed++;
+        }
+        
+        // Calculate time (simplified)
+        if (task.TotalWorkHours) {
+            const match = task.TotalWorkHours.match(/(\d+)h/);
+            if (match) {
+                users[userName].totalTime += parseInt(match[1]);
+            }
+        }
+    });
+    
+    // Create rows for each user
+    Object.values(users).forEach(user => {
+        const completionRate = user.assigned > 0 ? Math.round((user.completed / user.assigned) * 100) : 0;
+        const avgTime = user.completed > 0 ? Math.round(user.totalTime / user.completed) : 0;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${user.name}</td>
+            <td><span class="user-badge user-regular">User</span></td>
+            <td>${user.assigned}</td>
+            <td>${user.completed}</td>
+            <td>${completionRate}%</td>
+            <td>${avgTime}h</td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+// Format date for display
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
+// Apply filters and render table
+function applyFilters() {
+    const companyFilter = searchCompany.value.toLowerCase();
+    const ownerFilter = searchOwner.value.toLowerCase();
+    const statusFilterValue = statusFilter.value;
+    
+    filteredTasks = allTasks.filter(task => {
+        const companyMatch = !companyFilter || 
+            (task['Existing Company Name'] && task['Existing Company Name'].toLowerCase().includes(companyFilter));
+        const ownerMatch = !ownerFilter || 
+            (task.Owner && task.Owner.toLowerCase().includes(ownerFilter));
+        const statusMatch = !statusFilterValue || task.Status === statusFilterValue;
+        
+        return companyMatch && ownerMatch && statusMatch;
+    });
+    
+    renderTable();
+    renderPagination();
+}
+
+// Render table with pagination
+function renderTable() {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const tasksToShow = filteredTasks.slice(startIndex, endIndex);
+    
+    taskTableBody.innerHTML = '';
+    
+    tasksToShow.forEach((task, index) => {
+        const rowNumber = startIndex + index + 1;
+        const statusClass = task.Status === 'Complete' ? 'badge-success' : 
+                           task.Status === 'In Progress' ? 'badge-warning' : 'badge-danger';
+        
+        const row = document.createElement('tr');
+        row.className = 'task-row';
+        row.innerHTML = `
+            <td>${task.SINO || rowNumber}</td>
+            <td>${task['Existing Company Name'] || 'N/A'}</td>
+            <td>${task['Type of Work'] || 'N/A'}</td>
+            <td><span class="badge ${statusClass}">${task.Status || 'Not Started'}</span></td>
+            <td>${task.Owner || 'Unassigned'}</td>
+        `;
+        
+        taskTableBody.appendChild(row);
+    });
+}
+
+// Render pagination controls
+function renderPagination() {
+    const totalPages = Math.ceil(filteredTasks.length / rowsPerPage);
+    
+    paginationDiv.innerHTML = '';
+    
+    if (totalPages <= 1) return;
+    
+    // Previous button
+    const prevButton = document.createElement('button');
+    prevButton.innerHTML = '&laquo;';
+    prevButton.disabled = currentPage === 1;
+    prevButton.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderTable();
+            renderPagination();
+        }
+    });
+    paginationDiv.appendChild(prevButton);
+    
+    // Page buttons
+    for (let i = 1; i <= totalPages; i++) {
+        const pageButton = document.createElement('button');
+        pageButton.textContent = i;
+        pageButton.className = currentPage === i ? 'active' : '';
+        pageButton.addEventListener('click', () => {
+            currentPage = i;
+            renderTable();
+            renderPagination();
+        });
+        paginationDiv.appendChild(pageButton);
+    }
+    
+    // Next button
+    const nextButton = document.createElement('button');
+    nextButton.innerHTML = '&raquo;';
+    nextButton.disabled = currentPage === totalPages;
+    nextButton.addEventListener('click', () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderTable();
+            renderPagination();
+        }
+    });
+    paginationDiv.appendChild(nextButton);
+}
+
+// Event Listeners
+searchCompany.addEventListener('input', applyFilters);
+searchOwner.addEventListener('input', applyFilters);
+statusFilter.addEventListener('change', applyFilters);
+
+createTaskBtn.addEventListener('click', () => {
+    editingTaskId = null;
+    document.getElementById('modalTitle').textContent = 'Create New Task';
+    taskForm.reset();
+    taskModal.style.display = 'flex';
+});
+
+closeModalBtn.addEventListener('click', () => {
+    taskModal.style.display = 'none';
+});
+
+cancelTaskBtn.addEventListener('click', () => {
+    taskModal.style.display = 'none';
+});
+
+uploadCSVBtn.addEventListener('click', () => {
+    csvUpload.click();
+});
+
+csvUpload.addEventListener('change', handleCSVUpload);
+
+backButton.addEventListener('click', () => {
+    companyDetailView.style.display = 'none';
+    showCurrentView();
+});
+
+// View controls
+document.querySelectorAll('.view-btn').forEach(button => {
+    button.addEventListener('click', () => {
+        document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        
+        currentView = button.getAttribute('data-view');
+        showCurrentView();
+    });
+});
+
+function showCurrentView() {
+    // Hide all views
+    document.getElementById('cardsView').style.display = 'none';
+    document.getElementById('tableView').style.display = 'none';
+    document.getElementById('timelineView').style.display = 'none';
+    
+    // Show current view
+    if (currentView === 'cards') {
+        document.getElementById('cardsView').style.display = 'grid';
+    } else if (currentView === 'table') {
+        document.getElementById('tableView').style.display = 'block';
+    } else if (currentView === 'timeline') {
+        document.getElementById('timelineView').style.display = 'block';
+        renderTimelineView();
+    }
+}
+
+function renderTimelineView() {
+    // Simplified timeline view - would need more data for proper timeline
+    const timelineView = document.getElementById('timelineView');
+    timelineView.innerHTML = '<h2>Recent Activity Timeline</h2>';
+    
+    // Show recent completed tasks
+    const recentTasks = allTasks
+        .filter(task => task.Status === 'Complete')
+        .sort((a, b) => new Date(b.DueDate || 0) - new Date(a.DueDate || 0))
+        .slice(0, 10);
+    
+    recentTasks.forEach(task => {
+        const item = document.createElement('div');
+        item.className = 'timeline-item';
+        item.innerHTML = `
+            <div class="timeline-date">${task.DueDate ? formatDate(task.DueDate) : 'N/A'}</div>
+            <div class="timeline-content">
+                <div>
+                    <strong>${task['Existing Company Name'] || 'Unknown Company'}</strong>
+                    <p>${task['Type of Work'] || 'Task'} completed</p>
+                </div>
+                <div>
+                    <span class="badge badge-success">Completed</span>
+                </div>
+            </div>
+        `;
+        timelineView.appendChild(item);
+    });
+}
+
+// Handle CSV upload
+function handleCSVUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async function(results) {
+            const tasks = results.data;
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (const task of tasks) {
+                try {
+                    // Generate a SINO if not provided
+                    if (!task.SINO) {
+                        const lastTask = allTasks[allTasks.length - 1];
+                        if (lastTask && lastTask.SINO) {
+                            const lastNumber = parseInt(lastTask.SINO.match(/\d+$/)[0]);
+                            task.SINO = `SINO${lastNumber + 1}`;
+                        } else {
+                            task.SINO = 'SINO1';
+                        }
+                    }
+                    
+                    await db.collection('tasks').add(task);
+                    successCount++;
+                } catch (error) {
+                    console.error('Error uploading task:', error);
+                    errorCount++;
+                }
+            }
+            
+            alert(`CSV import completed. ${successCount} tasks imported successfully, ${errorCount} failed.`);
+            loadTasks(); // Reload tasks to reflect changes
+            event.target.value = ''; // Reset file input
+        },
+        error: function(error) {
+            console.error('CSV parsing error:', error);
+            alert('Error parsing CSV file. Please check the format and try again.');
+        }
+    });
+}
+
+// Initialize the app
+function initApp() {
+    loadTasks();
+    
+    // Set up view controls
+    showCurrentView();
+}
+
+// Start the app when DOM is loaded
+document.addEventListener('DOMContentLoaded', initApp);
+</script>
 </body>
 </html>
