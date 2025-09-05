@@ -754,6 +754,127 @@
             background: #e2e8f0;
         }
 
+        /* Team View Styles */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .team-member-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .member-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .member-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.25rem;
+        }
+
+        .member-info {
+            flex: 1;
+        }
+
+        .member-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .member-role {
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+
+        .member-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .stat-box {
+            background: var(--light);
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--secondary);
+        }
+
+        /* Work Type View Styles */
+        .work-type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .work-type-card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary);
+        }
+
+        .work-type-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .work-type-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+
+        .work-type-count {
+            background: var(--primary);
+            color: white;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .work-type-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
         /* Responsive Design */
         @media (max-width: 1200px) {
             .sidebar {
@@ -789,6 +910,10 @@
             }
             
             .task-detail-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .team-grid, .work-type-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -839,34 +964,41 @@
             </div>
 
             <div class="nav-menu">
-                <a href="#" class="nav-item active">
+                <a href="#" class="nav-item active" data-view="dashboard">
                     <div class="nav-icon">
                         <i class="fas fa-home"></i>
                     </div>
                     <span class="nav-text">Dashboard</span>
                 </a>
                 
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-view="companies">
                     <div class="nav-icon">
                         <i class="fas fa-building"></i>
                     </div>
                     <span class="nav-text">Companies</span>
-                    <span class="nav-badge">24</span>
+                    <span class="nav-badge" id="companies-count">24</span>
                 </a>
                 
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-view="tasks">
                     <div class="nav-icon">
                         <i class="fas fa-tasks"></i>
                     </div>
                     <span class="nav-text">Tasks</span>
-                    <span class="nav-badge">142</span>
+                    <span class="nav-badge" id="tasks-count">142</span>
                 </a>
                 
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-view="team">
                     <div class="nav-icon">
                         <i class="fas fa-users"></i>
                     </div>
                     <span class="nav-text">Team</span>
+                </a>
+                
+                <a href="#" class="nav-item" data-view="work-types">
+                    <div class="nav-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <span class="nav-text">Work Types</span>
                 </a>
                 
                 <a href="#" class="nav-item">
@@ -920,7 +1052,7 @@
             <div class="header">
                 <div class="search-bar">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search tasks, companies, or users...">
+                    <input type="text" id="globalSearch" placeholder="Search tasks, companies, or users...">
                 </div>
                 
                 <div class="header-actions">
@@ -946,87 +1078,176 @@
 
             <!-- Content Area -->
             <div class="content">
-                <h1 class="page-title">Company Task Dashboard</h1>
-                <p class="page-description">Manage all company tasks and track progress in one place</p>
+                <!-- Dashboard View -->
+                <div id="dashboard-view" class="view-content">
+                    <h1 class="page-title">Company Task Dashboard</h1>
+                    <p class="page-description">Manage all company tasks and track progress in one place</p>
 
-                <!-- Stats Cards -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon blue">
-                            <i class="fas fa-building"></i>
+                    <!-- Stats Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon blue">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="totalCompanies">0</h3>
+                                <p>Total Companies</p>
+                            </div>
                         </div>
-                        <div class="stat-content">
-                            <h3 id="totalCompanies">0</h3>
-                            <p>Total Companies</p>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon green">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="totalTasks">0</h3>
+                                <p>Total Tasks</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon orange">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="completedTasks">0</h3>
+                                <p>Completed Tasks</p>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card">
+                            <div class="stat-icon red">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="pendingTasks">0</h3>
+                                <p>Pending Tasks</p>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon green">
-                            <i class="fas fa-tasks"></i>
+
+                    <!-- Filters -->
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Search Company</label>
+                            <input type="search" id="searchCompany" placeholder="Company name...">
                         </div>
-                        <div class="stat-content">
-                            <h3 id="totalTasks">0</h3>
-                            <p>Total Tasks</p>
+                        
+                        <div class="filter-group">
+                            <label>Search Owner</label>
+                            <input type="search" id="searchOwner" placeholder="Owner name...">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Status Filter</label>
+                            <select id="statusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="Not Started">Not Started</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Complete">Complete</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-actions">
+                            <button class="btn btn-outline" id="clearFiltersBtn">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                            <button class="btn btn-primary" id="refreshBtn">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
                         </div>
                     </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon orange">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3 id="completedTasks">0</h3>
-                            <p>Completed Tasks</p>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon red">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="stat-content">
-                            <h3 id="pendingTasks">0</h3>
-                            <p>Pending Tasks</p>
-                        </div>
+
+                    <!-- Company Cards -->
+                    <div class="company-cards" id="companyCards">
+                        <!-- Company cards will be dynamically inserted here -->
                     </div>
                 </div>
 
-                <!-- Filters -->
-                <div class="filters">
-                    <div class="filter-group">
-                        <label>Search Company</label>
-                        <input type="search" id="searchCompany" placeholder="Company name...">
+                <!-- Companies View -->
+                <div id="companies-view" class="view-content" style="display: none;">
+                    <h1 class="page-title">Companies</h1>
+                    <p class="page-description">View all companies and their tasks</p>
+                    
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Search Company</label>
+                            <input type="search" id="companiesSearch" placeholder="Company name...">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Work Type</label>
+                            <select id="workTypeFilter">
+                                <option value="">All Work Types</option>
+                                <option value="Data Entry">Data Entry</option>
+                                <option value="Analysis">Analysis</option>
+                                <option value="Reporting">Reporting</option>
+                                <option value="Review">Review</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-actions">
+                            <button class="btn btn-primary" id="refreshCompaniesBtn">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                        </div>
                     </div>
                     
-                    <div class="filter-group">
-                        <label>Search Owner</label>
-                        <input type="search" id="searchOwner" placeholder="Owner name...">
-                    </div>
-                    
-                    <div class="filter-group">
-                        <label>Status Filter</label>
-                        <select id="statusFilter">
-                            <option value="">All Statuses</option>
-                            <option value="Not Started">Not Started</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Complete">Complete</option>
-                        </select>
-                    </div>
-                    
-                    <div class="filter-actions">
-                        <button class="btn btn-outline">
-                            <i class="fas fa-filter"></i> Filter
-                        </button>
-                        <button class="btn btn-primary" id="refreshBtn">
-                            <i class="fas fa-sync"></i> Refresh
-                        </button>
+                    <div id="companiesList">
+                        <!-- Companies list will be inserted here -->
                     </div>
                 </div>
 
-                <!-- Company Cards -->
-                <div class="company-cards" id="companyCards">
-                    <!-- Company cards will be dynamically inserted here -->
+                <!-- Team View -->
+                <div id="team-view" class="view-content" style="display: none;">
+                    <h1 class="page-title">Team Members</h1>
+                    <p class="page-description">View team performance and task assignments</p>
+                    
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Search Member</label>
+                            <input type="search" id="teamSearch" placeholder="Member name...">
+                        </div>
+                        
+                        <div class="filter-actions">
+                            <button class="btn btn-primary" id="refreshTeamBtn">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="team-grid" id="teamGrid">
+                        <!-- Team member cards will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Work Types View -->
+                <div id="work-types-view" class="view-content" style="display: none;">
+                    <h1 class="page-title">Work Types</h1>
+                    <p class="page-description">View tasks by work type</p>
+                    
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Work Type</label>
+                            <select id="workTypeViewFilter">
+                                <option value="">All Work Types</option>
+                                <option value="Data Entry">Data Entry</option>
+                                <option value="Analysis">Analysis</option>
+                                <option value="Reporting">Reporting</option>
+                                <option value="Review">Review</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-actions">
+                            <button class="btn btn-primary" id="refreshWorkTypesBtn">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="work-type-grid" id="workTypeGrid">
+                        <!-- Work type cards will be inserted here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -1061,11 +1282,13 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // DOM Elements
         const companyCards = document.getElementById('companyCards');
         const searchCompany = document.getElementById('searchCompany');
         const searchOwner = document.getElementById('searchOwner');
         const statusFilter = document.getElementById('statusFilter');
         const refreshBtn = document.getElementById('refreshBtn');
+        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
         const taskModal = document.getElementById('taskModal');
         const closeModal = document.getElementById('closeModal');
         const modalTaskTitle = document.getElementById('modalTaskTitle');
@@ -1075,16 +1298,70 @@
         const totalTasksEl = document.getElementById('totalTasks');
         const completedTasksEl = document.getElementById('completedTasks');
         const pendingTasksEl = document.getElementById('pendingTasks');
+        
+        // View elements
+        const viewContents = document.querySelectorAll('.view-content');
+        const navItems = document.querySelectorAll('.nav-item[data-view]');
+        
+        // Companies view elements
+        const companiesView = document.getElementById('companies-view');
+        const companiesList = document.getElementById('companiesList');
+        const companiesSearch = document.getElementById('companiesSearch');
+        const workTypeFilter = document.getElementById('workTypeFilter');
+        const refreshCompaniesBtn = document.getElementById('refreshCompaniesBtn');
+        
+        // Team view elements
+        const teamView = document.getElementById('team-view');
+        const teamGrid = document.getElementById('teamGrid');
+        const teamSearch = document.getElementById('teamSearch');
+        const refreshTeamBtn = document.getElementById('refreshTeamBtn');
+        
+        // Work types view elements
+        const workTypesView = document.getElementById('work-types-view');
+        const workTypeGrid = document.getElementById('workTypeGrid');
+        const workTypeViewFilter = document.getElementById('workTypeViewFilter');
+        const refreshWorkTypesBtn = document.getElementById('refreshWorkTypesBtn');
+        
+        // Global search
+        const globalSearch = document.getElementById('globalSearch');
 
         let allTasks = [];
         let filteredTasks = [];
         let companies = {};
+        let teamMembers = {};
+        let workTypes = {};
+
+        // Navigation handling
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const viewName = this.getAttribute('data-view');
+                
+                // Update active nav item
+                navItems.forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show the selected view
+                viewContents.forEach(view => view.style.display = 'none');
+                document.getElementById(`${viewName}-view`).style.display = 'block';
+                
+                // Load data for the view if needed
+                if (viewName === 'team') {
+                    loadTeamView();
+                } else if (viewName === 'work-types') {
+                    loadWorkTypesView();
+                } else if (viewName === 'companies') {
+                    loadCompaniesView();
+                }
+            });
+        });
 
         async function loadTasks() {
             try {
                 const snapshot = await db.collection('tasks').get();
                 allTasks = [];
                 companies = {};
+                teamMembers = {};
+                workTypes = {};
                 
                 snapshot.forEach(doc => {
                     const taskData = { id: doc.id, ...doc.data() };
@@ -1096,6 +1373,43 @@
                         companies[companyName] = [];
                     }
                     companies[companyName].push(taskData);
+                    
+                    // Group tasks by team member
+                    const ownerName = taskData.Owner || 'Unassigned';
+                    if (!teamMembers[ownerName]) {
+                        teamMembers[ownerName] = {
+                            tasks: [],
+                            completed: 0,
+                            inProgress: 0,
+                            notStarted: 0,
+                            totalHours: 0,
+                            pauseHours: 0
+                        };
+                    }
+                    teamMembers[ownerName].tasks.push(taskData);
+                    
+                    if (taskData.Status === 'Complete') teamMembers[ownerName].completed++;
+                    else if (taskData.Status === 'In Progress') teamMembers[ownerName].inProgress++;
+                    else teamMembers[ownerName].notStarted++;
+                    
+                    teamMembers[ownerName].totalHours += parseFloat(taskData.TotalWorkHours || 0);
+                    teamMembers[ownerName].pauseHours += parseFloat(taskData.TotalPauseHours || 0);
+                    
+                    // Group tasks by work type
+                    const workType = taskData['TYPE OF WORK'] || 'Other';
+                    if (!workTypes[workType]) {
+                        workTypes[workType] = {
+                            tasks: [],
+                            completed: 0,
+                            inProgress: 0,
+                            notStarted: 0
+                        };
+                    }
+                    workTypes[workType].tasks.push(taskData);
+                    
+                    if (taskData.Status === 'Complete') workTypes[workType].completed++;
+                    else if (taskData.Status === 'In Progress') workTypes[workType].inProgress++;
+                    else workTypes[workType].notStarted++;
                 });
 
                 // Update stats
@@ -1118,6 +1432,10 @@
             totalTasksEl.textContent = taskCount;
             completedTasksEl.textContent = completedCount;
             pendingTasksEl.textContent = pendingCount;
+            
+            // Update nav badges
+            document.getElementById('companies-count').textContent = companyCount;
+            document.getElementById('tasks-count').textContent = taskCount;
         }
 
         function renderCompanyCards(tasksByCompany) {
@@ -1206,6 +1524,176 @@
                 companyCard.appendChild(companyHeader);
                 companyCard.appendChild(tasksContainer);
                 companyCards.appendChild(companyCard);
+            });
+        }
+
+        function loadCompaniesView() {
+            const searchTerm = companiesSearch.value.toLowerCase();
+            const workType = workTypeFilter.value;
+            
+            companiesList.innerHTML = '';
+            
+            Object.keys(companies).sort().forEach(companyName => {
+                if (searchTerm && !companyName.toLowerCase().includes(searchTerm)) return;
+                
+                const tasks = companies[companyName];
+                const filteredTasks = workType ? 
+                    tasks.filter(task => task['TYPE OF WORK'] === workType) : 
+                    tasks;
+                
+                if (filteredTasks.length === 0) return;
+                
+                const companyCard = document.createElement('div');
+                companyCard.classList.add('company-card');
+                
+                // Count tasks by status
+                const completedCount = filteredTasks.filter(task => task.Status === 'Complete').length;
+                const inProgressCount = filteredTasks.filter(task => task.Status === 'In Progress').length;
+                const notStartedCount = filteredTasks.filter(task => !task.Status || task.Status === 'Not Started').length;
+                
+                // Get unique work types for this company
+                const workTypes = [...new Set(filteredTasks.map(task => task['TYPE OF WORK'] || 'Other'))];
+                
+                companyCard.innerHTML = `
+                    <div class="company-header">
+                        <div class="company-header-info">
+                            <h3>${companyName}</h3>
+                            <span class="company-tasks-count">${filteredTasks.length} tasks</span>
+                        </div>
+                        <div class="company-header-actions">
+                            <div class="company-action">
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tasks-container">
+                        <div style="padding: 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div style="text-align: center; padding: 1rem; background: #ecfdf5; border-radius: 8px;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">${completedCount}</div>
+                                <div style="font-size: 0.8rem; color: #64748b;">Completed</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: #ebf5ff; border-radius: 8px;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;">${inProgressCount}</div>
+                                <div style="font-size: 0.8rem; color: #64748b;">In Progress</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: #fff5eb; border-radius: 8px;">
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #f59e0b;">${notStartedCount}</div>
+                                <div style="font-size: 0.8rem; color: #64748b;">Not Started</div>
+                            </div>
+                        </div>
+                        <div style="padding: 0 1rem 1rem;">
+                            <h4 style="margin-bottom: 0.5rem;">Work Types:</h4>
+                            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                ${workTypes.map(type => `<span style="background: #eef2ff; color: #4a6cf7; padding: 0.35rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">${type}</span>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                companyCard.querySelector('.company-header').addEventListener('click', function() {
+                    const tasksContainer = this.nextElementSibling;
+                    if (tasksContainer.style.display === 'block') {
+                        tasksContainer.style.display = 'none';
+                        this.querySelector('.fa-chevron-down').className = 'fas fa-chevron-down';
+                    } else {
+                        tasksContainer.style.display = 'block';
+                        this.querySelector('.fa-chevron-down').className = 'fas fa-chevron-up';
+                    }
+                });
+                
+                companiesList.appendChild(companyCard);
+            });
+        }
+
+        function loadTeamView() {
+            const searchTerm = teamSearch.value.toLowerCase();
+            
+            teamGrid.innerHTML = '';
+            
+            Object.keys(teamMembers).sort().forEach(memberName => {
+                if (searchTerm && !memberName.toLowerCase().includes(searchTerm)) return;
+                
+                const memberData = teamMembers[memberName];
+                const initials = getInitials(memberName);
+                
+                const memberCard = document.createElement('div');
+                memberCard.classList.add('team-member-card');
+                
+                memberCard.innerHTML = `
+                    <div class="member-header">
+                        <div class="member-avatar">${initials}</div>
+                        <div class="member-info">
+                            <div class="member-name">${memberName}</div>
+                            <div class="member-role">Team Member</div>
+                        </div>
+                    </div>
+                    <div class="member-stats">
+                        <div class="stat-box">
+                            <div class="stat-value">${memberData.tasks.length}</div>
+                            <div class="stat-label">Total Tasks</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${memberData.completed}</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${memberData.inProgress}</div>
+                            <div class="stat-label">In Progress</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${memberData.notStarted}</div>
+                            <div class="stat-label">Not Started</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${memberData.totalHours.toFixed(1)}</div>
+                            <div class="stat-label">Work Hours</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${memberData.pauseHours.toFixed(1)}</div>
+                            <div class="stat-label">Pause Hours</div>
+                        </div>
+                    </div>
+                `;
+                
+                teamGrid.appendChild(memberCard);
+            });
+        }
+
+        function loadWorkTypesView() {
+            const workTypeFilterValue = workTypeViewFilter.value;
+            
+            workTypeGrid.innerHTML = '';
+            
+            Object.keys(workTypes).sort().forEach(workType => {
+                if (workTypeFilterValue && workType !== workTypeFilterValue) return;
+                
+                const workTypeData = workTypes[workType];
+                
+                const workTypeCard = document.createElement('div');
+                workTypeCard.classList.add('work-type-card');
+                
+                workTypeCard.innerHTML = `
+                    <div class="work-type-header">
+                        <div class="work-type-title">${workType}</div>
+                        <div class="work-type-count">${workTypeData.tasks.length} tasks</div>
+                    </div>
+                    <div class="work-type-stats">
+                        <div class="stat-box">
+                            <div class="stat-value">${workTypeData.completed}</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${workTypeData.inProgress}</div>
+                            <div class="stat-label">In Progress</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${workTypeData.notStarted}</div>
+                            <div class="stat-label">Not Started</div>
+                        </div>
+                    </div>
+                `;
+                
+                workTypeGrid.appendChild(workTypeCard);
             });
         }
 
@@ -1402,7 +1890,59 @@
             el.addEventListener('input', applyFilters)
         );
         
+        clearFiltersBtn.addEventListener('click', () => {
+            searchCompany.value = '';
+            searchOwner.value = '';
+            statusFilter.value = '';
+            applyFilters();
+        });
+        
         refreshBtn.addEventListener('click', loadTasks);
+        
+        // Companies view event listeners
+        companiesSearch.addEventListener('input', loadCompaniesView);
+        workTypeFilter.addEventListener('change', loadCompaniesView);
+        refreshCompaniesBtn.addEventListener('click', loadTasks);
+        
+        // Team view event listeners
+        teamSearch.addEventListener('input', loadTeamView);
+        refreshTeamBtn.addEventListener('click', loadTasks);
+        
+        // Work types view event listeners
+        workTypeViewFilter.addEventListener('change', loadWorkTypesView);
+        refreshWorkTypesBtn.addEventListener('click', loadTasks);
+        
+        // Global search
+        globalSearch.addEventListener('input', () => {
+            const searchTerm = globalSearch.value.toLowerCase();
+            if (!searchTerm) {
+                applyFilters();
+                return;
+            }
+            
+            // Filter tasks based on global search
+            const searchFilteredTasks = allTasks.filter(task => {
+                return (
+                    task.Task?.toLowerCase().includes(searchTerm) ||
+                    task['Existing Company Name']?.toLowerCase().includes(searchTerm) ||
+                    task.Owner?.toLowerCase().includes(searchTerm) ||
+                    task['Assigned By']?.toLowerCase().includes(searchTerm) ||
+                    task['TYPE OF WORK']?.toLowerCase().includes(searchTerm)
+                );
+            });
+            
+            // Regroup filtered tasks by company
+            const searchFilteredCompanies = {};
+            searchFilteredTasks.forEach(task => {
+                const companyName = task['Existing Company Name'] || 'Unknown Company';
+                if (!searchFilteredCompanies[companyName]) {
+                    searchFilteredCompanies[companyName] = [];
+                }
+                searchFilteredCompanies[companyName].push(task);
+            });
+
+            renderCompanyCards(searchFilteredCompanies);
+        });
         
         closeModal.addEventListener('click', () => {
             taskModal.style.display = 'none';
