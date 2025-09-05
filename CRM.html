@@ -1,551 +1,863 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>CRM Task Dashboard</title>
-<style>
-  :root {
-    --primary: #0b3d91;
-    --primary-light: #1a4fb3;
-    --secondary: #ff6b35;
-    --light: #f5f7fa;
-    --dark: #333;
-    --gray: #7b7b7b;
-    --success: #28a745;
-    --warning: #ffc107;
-    --danger: #dc3545;
-    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  }
-  
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0; padding: 0;
-    background: #f0f2f5;
-    color: #333;
-  }
-  
-  header {
-    background: #0b3d91;
-    color: white;
-    padding: 12px 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-    z-index: 100;
-  }
-  
-  header .datetime {
-    font-size: 1.3em;
-    font-weight: 600;
-  }
-  
-  header a.home-btn {
-    background: white;
-    color: #0b3d91;
-    padding: 8px 16px;
-    text-decoration: none;
-    border-radius: 6px;
-    font-weight: 700;
-    box-shadow: 0 2px 6px rgba(11, 61, 145, 0.4);
-    transition: background 0.3s, color 0.3s;
-    margin-left: 10px;
-  }
-  
-  header a.home-btn:hover {
-    background: #07306b;
-    color: #f0f0f0;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Task Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-  /* Stats Cards */
-  .stats-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 20px;
-    margin: 20px 24px;
-  }
-  
-  .stat-card {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: var(--card-shadow);
-  }
-  
-  .stat-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-  }
-  
-  .stat-card-header i {
-    font-size: 1.8rem;
-    color: var(--primary);
-  }
-  
-  .stat-card h3 {
-    font-size: 1.8rem;
-    margin-bottom: 5px;
-  }
-  
-  .stat-card p {
-    color: var(--gray);
-    font-size: 0.9rem;
-  }
+        :root {
+            --primary: #0b3d91;
+            --primary-light: #1a4fb3;
+            --secondary: #ff6b35;
+            --light: #f5f7fa;
+            --dark: #333;
+            --gray: #7b7b7b;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
 
-  /* CRM Dashboard */
-  .crm-dashboard {
-    background: white;
-    border-radius: 10px;
-    box-shadow: var(--card-shadow);
-    overflow: hidden;
-    margin: 0 24px 24px;
-  }
-  
-  .crm-header {
-    padding: 15px 20px;
-    background: var(--primary);
-    color: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .crm-controls {
-    display: flex;
-    gap: 15px;
-    padding: 15px 20px;
-    background: #f9f9f9;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .crm-controls input, .crm-controls select {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    outline: none;
-    min-width: 160px;
-  }
-  
-  .crm-controls input:focus, .crm-controls select:focus {
-    border-color: var(--primary);
-  }
+        body {
+            background-color: #f0f2f5;
+            color: var(--dark);
+            line-height: 1.6;
+        }
 
-  /* Company Cards */
-  .company-cards {
-    padding: 20px;
-  }
-  
-  .company-card {
-    border: 1px solid #eee;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    overflow: hidden;
-  }
-  
-  .company-header {
-    padding: 15px;
-    background: #f9f9f9;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-  }
-  
-  .company-header h3 {
-    color: var(--primary);
-  }
-  
-  .company-header span {
-    color: var(--gray);
-    font-size: 0.9rem;
-  }
-  
-  .tasks-container {
-    display: none;
-    padding: 0;
-  }
-  
-  .task-item {
-    padding: 15px;
-    border-bottom: 1px solid #f0f0f0;
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 15px;
-    align-items: center;
-  }
-  
-  .task-item:last-child {
-    border-bottom: none;
-  }
-  
-  .task-info h4 {
-    margin-bottom: 5px;
-    color: var(--dark);
-  }
-  
-  .task-info p {
-    color: var(--gray);
-    font-size: 0.9rem;
-  }
-  
-  .task-assignee, .task-assigned-by {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .assignee-img, .assigned-by-img {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: var(--primary-light);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 0.8rem;
-    font-weight: bold;
-  }
-  
-  .task-status {
-    padding: 5px 10px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    text-align: center;
-  }
-  
-  .status-not-started {
-    background: #fff0e6;
-    color: #ff6b35;
-  }
-  
-  .status-in-progress {
-    background: #e6f7ff;
-    color: #1890ff;
-  }
-  
-  .status-complete {
-    background: #e6f7e6;
-    color: #28a745;
-  }
-  
-  .task-details {
-    grid-column: 1 / -1;
-    padding: 15px;
-    background: #f9f9f9;
-    border-radius: 5px;
-    font-size: 0.9rem;
-    line-height: 1.5;
-  }
-  
-  .task-details strong {
-    color: var(--primary);
-  }
-  
-  /* Responsive Design */
-  @media (max-width: 992px) {
-    .task-item {
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-    
-    .task-assignee, .task-assigned-by {
-      justify-content: flex-start;
-    }
-  }
-</style>
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            background: var(--primary);
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            width: 250px;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .logo {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo span {
+            color: var(--secondary);
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: var(--primary-light);
+            color: white;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            grid-column: 2;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .header-title h2 {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .header-title p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Stats Cards */
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-card-header i {
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+
+        .stat-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        /* CRM Dashboard */
+        .crm-dashboard {
+            background: white;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .crm-header {
+            padding: 15px 20px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .crm-controls {
+            display: flex;
+            gap: 15px;
+            padding: 15px 20px;
+            background: #f9f9f9;
+            border-bottom: 1px solid #eee;
+        }
+
+        .crm-controls input, .crm-controls select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .crm-controls input:focus, .crm-controls select:focus {
+            border-color: var(--primary);
+        }
+
+        /* Company Cards */
+        .company-cards {
+            padding: 20px;
+        }
+
+        .company-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .company-header {
+            padding: 15px;
+            background: #f9f9f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .company-header h3 {
+            color: var(--primary);
+        }
+
+        .company-header span {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .tasks-container {
+            display: none;
+            padding: 0;
+        }
+
+        .task-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-info h4 {
+            margin-bottom: 5px;
+            color: var(--dark);
+        }
+
+        .task-info p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .task-assignee, .task-assigned-by {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .assignee-img, .assigned-by-img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .task-status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .status-not-started {
+            background: #fff0e6;
+            color: #ff6b35;
+        }
+
+        .status-in-progress {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        .status-complete {
+            background: #e6f7e6;
+            color: #28a745;
+        }
+
+        .task-details {
+            grid-column: 1 / -1;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .task-details strong {
+            color: var(--primary);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .modal-header {
+            padding: 10px 0;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .modal-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .task-timeline {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .timeline-item {
+            display: flex;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .timeline-date {
+            min-width: 120px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .timeline-content {
+            padding-left: 20px;
+            position: relative;
+            flex: 1;
+        }
+
+        .timeline-content:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 5px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+
+        .timeline-item:not(:last-child) .timeline-content:after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 15px;
+            bottom: -15px;
+            width: 2px;
+            background: #ddd;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .main-content {
+                grid-column: 1;
+            }
+            
+            .task-item {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .task-assignee, .task-assigned-by {
+                justify-content: flex-start;
+            }
+            
+            .modal-body {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1><i class="fas fa-tasks"></i> Task<span>CRM</span></h1>
+            </div>
+            <a href="#" class="nav-item active"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="#" class="nav-item"><i class="fas fa-building"></i> Companies</a>
+            <a href="#" class="nav-item"><i class="fas fa-tasks"></i> Tasks</a>
+            <a href="#" class="nav-item"><i class="fas fa-users"></i> Team</a>
+            <a href="#" class="nav-item"><i class="fas fa-chart-bar"></i> Reports</a>
+            <a href="#" class="nav-item"><i class="fas fa-cog"></i> Settings</a>
+        </div>
 
-<header>
-  <div class="datetime" id="dateTimeDisplay">Loading Date & Time...</div>
-  <div style="display: flex; gap: 12px;">
-    <a href="Current Works subadmin.html" class="home-btn">Current Working</a>
-    <a href="Sub Admin Dashboard.html" class="home-btn">Home</a>
-  </div>
-</header>
+        <!-- Main Content -->
+        <div class="main-content">
+            <header>
+                <div class="header-title">
+                    <h2>CRM Task Management</h2>
+                    <p>Track all company tasks in one place</p>
+                </div>
+                <div class="user-info">
+                    <div class="notifications">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="user-img">JD</div>
+                    <div class="user-details">
+                        <div>John Doe</div>
+                        <div>Admin</div>
+                    </div>
+                </div>
+            </header>
 
-<!-- Stats Cards -->
-<div class="stats-cards">
-  <div class="stat-card">
-    <div class="stat-card-header">
-      <i class="fas fa-building"></i>
+            <!-- Stats Cards -->
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h3 id="totalCompanies">0</h3>
+                    <p>Total Companies</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h3 id="totalTasks">0</h3>
+                    <p>Total Tasks</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h3 id="completedTasks">0</h3>
+                    <p>Completed Tasks</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3 id="pendingTasks">0</h3>
+                    <p>Pending Tasks</p>
+                </div>
+            </div>
+
+            <!-- CRM Dashboard -->
+            <div class="crm-dashboard">
+                <div class="crm-header">
+                    <h3><i class="fas fa-list"></i> Company Tasks Overview</h3>
+                    <div class="view-options">
+                        <button class="btn btn-light" id="refreshBtn"><i class="fas fa-sync"></i> Refresh</button>
+                    </div>
+                </div>
+                
+                <div class="crm-controls">
+                    <input type="text" placeholder="Search company..." id="searchCompany">
+                    <input type="text" placeholder="Search owner..." id="searchOwner">
+                    <select id="statusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Complete">Complete</option>
+                    </select>
+                </div>
+
+                <div class="company-cards" id="companyCards">
+                    <!-- Company cards will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
     </div>
-    <h3 id="totalCompanies">0</h3>
-    <p>Total Companies</p>
-  </div>
-  <div class="stat-card">
-    <div class="stat-card-header">
-      <i class="fas fa-tasks"></i>
+
+    <!-- Task Detail Modal -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeModal">&times;</span>
+            <div class="modal-header">
+                <h3 id="modalTaskTitle">Task Details</h3>
+            </div>
+            <div class="modal-body" id="modalTaskBody">
+                <!-- Task details will be inserted here -->
+            </div>
+        </div>
     </div>
-    <h3 id="totalTasks">0</h3>
-    <p>Total Tasks</p>
-  </div>
-  <div class="stat-card">
-    <div class="stat-card-header">
-      <i class="fas fa-user-check"></i>
-    </div>
-    <h3 id="completedTasks">0</h3>
-    <p>Completed Tasks</p>
-  </div>
-  <div class="stat-card">
-    <div class="stat-card-header">
-      <i class="fas fa-clock"></i>
-    </div>
-    <h3 id="pendingTasks">0</h3>
-    <p>Pending Tasks</p>
-  </div>
-</div>
 
-<!-- CRM Dashboard -->
-<div class="crm-dashboard">
-  <div class="crm-header">
-    <h3><i class="fas fa-list"></i> Company Tasks Overview</h3>
-    <div class="view-options">
-      <button class="home-btn" id="refreshBtn"><i class="fas fa-sync"></i> Refresh</button>
-    </div>
-  </div>
-  
-  <div class="crm-controls">
-    <input type="search" id="searchCompany" placeholder="Search company..." />
-    <input type="search" id="searchOwner" placeholder="Search owner..." />
-    <select id="statusFilter">
-      <option value="">All Statuses</option>
-      <option value="Not Started">Not Started</option>
-      <option value="In Progress">In Progress</option>
-      <option value="Complete">Complete</option>
-    </select>
-  </div>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-  <div class="company-cards" id="companyCards">
-    <!-- Company cards will be dynamically inserted here -->
-  </div>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-    authDomain: "task-manager-602da.firebaseapp.com",
-    projectId: "task-manager-602da",
-    storageBucket: "task-manager-602da.appspot.com",
-    messagingSenderId: "438978699329",
-    appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
-  };
-  
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  const companyCards = document.getElementById('companyCards');
-  const searchCompany = document.getElementById('searchCompany');
-  const searchOwner = document.getElementById('searchOwner');
-  const statusFilter = document.getElementById('statusFilter');
-  const dateTimeDisplay = document.getElementById('dateTimeDisplay');
-  const refreshBtn = document.getElementById('refreshBtn');
-  
-  const totalCompaniesEl = document.getElementById('totalCompanies');
-  const totalTasksEl = document.getElementById('totalTasks');
-  const completedTasksEl = document.getElementById('completedTasks');
-  const pendingTasksEl = document.getElementById('pendingTasks');
-
-  let allTasks = [];
-  let filteredTasks = [];
-  let companies = {};
-
-  function updateDateTime() {
-    const now = new Date();
-    const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
-    const dateStr = now.toLocaleDateString(undefined, options);
-    const timeStr = now.toLocaleTimeString();
-    dateTimeDisplay.textContent = `${dateStr} ${timeStr}`;
-  }
-  
-  setInterval(updateDateTime, 1000);
-  updateDateTime();
-
-  async function loadTasks() {
-    try {
-      const snapshot = await db.collection('tasks').get();
-      allTasks = [];
-      companies = {};
-      
-      snapshot.forEach(doc => {
-        const taskData = { id: doc.id, ...doc.data() };
-        allTasks.push(taskData);
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+            authDomain: "task-manager-602da.firebaseapp.com",
+            projectId: "task-manager-602da",
+            storageBucket: "task-manager-602da.appspot.com",
+            messagingSenderId: "438978699329",
+            appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+        };
         
-        // Group tasks by company
-        const companyName = taskData['Existing Company Name'] || 'Unknown Company';
-        if (!companies[companyName]) {
-          companies[companyName] = [];
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const companyCards = document.getElementById('companyCards');
+        const searchCompany = document.getElementById('searchCompany');
+        const searchOwner = document.getElementById('searchOwner');
+        const statusFilter = document.getElementById('statusFilter');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const taskModal = document.getElementById('taskModal');
+        const closeModal = document.getElementById('closeModal');
+        const modalTaskTitle = document.getElementById('modalTaskTitle');
+        const modalTaskBody = document.getElementById('modalTaskBody');
+        
+        const totalCompaniesEl = document.getElementById('totalCompanies');
+        const totalTasksEl = document.getElementById('totalTasks');
+        const completedTasksEl = document.getElementById('completedTasks');
+        const pendingTasksEl = document.getElementById('pendingTasks');
+
+        let allTasks = [];
+        let filteredTasks = [];
+        let companies = {};
+
+        async function loadTasks() {
+            try {
+                const snapshot = await db.collection('tasks').get();
+                allTasks = [];
+                companies = {};
+                
+                snapshot.forEach(doc => {
+                    const taskData = { id: doc.id, ...doc.data() };
+                    allTasks.push(taskData);
+                    
+                    // Group tasks by company
+                    const companyName = taskData['Existing Company Name'] || 'Unknown Company';
+                    if (!companies[companyName]) {
+                        companies[companyName] = [];
+                    }
+                    companies[companyName].push(taskData);
+                });
+
+                // Update stats
+                updateStats();
+                
+                // Apply filters and render
+                applyFilters();
+            } catch (error) {
+                console.error("Error loading tasks:", error);
+            }
         }
-        companies[companyName].push(taskData);
-      });
 
-      // Update stats
-      updateStats();
-      
-      // Apply filters and render
-      applyFilters();
-    } catch (error) {
-      console.error("Error loading tasks:", error);
-    }
-  }
-
-  function updateStats() {
-    const companyCount = Object.keys(companies).length;
-    const taskCount = allTasks.length;
-    const completedCount = allTasks.filter(task => task.Status === 'Complete').length;
-    const pendingCount = taskCount - completedCount;
-    
-    totalCompaniesEl.textContent = companyCount;
-    totalTasksEl.textContent = taskCount;
-    completedTasksEl.textContent = completedCount;
-    pendingTasksEl.textContent = pendingCount;
-  }
-
-  function renderCompanyCards(tasksByCompany) {
-    companyCards.innerHTML = '';
-    
-    Object.keys(tasksByCompany).sort().forEach(companyName => {
-      const tasks = tasksByCompany[companyName];
-      
-      const companyCard = document.createElement('div');
-      companyCard.classList.add('company-card');
-      
-      const companyHeader = document.createElement('div');
-      companyHeader.classList.add('company-header');
-      companyHeader.innerHTML = `
-        <h3>${companyName}</h3>
-        <span>${tasks.length} tasks <i class="fas fa-chevron-down"></i></span>
-      `;
-      
-      const tasksContainer = document.createElement('div');
-      tasksContainer.classList.add('tasks-container');
-      tasksContainer.id = `tasks-${companyName.replace(/\s+/g, '-')}`;
-      
-      tasks.forEach(task => {
-        const taskItem = document.createElement('div');
-        taskItem.classList.add('task-item');
-        
-        // Get initials for avatars
-        const assigneeInitials = getInitials(task.Owner || '');
-        const assignedByInitials = getInitials(task['Assigned By'] || '');
-        
-        // Determine status class
-        let statusClass = 'status-not-started';
-        if (task.Status === 'In Progress') statusClass = 'status-in-progress';
-        if (task.Status === 'Complete') statusClass = 'status-complete';
-        
-        taskItem.innerHTML = `
-          <div class="task-info">
-            <h4>${task.Task || ''} (${task['TYPE OF WORK'] || ''})</h4>
-            <p>Due: ${task['Due date'] || 'No due date'}</p>
-          </div>
-          <div class="task-status ${statusClass}">${task.Status || 'Not Started'}</div>
-          <div class="task-assignee">
-            <div class="assignee-img">${assigneeInitials}</div>
-            <div>${task.Owner || 'Unassigned'}</div>
-          </div>
-          <div class="task-assigned-by">
-            <div class="assigned-by-img">${assignedByInitials}</div>
-            <div>${task['Assigned By'] || 'Unknown'}</div>
-          </div>
-          <div class="task-details">
-            <strong>ACCOUNT TYPE:</strong> ${task['ACCOUNT TYPE'] || ''}<br/>
-            <strong>Accounts / Cards:</strong> ${task['Accounts / Cards'] || ''}<br/>
-            <strong>WORK FOR:</strong> ${task['WORK FOR'] || ''}<br/>
-            <strong>PERIOD:</strong> ${task.PERIOD || ''}<br/>
-            <strong>Notes:</strong> ${task.Notes || ''}<br/>
-            <strong>Time Started:</strong> ${formatTimestamp(task.taskStart)}<br/>
-            <strong>Time End:</strong> ${formatTimestamp(task.taskEnd)}<br/>
-            <strong>Total Work Hours:</strong> ${task.TotalWorkHours || ''}<br/>
-            <strong>Total Pause Hours:</strong> ${task.TotalPauseHours || ''}<br/>
-            <strong>Remarks:</strong> ${task.Remarks || ''}<br/>
-          </div>
-        `;
-        
-        tasksContainer.appendChild(taskItem);
-      });
-      
-      companyHeader.addEventListener('click', () => {
-        if (tasksContainer.style.display === 'block') {
-          tasksContainer.style.display = 'none';
-          companyHeader.querySelector('i').className = 'fas fa-chevron-down';
-        } else {
-          tasksContainer.style.display = 'block';
-          companyHeader.querySelector('i').className = 'fas fa-chevron-up';
+        function updateStats() {
+            const companyCount = Object.keys(companies).length;
+            const taskCount = allTasks.length;
+            const completedCount = allTasks.filter(task => task.Status === 'Complete').length;
+            const pendingCount = taskCount - completedCount;
+            
+            totalCompaniesEl.textContent = companyCount;
+            totalTasksEl.textContent = taskCount;
+            completedTasksEl.textContent = completedCount;
+            pendingTasksEl.textContent = pendingCount;
         }
-      });
-      
-      companyCard.appendChild(companyHeader);
-      companyCard.appendChild(tasksContainer);
-      companyCards.appendChild(companyCard);
-    });
-  }
 
-  function getInitials(name) {
-    return name.split(' ')
-      .map(part => part.charAt(0))
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  }
+        function renderCompanyCards(tasksByCompany) {
+            companyCards.innerHTML = '';
+            
+            Object.keys(tasksByCompany).sort().forEach(companyName => {
+                const tasks = tasksByCompany[companyName];
+                
+                const companyCard = document.createElement('div');
+                companyCard.classList.add('company-card');
+                
+                const companyHeader = document.createElement('div');
+                companyHeader.classList.add('company-header');
+                companyHeader.innerHTML = `
+                    <h3>${companyName}</h3>
+                    <span>${tasks.length} tasks <i class="fas fa-chevron-down"></i></span>
+                `;
+                
+                const tasksContainer = document.createElement('div');
+                tasksContainer.classList.add('tasks-container');
+                tasksContainer.id = `tasks-${companyName.replace(/\s+/g, '-')}`;
+                
+                tasks.forEach(task => {
+                    const taskItem = document.createElement('div');
+                    taskItem.classList.add('task-item');
+                    
+                    // Get initials for avatars
+                    const assigneeInitials = getInitials(task.Owner || '');
+                    const assignedByInitials = getInitials(task['Assigned By'] || '');
+                    
+                    // Determine status class
+                    let statusClass = 'status-not-started';
+                    if (task.Status === 'In Progress') statusClass = 'status-in-progress';
+                    if (task.Status === 'Complete') statusClass = 'status-complete';
+                    
+                    taskItem.innerHTML = `
+                        <div class="task-info">
+                            <h4>${task.Task || ''} (${task['TYPE OF WORK'] || ''})</h4>
+                            <p>Due: ${task['Due date'] || 'No due date'}</p>
+                        </div>
+                        <div class="task-status ${statusClass}">${task.Status || 'Not Started'}</div>
+                        <div class="task-assignee">
+                            <div class="assignee-img">${assigneeInitials}</div>
+                            <div>${task.Owner || 'Unassigned'}</div>
+                        </div>
+                        <div class="task-assigned-by">
+                            <div class="assigned-by-img">${assignedByInitials}</div>
+                            <div>${task['Assigned By'] || 'Unknown'}</div>
+                        </div>
+                        <div class="task-details">
+                            <strong>ACCOUNT TYPE:</strong> ${task['ACCOUNT TYPE'] || ''}<br/>
+                            <strong>Accounts / Cards:</strong> ${task['Accounts / Cards'] || ''}<br/>
+                            <strong>WORK FOR:</strong> ${task['WORK FOR'] || ''}<br/>
+                            <strong>PERIOD:</strong> ${task.PERIOD || ''}<br/>
+                            <strong>Notes:</strong> ${task.Notes || ''}<br/>
+                            <strong>Time Started:</strong> ${formatTimestamp(task.taskStart)}<br/>
+                            <strong>Time End:</strong> ${formatTimestamp(task.taskEnd)}<br/>
+                            <strong>Total Work Hours:</strong> ${task.TotalWorkHours || ''}<br/>
+                            <strong>Total Pause Hours:</strong> ${task.TotalPauseHours || ''}<br/>
+                            <strong>Remarks:</strong> ${task.Remarks || ''}<br/>
+                        </div>
+                    `;
+                    
+                    // Add click event to show detailed modal
+                    taskItem.addEventListener('click', () => {
+                        showTaskDetails(task);
+                    });
+                    
+                    tasksContainer.appendChild(taskItem);
+                });
+                
+                companyHeader.addEventListener('click', () => {
+                    if (tasksContainer.style.display === 'block') {
+                        tasksContainer.style.display = 'none';
+                        companyHeader.querySelector('i').className = 'fas fa-chevron-down';
+                    } else {
+                        tasksContainer.style.display = 'block';
+                        companyHeader.querySelector('i').className = 'fas fa-chevron-up';
+                    }
+                });
+                
+                companyCard.appendChild(companyHeader);
+                companyCard.appendChild(tasksContainer);
+                companyCards.appendChild(companyCard);
+            });
+        }
 
-  function formatTimestamp(ts) {
-    if (!ts) return '';
-    if (typeof ts.toDate === 'function') {
-      return ts.toDate().toLocaleString();
-    }
-    if (ts instanceof Date) {
-      return ts.toLocaleString();
-    }
-    return ts; // In case it's already a string
-  }
+        function showTaskDetails(task) {
+            modalTaskTitle.textContent = `${task.Task || 'Task'} - ${task['Existing Company Name'] || ''}`;
+            
+            // Get initials for avatars
+            const assigneeInitials = getInitials(task.Owner || '');
+            const assignedByInitials = getInitials(task['Assigned By'] || '');
+            
+            // Determine status class
+            let statusClass = 'status-not-started';
+            if (task.Status === 'In Progress') statusClass = 'status-in-progress';
+            if (task.Status === 'Complete') statusClass = 'status-complete';
+            
+            // Format work sessions timeline
+            let timelineHTML = '';
+            if (task.workSessions && task.workSessions.length > 0) {
+                timelineHTML = `<div class="task-timeline">
+                    <h4>Work Sessions Timeline</h4>`;
+                
+                task.workSessions.forEach(session => {
+                    timelineHTML += `
+                        <div class="timeline-item">
+                            <div class="timeline-date">${formatTimestamp(session.start)}</div>
+                            <div class="timeline-content">
+                                <strong>Session Started</strong>
+                                <p>Work began on this task</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    if (session.end) {
+                        timelineHTML += `
+                            <div class="timeline-item">
+                                <div class="timeline-date">${formatTimestamp(session.end)}</div>
+                                <div class="timeline-content">
+                                    <strong>Session Ended</strong>
+                                    <p>Work paused or completed</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                timelineHTML += `</div>`;
+            }
+            
+            modalTaskBody.innerHTML = `
+                <div>
+                    <h4>Task Information</h4>
+                    <p><strong>Type of Work:</strong> ${task['TYPE OF WORK'] || ''}</p>
+                    <p><strong>Status:</strong> <span class="task-status ${statusClass}">${task.Status || 'Not Started'}</span></p>
+                    <p><strong>Due Date:</strong> ${task['Due date'] || 'No due date'}</p>
+                    <p><strong>Period:</strong> ${task.PERIOD || ''}</p>
+                    <p><strong>Work For:</strong> ${task['WORK FOR'] || ''}</p>
+                </div>
+                <div>
+                    <h4>Assignment</h4>
+                    <p><strong>Assigned To:</strong> 
+                        <div class="task-assignee">
+                            <div class="assignee-img">${assigneeInitials}</div>
+                            <div>${task.Owner || 'Unassigned'}</div>
+                        </div>
+                    </p>
+                    <p><strong>Assigned By:</strong> 
+                        <div class="task-assigned-by">
+                            <div class="assigned-by-img">${assignedByInitials}</div>
+                            <div>${task['Assigned By'] || 'Unknown'}</div>
+                        </div>
+                    </p>
+                    <p><strong>Account Type:</strong> ${task['ACCOUNT TYPE'] || ''}</p>
+                    <p><strong>Accounts/Cards:</strong> ${task['Accounts / Cards'] || ''}</p>
+                </div>
+                <div style="grid-column: 1 / -1;">
+                    <h4>Time Tracking</h4>
+                    <p><strong>Time Started:</strong> ${formatTimestamp(task.taskStart)}</p>
+                    <p><strong>Time Ended:</strong> ${formatTimestamp(task.taskEnd)}</p>
+                    <p><strong>Total Work Hours:</strong> ${task.TotalWorkHours || ''}</p>
+                    <p><strong>Total Pause Hours:</strong> ${task.TotalPauseHours || ''}</p>
+                </div>
+                <div style="grid-column: 1 / -1;">
+                    <h4>Additional Information</h4>
+                    <p><strong>Notes:</strong> ${task.Notes || ''}</p>
+                    <p><strong>Remarks:</strong> ${task.Remarks || ''}</p>
+                    <p><strong>SINO:</strong> ${task.SINO || ''}</p>
+                </div>
+                ${timelineHTML}
+            `;
+            
+            taskModal.style.display = 'flex';
+        }
 
-  function applyFilters() {
-    const companyFilter = searchCompany.value.toLowerCase();
-    const ownerFilter = searchOwner.value.toLowerCase();
-    const status = statusFilter.value;
+        function getInitials(name) {
+            return name.split(' ')
+                .map(part => part.charAt(0))
+                .join('')
+                .toUpperCase()
+                .substring(0, 2);
+        }
 
-    // Filter tasks
-    filteredTasks = allTasks.filter(task => {
-      const matchCompany = task['Existing Company Name']?.toLowerCase().includes(companyFilter);
-      const matchOwner = task.Owner?.toLowerCase().includes(ownerFilter);
-      const matchStatus = !status || task.Status === status;
-      return matchCompany && matchOwner && matchStatus;
-    });
+        function formatTimestamp(ts) {
+            if (!ts) return 'Not specified';
+            if (typeof ts.toDate === 'function') {
+                return ts.toDate().toLocaleString();
+            }
+            if (ts instanceof Date) {
+                return ts.toLocaleString();
+            }
+            return ts; // In case it's already a string
+        }
 
-    // Regroup filtered tasks by company
-    const filteredCompanies = {};
-    filteredTasks.forEach(task => {
-      const companyName = task['Existing Company Name'] || 'Unknown Company';
-      if (!filteredCompanies[companyName]) {
-        filteredCompanies[companyName] = [];
-      }
-      filteredCompanies[companyName].push(task);
-    });
+        function applyFilters() {
+            const companyFilter = searchCompany.value.toLowerCase();
+            const ownerFilter = searchOwner.value.toLowerCase();
+            const status = statusFilter.value;
 
-    renderCompanyCards(filteredCompanies);
-  }
+            // Filter tasks
+            filteredTasks = allTasks.filter(task => {
+                const matchCompany = task['Existing Company Name']?.toLowerCase().includes(companyFilter);
+                const matchOwner = task.Owner?.toLowerCase().includes(ownerFilter);
+                const matchStatus = !status || task.Status === status;
+                return matchCompany && matchOwner && matchStatus;
+            });
 
-  // Event listeners
-  [searchCompany, searchOwner, statusFilter].forEach(el =>
-    el.addEventListener('input', applyFilters)
-  );
-  
-  refreshBtn.addEventListener('click', loadTasks);
+            // Regroup filtered tasks by company
+            const filteredCompanies = {};
+            filteredTasks.forEach(task => {
+                const companyName = task['Existing Company Name'] || 'Unknown Company';
+                if (!filteredCompanies[companyName]) {
+                    filteredCompanies[companyName] = [];
+                }
+                filteredCompanies[companyName].push(task);
+            });
 
-  window.onload = loadTasks;
-</script>
+            renderCompanyCards(filteredCompanies);
+        }
 
+        // Event listeners
+        [searchCompany, searchOwner, statusFilter].forEach(el =>
+            el.addEventListener('input', applyFilters)
+        );
+        
+        refreshBtn.addEventListener('click', loadTasks);
+        
+        closeModal.addEventListener('click', () => {
+            taskModal.style.display = 'none';
+        });
+        
+        window.addEventListener('click', (event) => {
+            if (event.target === taskModal) {
+                taskModal.style.display = 'none';
+            }
+        });
+
+        window.onload = loadTasks;
+    </script>
 </body>
 </html>
