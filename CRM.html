@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRM Dashboard - Task Manager</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -140,6 +143,9 @@
         
         .dashboard-header {
             margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
         .dashboard-header h1 {
@@ -149,6 +155,42 @@
         
         .dashboard-header p {
             color: var(--gray);
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-button {
+            padding: 10px 15px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .primary-btn {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .primary-btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        .secondary-btn {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        
+        .secondary-btn:hover {
+            background: var(--light);
         }
         
         /* Stats Cards */
@@ -279,6 +321,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             margin-bottom: 25px;
+            overflow-x: auto;
         }
         
         .data-table-container h2 {
@@ -362,6 +405,179 @@
             border-color: var(--primary);
         }
         
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .filter-group label {
+            font-size: 14px;
+            color: var(--dark);
+            font-weight: 500;
+        }
+        
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-width: 150px;
+        }
+        
+        /* Task Table Styles */
+        .task-row {
+            cursor: pointer;
+        }
+        
+        .details-row {
+            display: none;
+        }
+        
+        .details-box {
+            padding: 15px;
+            background: var(--light-gray);
+            border-radius: 4px;
+            line-height: 1.8;
+        }
+        
+        .action-btn {
+            padding: 6px 12px;
+            margin-right: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .edit-btn {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .delete-btn {
+            background: var(--danger);
+            color: white;
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 20px;
+        }
+        
+        .pagination button {
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .pagination button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .modal-header h2 {
+            color: var(--dark);
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .stats-cards,
@@ -375,6 +591,15 @@
             
             .sidebar {
                 width: 100%;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .filters {
+                flex-direction: column;
             }
         }
     </style>
@@ -418,8 +643,19 @@
         <div class="main-content">
             <!-- Dashboard Header -->
             <div class="dashboard-header">
-                <h1>CRM Dashboard</h1>
-                <p>Monitor task performance, company metrics, and user productivity</p>
+                <div>
+                    <h1>CRM Dashboard</h1>
+                    <p>Monitor task performance, company metrics, and user productivity</p>
+                </div>
+                <div class="header-actions">
+                    <button class="action-button primary-btn" id="createTaskBtn">
+                        <i class="fas fa-plus"></i> New Task
+                    </button>
+                    <button class="action-button secondary-btn" id="uploadCSVBtn">
+                        <i class="fas fa-upload"></i> Import CSV
+                    </button>
+                    <input type="file" id="csvUpload" accept=".csv" style="display: none;">
+                </div>
             </div>
 
             <!-- View Controls -->
@@ -453,6 +689,51 @@
                     <h3>ACTIVE COMPANIES</h3>
                     <div class="value">24</div>
                     <div class="trend up"><i class="fas fa-arrow-up"></i> 3 new this month</div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="searchCompany">Company</label>
+                    <input type="text" id="searchCompany" placeholder="Search company...">
+                </div>
+                <div class="filter-group">
+                    <label for="searchOwner">Owner</label>
+                    <input type="text" id="searchOwner" placeholder="Search owner...">
+                </div>
+                <div class="filter-group">
+                    <label for="statusFilter">Status</label>
+                    <select id="statusFilter">
+                        <option value="">All Status</option>
+                        <option value="Not Started">Not Started</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Complete">Complete</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Task Table -->
+            <div class="data-table-container">
+                <h2><i class="fas fa-tasks"></i> Task Manager</h2>
+                <table class="data-table" id="tasksTable">
+                    <thead>
+                        <tr>
+                            <th>SINO</th>
+                            <th>Company</th>
+                            <th>Type of Work</th>
+                            <th>Status</th>
+                            <th>Owner</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Task rows will be populated by JavaScript -->
+                    </tbody>
+                </table>
+                
+                <!-- Pagination -->
+                <div class="pagination" id="paginationControls">
+                    <!-- Pagination controls will be populated by JavaScript -->
                 </div>
             </div>
 
@@ -637,19 +918,759 @@
         </div>
     </div>
 
-    <script>
-        // Sample data for demonstration
-        const companies = [
-            { name: "ABC Corp", industry: "Financial Services", tasks: 18, completed: 14, users: ["John Doe", "Jane Smith"] },
-            { name: "XYZ Ltd", industry: "Manufacturing", tasks: 24, completed: 20, users: ["Robert Johnson", "Jane Smith"] },
-            { name: "Acme Inc", industry: "Technology", tasks: 32, completed: 28, users: ["John Doe", "Robert Johnson"] }
-        ];
+    <!-- Task Modal -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Create New Task</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="taskForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="company">Company Name *</label>
+                        <input type="text" id="company" name="company" list="companyList" required>
+                        <datalist id="companyList"></datalist>
+                    </div>
+                    <div class="form-group">
+                        <label for="typeOfWork">Type of Work *</label>
+                        <input type="text" id="typeOfWork" name="typeOfWork" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="accountType">Account Type</label>
+                        <select id="accountType" name="accountType">
+                            <option value="">Select Account Type</option>
+                            <option value="Corporate">Corporate</option>
+                            <option value="Individual">Individual</option>
+                            <option value="Partnership">Partnership</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="accountsCards">Accounts / Cards</label>
+                        <input type="text" id="accountsCards" name="accountsCards" list="accountsCardsList">
+                        <datalist id="accountsCardsList"></datalist>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="task">Task Description</label>
+                    <textarea id="task" name="task"></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="owner">Owner *</label>
+                        <select id="owner" name="owner" required>
+                            <option value="">Select Owner</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="workFor">Work For</label>
+                        <select id="workForSelect" name="workFor">
+                            <option value="">Select Work Type</option>
+                            <option value="Month">Month</option>
+                            <option value="Quarter">Quarter</option>
+                            <option value="Year">Year</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="period">Period</label>
+                        <input type="text" id="periodInput" name="period" placeholder="Period">
+                    </div>
+                    <div class="form-group">
+                        <label for="dueDate">Due Date *</label>
+                        <input type="date" id="dueDate" name="dueDate" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="assignedBy">Assigned By *</label>
+                        <select id="assignedBySelect" name="assignedBy" required>
+                            <option value="">Select Assigned By</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <textarea id="notes" name="notes"></textarea>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="action-button secondary-btn" id="cancelTask">Cancel</button>
+                    <button type="submit" class="action-button primary-btn">Save Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        const users = [
-            { name: "John Doe", role: "Admin", tasks: 42, completed: 38, avgTime: "3.8h" },
-            { name: "Jane Smith", role: "Subadmin", tasks: 36, completed: 32, avgTime: "4.2h" },
-            { name: "Robert Johnson", role: "User", tasks: 28, completed: 22, avgTime: "5.1h" }
-        ];
+    <script>
+        let editingTaskId = null;
+
+        // Firebase config
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+            authDomain: "task-manager-602da.firebaseapp.com",
+            projectId: "task-manager-602da",
+            storageBucket: "task-manager-602da.appspot.com",
+            messagingSenderId: "438978699329",
+            appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // DOM Elements
+        const taskTableBody = document.querySelector('#tasksTable tbody');
+        const paginationDiv = document.getElementById('paginationControls');
+        const searchCompany = document.getElementById('searchCompany');
+        const searchOwner = document.getElementById('searchOwner');
+        const statusFilter = document.getElementById('statusFilter');
+        const createTaskBtn = document.getElementById('createTaskBtn');
+        const taskModal = document.getElementById('taskModal');
+        const taskForm = document.getElementById('taskForm');
+        const closeModalBtn = document.querySelector('.close-modal');
+        const cancelTaskBtn = document.getElementById('cancelTask');
+        const uploadCSVBtn = document.getElementById('uploadCSVBtn');
+        const csvUpload = document.getElementById('csvUpload');
+
+        const rowsPerPage = 10;
+        let currentPage = 1;
+        let allTasks = [];
+        let filteredTasks = [];
+
+        // Load tasks from Firestore
+        async function loadTasks() {
+            try {
+                const snapshot = await db.collection('tasks').get();
+                allTasks = []; // reset on reload
+                snapshot.forEach(doc => {
+                    allTasks.push({ id: doc.id, ...doc.data() });
+                });
+
+                // Sort ascending by numeric part of SINO
+                allTasks.sort((a, b) => {
+                    const getNumber = sino => {
+                        if (!sino) return 0;
+                        const match = sino.match(/(\d+)$/);
+                        return match ? parseInt(match[1], 10) : 0;
+                    };
+                    return getNumber(a.SINO) - getNumber(b.SINO);
+                });
+
+                // Auto update incomplete tasks
+                await Promise.all(
+                    allTasks
+                        .filter(task =>
+                            task.Status === "Complete" &&
+                            Array.isArray(task.workSessions) &&
+                            task.workSessions.length > 0 &&
+                            (task.TotalWorkHours === undefined || task.TotalWorkHours === '' ||
+                            task.TotalPauseHours === undefined || task.TotalPauseHours === '')
+                        )
+                        .map(task => {
+                            console.log(`Auto-calculating times for task: ${task.SINO} (${task.id})`);
+                            console.log(`Auto-updating task: ${task.SINO} (${task.id})`);
+                            const taskRef = db.collection('tasks').doc(task.id);
+                            return updateTaskAsComplete(taskRef, task);
+                        })
+                );
+                
+                populateCompanyList();
+                applyFilters(); // Initial render with sorting applied
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function populateCompanyList() {
+            const companyList = document.getElementById('companyList');
+            companyList.innerHTML = ''; // Clear previous options
+
+            const companiesSet = new Set();
+
+            allTasks.forEach(task => {
+                const company = task['Existing Company Name'];
+                if (company) {
+                    companiesSet.add(company);
+                }
+            });
+
+            companiesSet.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                companyList.appendChild(option);
+            });
+        }
+
+        // Render a specific page
+        function renderTablePage(page, tasks) {
+            taskTableBody.innerHTML = '';
+            const start = (page - 1) * rowsPerPage;
+            const pageTasks = tasks.slice(start, start + rowsPerPage);
+
+            pageTasks.forEach(task => {
+                const tr = document.createElement('tr');
+                tr.classList.add('task-row');
+                tr.innerHTML = `
+                    <td>${task.SINO || ''}</td>
+                    <td>${task['Existing Company Name'] || ''}</td>
+                    <td>${task['TYPE OF WORK'] || ''}</td>
+                    <td>${task.Status || ''}</td>
+                    <td>${task.Owner || ''}</td>
+                `;
+
+                const detailsTr = document.createElement('tr');
+                detailsTr.classList.add('details-row');
+                detailsTr.style.display = 'none';
+                detailsTr.innerHTML = `
+                    <td colspan="5">
+                        <div class="details-box">
+                            <strong>ACCOUNT TYPE:</strong> ${task['ACCOUNT TYPE'] || ''}<br/>
+                            <strong>Accounts / Cards:</strong> ${task['Accounts / Cards'] || ''}<br/>
+                            <strong>Task:</strong> ${task.Task || ''}<br/>
+                            <strong>WORK FOR:</strong> ${task['WORK FOR'] || ''}<br/>
+                            <strong>PERIOD:</strong> ${task.PERIOD || ''}<br/>
+                            <strong>Due Date:</strong> ${task['Due date'] || ''}<br/>
+                            <strong>Assigned By:</strong> ${task['Assigned By'] || ''}<br/>
+                            <strong>Notes:</strong> ${task.Notes || ''}<br/>
+                            <strong>Time Started:</strong> ${formatTimestamp(task.taskStart)}<br/>
+                            <strong>Time End:</strong> ${formatTimestamp(task.taskEnd)}<br/>
+                            <strong>Total Work Hours:</strong> ${task.TotalWorkHours || ''}<br/>
+                            <strong>Total Pause Hours:</strong> ${task.TotalPauseHours || ''}<br/>
+                            <strong>Remarks:</strong> ${task.Remarks || ''}<br/><br/>
+                            <button class="edit-btn action-btn" data-id="${task.id}">Edit</button>
+                            <button class="delete-btn action-btn" data-id="${task.id}">Delete</button>
+                        </div>
+                    </td>
+                `;
+
+                tr.addEventListener('click', () => {
+                    detailsTr.style.display = detailsTr.style.display === 'none' ? 'table-row' : 'none';
+                });
+
+                taskTableBody.appendChild(tr);
+                taskTableBody.appendChild(detailsTr);
+            });
+
+            attachRowEventListeners();
+        }
+
+        function formatTimestamp(ts) {
+            if (!ts) return '';
+            if (typeof ts.toDate === 'function') {
+                return ts.toDate().toLocaleString();
+            }
+            if (ts instanceof Date) {
+                return ts.toLocaleString();
+            }
+            return '';
+        }
+
+        // --- Update task as Complete with real time calculations ---
+        async function updateTaskAsComplete(taskRef, task) {
+            const nowTimestamp = firebase.firestore.Timestamp.now();
+
+            function formatMs(ms) {
+                const hrs = Math.floor(ms / 3600000);
+                const mins = Math.floor((ms % 3600000) / 60000);
+                return `${hrs}h ${mins}m`;
+            }
+
+            function toFirestoreTimestamp(value) {
+                if (!value) return null;
+                if (value instanceof firebase.firestore.Timestamp) return value;
+                if (value instanceof Date) return firebase.firestore.Timestamp.fromDate(value);
+                const d = new Date(value);
+                if (!isNaN(d.getTime())) return firebase.firestore.Timestamp.fromDate(d);
+                return null;
+            }
+
+            function calcTimeDetails(sessions = []) {
+                let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
+
+                sessions.forEach(sess => {
+                    const startMs = sess.start?.toDate?.().getTime();
+                    const endMs = sess.end?.toDate?.().getTime();
+                    if (startMs && endMs) {
+                        totalWorkMs += endMs - startMs;
+                        if (lastEnd !== null) {
+                            const pause = startMs - lastEnd;
+                            if (pause > 0) {
+                                totalPauseMs += pause;
+                                pauseCount++;
+                            }
+                        }
+                        lastEnd = endMs;
+                    }
+                });
+
+                const startTime = sessions[0]?.start || null;
+                const endTime = sessions.length ? sessions[sessions.length - 1]?.end || null : null;
+
+                return { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime };
+            }
+
+            const sessions = Array.isArray(task.workSessions) ? task.workSessions : [];
+
+            const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(sessions);
+
+            const taskStart = toFirestoreTimestamp(task.taskStart) || toFirestoreTimestamp(startTime) || nowTimestamp;
+            const taskEnd = toFirestoreTimestamp(task.taskEnd) || toFirestoreTimestamp(endTime) || nowTimestamp;
+
+            try {
+                await taskRef.update({
+                    Status: "Complete",
+                    taskStart: taskStart,
+                    taskEnd: taskEnd,
+                    TimeStarted: formatTimestamp(taskStart),
+                    TimeEnd: formatTimestamp(taskEnd),
+                    TotalWorkHours: formatMs(totalWorkMs || (taskEnd.toMillis() - taskStart.toMillis())),
+                    TotalPauseHours: formatMs(totalPauseMs),
+                    Remarks: pauseCount > 1 ? "-" : (task.Remarks || "")
+                });
+
+                alert("Task marked complete with updated time info.");
+            } catch (err) {
+                console.error("Failed to update task:", err);
+                alert("Failed to update task time info.");
+            }
+        }
+
+        // Attach edit/delete/complete button events
+        function attachRowEventListeners() {
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async e => {
+                    e.stopPropagation();
+                    const id = e.target.dataset.id;
+                    if (confirm('Delete this task?')) {
+                        try {
+                            await db.collection('tasks').doc(id).delete();
+                            alert('Deleted');
+                            loadTasks();
+                        } catch (err) {
+                            console.error(err);
+                            alert('Delete failed');
+                        }
+                    }
+                });
+            });
+
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', async e => {
+                    e.stopPropagation();
+                    const id = e.target.dataset.id;
+                    const task = allTasks.find(t => t.id === id);
+                    if (!task) return alert('Task not found');
+
+                    editingTaskId = id; // Track the task being edited
+                    populateDropdowns(); // Ensure dropdowns are filled
+                    taskForm.reset(); // Clear previous data
+
+                    // Populate form fields
+                    taskForm.elements['company'].value = task['Existing Company Name'] || '';
+                    taskForm.elements['typeOfWork'].value = task['TYPE OF WORK'] || '';
+                    taskForm.elements['accountType'].value = task['ACCOUNT TYPE'] || '';
+                    taskForm.elements['accountsCards'].value = task['Accounts / Cards'] || '';
+                    taskForm.elements['task'].value = task.Task || '';
+                    taskForm.elements['owner'].value = task.Owner || '';
+                    taskForm.elements['workFor'].value = task['WORK FOR'] || '';
+                    taskForm.elements['period'].value = task.PERIOD || '';
+                    taskForm.elements['dueDate'].value = task['Due date'] || '';
+                    taskForm.elements['assignedBy'].value = task['Assigned By'] || '';
+                    taskForm.elements['notes'].value = task.Notes || '';
+
+                    taskModal.style.display = 'flex';
+                });
+            });
+        }
+
+        // Render pagination with page numbers
+        function renderPagination(tasks) {
+            paginationDiv.innerHTML = '';
+            const totalPages = Math.ceil(tasks.length / rowsPerPage);
+            if (totalPages <= 1) return;
+
+            const maxVisiblePages = 5;
+            const pages = [];
+
+            // Always show first page
+            pages.push(1);
+
+            let start = Math.max(2, currentPage - 1);
+            let end = Math.min(totalPages - 1, currentPage + 1);
+
+            if (currentPage <= 3) {
+                end = Math.min(4, totalPages - 1);
+            } else if (currentPage >= totalPages - 2) {
+                start = Math.max(totalPages - 3, 2);
+            }
+
+            if (start > 2) pages.push('...');
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+            if (end < totalPages - 1) pages.push('...');
+            
+            // Always show last page
+            if (totalPages > 1) pages.push(totalPages);
+
+            const prevBtn = createPageButton('Prev', currentPage === 1, () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTablePage(currentPage, filteredTasks);
+                    renderPagination(filteredTasks);
+                }
+            });
+            paginationDiv.appendChild(prevBtn);
+
+            pages.forEach(p => {
+                const isEllipsis = p === '...';
+                const btn = document.createElement('button');
+                btn.textContent = p;
+                btn.disabled = isEllipsis || p === currentPage;
+                if (!isEllipsis && p !== currentPage) {
+                    btn.addEventListener('click', () => {
+                        currentPage = p;
+                        renderTablePage(currentPage, filteredTasks);
+                        renderPagination(filteredTasks);
+                    });
+                }
+                paginationDiv.appendChild(btn);
+            });
+
+            const nextBtn = createPageButton('Next', currentPage === totalPages, () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTablePage(currentPage, filteredTasks);
+                    renderPagination(filteredTasks);
+                }
+            });
+            paginationDiv.appendChild(nextBtn);
+        }
+
+        function createPageButton(label, disabled, onClick) {
+            const btn = document.createElement('button');
+            btn.textContent = label;
+            btn.disabled = disabled;
+            if (!disabled) btn.addEventListener('click', onClick);
+            return btn;
+        }
+
+        // Filter tasks based on inputs
+        function applyFilters() {
+            const company = searchCompany.value.toLowerCase();
+            const owner = searchOwner.value.toLowerCase();
+            const status = statusFilter.value;
+
+            filteredTasks = allTasks.filter(task => {
+                const matchCompany = task['Existing Company Name']?.toLowerCase().includes(company);
+                const matchOwner = task.Owner?.toLowerCase().includes(owner);
+                const matchStatus = !status || task.Status === status;
+                return matchCompany && matchOwner && matchStatus;
+            });
+
+            currentPage = 1;
+            renderTablePage(currentPage, filteredTasks);
+            renderPagination(filteredTasks);
+        }
+
+        // Open modal on + button click
+        createTaskBtn.addEventListener('click', () => {
+            editingTaskId = null;
+            populateDropdowns();
+            taskForm.reset();
+            document.getElementById('modalTitle').textContent = 'Create New Task';
+            taskModal.style.display = 'flex';
+        });
+
+        // Close modal events
+        closeModalBtn.addEventListener('click', () => {
+            taskModal.style.display = 'none';
+        });
+
+        cancelTaskBtn.addEventListener('click', () => {
+            taskModal.style.display = 'none';
+        });
+
+        // Populate Owner and Assigned By dropdowns from existing tasks
+        function populateDropdowns() {
+            const owners = new Set();
+            const assignedBys = new Set();
+
+            allTasks.forEach(task => {
+                if (task.Owner) owners.add(task.Owner);
+                if (task['Assigned By']) assignedBys.add(task['Assigned By']);
+            });
+
+            const ownerSelect = document.getElementById('owner');
+            const assignedBySelect = document.getElementById('assignedBySelect');
+
+            ownerSelect.innerHTML = '<option value="">Select Owner</option>';
+            assignedBySelect.innerHTML = '<option value="">Select Assigned By</option>';
+
+            owners.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                ownerSelect.appendChild(option);
+            });
+
+            assignedBys.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                assignedBySelect.appendChild(option);
+            });
+        }
+
+        // When user types company name, prefill if exists
+        const companyInput = document.getElementById('company');
+        companyInput.addEventListener('input', () => {
+            const val = companyInput.value.trim().toLowerCase();
+            if (!val) return;
+            const existingTask = allTasks.find(task => (task['Existing Company Name']?.toLowerCase() === val));
+            if (existingTask) {
+                document.getElementById('typeOfWork').value = existingTask['TYPE OF WORK'] || '';
+                document.getElementById('accountType').value = existingTask['ACCOUNT TYPE'] || '';
+                document.getElementById('accountsCards').value = existingTask['Accounts / Cards'] || '';
+                document.getElementById('owner').value = existingTask.Owner || '';
+                document.getElementById('assignedBySelect').value = existingTask['Assigned By'] || '';
+            }
+        });
+
+        // Update Accounts/Cards based on company and account type
+        function updateAccountsCardsList() {
+            const company = companyInput.value.trim();
+            const accountType = document.getElementById('accountType').value;
+
+            const accountsCardsList = document.getElementById('accountsCardsList');
+            accountsCardsList.innerHTML = '';
+
+            if (!company) return;
+
+            const cardsSet = new Set();
+
+            allTasks.forEach(task => {
+                const taskCompany = task['Existing Company Name'] || '';
+                const taskAccountType = task['ACCOUNT TYPE'] || '';
+
+                if (
+                    taskCompany.toLowerCase() === company.toLowerCase() &&
+                    taskAccountType.toLowerCase() === accountType.toLowerCase() &&
+                    task['Accounts / Cards']
+                ) {
+                    cardsSet.add(task['Accounts / Cards']);
+                }
+            });
+
+            cardsSet.forEach(card => {
+                const option = document.createElement('option');
+                option.value = card;
+                accountsCardsList.appendChild(option);
+            });
+        }
+
+        // Add event listeners to update Accounts / Cards dynamically
+        companyInput.addEventListener('input', updateAccountsCardsList);
+        document.getElementById('accountType').addEventListener('change', updateAccountsCardsList);
+
+        // Show/hide period input based on work for selection
+        document.getElementById('workForSelect').addEventListener('change', function () {
+            const val = this.value;
+            const period = document.getElementById('periodInput');
+            if (val) {
+                period.style.display = 'inline-block';
+                period.placeholder = `${val} Period`;
+            } else {
+                period.style.display = 'none';
+            }
+        });
+
+        // Corrected generateSINO: generates globally incremented SINO ignoring company name
+        function generateSINO() {
+            let maxNumber = 0;
+            allTasks.forEach(task => {
+                if (task.SINO) {
+                    const match = task.SINO.match(/(\d+)$/);
+                    if (match) {
+                        const num = parseInt(match[1], 10);
+                        if (num > maxNumber) maxNumber = num;
+                    }
+                }
+            });
+
+            const nextNumber = maxNumber + 1;
+            return String(nextNumber).padStart(3, '0');
+        }
+
+        function cleanUndefined(obj) {
+            return Object.fromEntries(
+                Object.entries(obj).filter(([_, v]) => v !== undefined)
+            );
+        }
+
+        // Task form submission
+        taskForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(taskForm);
+            const data = {};
+
+            formData.forEach((value, key) => {
+                data[key] = value.trim();
+            });
+
+            if (!data.company || !data.typeOfWork || !data.dueDate || !data.owner || !data.assignedBy) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            const taskData = {
+                SINO: editingTaskId ? undefined : generateSINO(),
+                Status: editingTaskId ? undefined : 'Not Started',
+                'Existing Company Name': data.company,
+                'TYPE OF WORK': data.typeOfWork,
+                'ACCOUNT TYPE': data.accountType || '',
+                'Accounts / Cards': data.accountsCards || '',
+                Task: data.task || '',
+                Owner: data.owner,
+                'WORK FOR': data.workFor || '',
+                PERIOD: data.period || '',
+                'Due date': data.dueDate,
+                'Assigned By': data.assignedBy,
+                Notes: data.notes || ''
+            };
+
+            try {
+                if (editingTaskId) {
+                    const existingTask = allTasks.find(t => t.id === editingTaskId);
+                    if (!existingTask) throw new Error("Task not found for editing.");
+
+                    const mergedTask = { ...existingTask, ...cleanUndefined(taskData) };
+
+                    await db.collection('tasks').doc(editingTaskId).set(mergedTask);
+                    alert('Task updated successfully!');
+                    editingTaskId = null;
+                } else {
+                    await db.collection('tasks').add(taskData);
+                    alert('Task created successfully!');
+                }
+
+                taskModal.style.display = 'none';
+                loadTasks();
+            } catch (err) {
+                console.error('Error saving task:', err);
+                alert('Error saving task. See console for details.');
+            }
+        });
+
+        // CSV Upload functionality
+        uploadCSVBtn.addEventListener('click', () => {
+            csvUpload.click();
+        });
+
+        csvUpload.addEventListener('change', handleCSVUpload);
+
+        async function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return alert('No file selected.');
+
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: async function (results) {
+                    const rows = results.data;
+
+                    const requiredHeaders = ['SINO', 'Company', 'Type of Work', 'Owner', 'DueDate', 'Assigned By', 'Status'];
+                    const csvHeaders = Object.keys(rows[0]);
+
+                    const hasAllRequired = requiredHeaders.every(h => csvHeaders.includes(h));
+                    if (!hasAllRequired) return alert('Missing required headers in CSV.');
+
+                    const tasksToUpload = [];
+
+                    for (let i = 0; i < rows.length; i++) {
+                        const row = rows[i];
+                        const dueDateStr = row['DueDate'];
+                        const timeStartStr = row['Time Started'];
+                        const timeEndStr = row['Time End'];
+
+                        let timeStart = null, timeEnd = null;
+                        try {
+                            // Convert to valid Date
+                            timeStart = timeStartStr ? new Date(timeStartStr) : null;
+                            timeEnd = timeEndStr ? new Date(timeEndStr) : null;
+                        } catch (e) {
+                            console.warn(`Invalid time format in row ${i + 2}`);
+                        }
+
+                        const workSessions = (timeStart && timeEnd)
+                            ? [{
+                                start: firebase.firestore.Timestamp.fromDate(timeStart),
+                                end: firebase.firestore.Timestamp.fromDate(timeEnd)
+                            }]
+                            : [];
+
+                        const finalTask = {
+                            SINO: row['SINO'],
+                            'Existing Company Name': row['Company'],
+                            'TYPE OF WORK': row['Type of Work'],
+                            'ACCOUNT TYPE': row['Account Type'],
+                            'Accounts / Cards': row['Accounts / Cards'],
+                            Task: row['Task'],
+                            Owner: row['Owner'],
+                            'WORK FOR': row['Work For'],
+                            PERIOD: row['Period'],
+                            'Due date': row['DueDate'],
+                            'Assigned By': row['Assigned By'],
+                            Notes: row['Notes'],
+                            Status: row['Status'] || 'Not Started',
+
+                            TimeStarted: timeStart ? timeStart.toLocaleString() : '',
+                            TimeEnd: timeEnd ? timeEnd.toLocaleString() : '',
+                            taskStart: timeStart ? firebase.firestore.Timestamp.fromDate(timeStart) : null,
+                            taskEnd: timeEnd ? firebase.firestore.Timestamp.fromDate(timeEnd) : null,
+
+                            TotalWorkHours: row['Total Work Hours'] || '',
+                            TotalPauseHours: row['Total Pause Hours'] || '',
+                            Remarks: row['Remarks'] || '',
+                            workSessions
+                        };
+
+                        tasksToUpload.push(finalTask);
+                    }
+
+                    try {
+                        const batch = db.batch();
+                        const tasksRef = db.collection('tasks');
+
+                        tasksToUpload.forEach(task => {
+                            const newDoc = tasksRef.doc();
+                            batch.set(newDoc, task);
+                        });
+
+                        await batch.commit();
+                        alert(`${tasksToUpload.length} tasks uploaded successfully.`);
+                        loadTasks(); // Reload the task table
+                    } catch (err) {
+                        console.error('Error uploading tasks:', err);
+                        alert('Failed to upload tasks. See console for details.');
+                    }
+                },
+                error: function (err) {
+                    console.error("PapaParse error:", err);
+                    alert("CSV parsing failed.");
+                }
+            });
+        }
 
         // Initialize the dashboard with sample data
         document.addEventListener('DOMContentLoaded', function() {
@@ -687,9 +1708,13 @@
                 });
             });
             
-            // Display loaded data in console for verification
-            console.log('Companies loaded:', companies);
-            console.log('Users loaded:', users);
+            // Attach filter input listeners
+            [searchCompany, searchOwner, statusFilter].forEach(el =>
+                el.addEventListener('input', applyFilters)
+            );
+            
+            // Load tasks on page load
+            loadTasks();
         });
     </script>
 </body>
