@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Complete CRM System</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
     /* Global Styles */
     * {
@@ -664,9 +665,84 @@
         font-size: 12px;
         color: var(--gray);
     }
+
+    /* Loading overlay */
+    #loadingOverlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 24px;
+    }
+
+    .spinner {
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid #2a9d8f;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Toast notification */
+    #toast {
+        visibility: hidden;
+        min-width: 300px;
+        background-color: #e76f51;
+        color: white;
+        text-align: center;
+        border-radius: 8px;
+        padding: 16px;
+        position: fixed;
+        z-index: 1000;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        font-weight: 600;
+    }
+
+    #toast.show {
+        visibility: visible;
+        animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    }
+
+    @keyframes fadein {
+        from {bottom: 0; opacity: 0;}
+        to {bottom: 30px; opacity: 1;}
+    }
+
+    @keyframes fadeout {
+        from {bottom: 30px; opacity: 1;}
+        to {bottom: 0; opacity: 0;}
+    }
 </style>
 </head>
 <body>
+    <!-- Toast notification -->
+    <div id="toast"></div>
+
+    <!-- Loading overlay -->
+    <div id="loadingOverlay">
+        <div style="text-align: center;">
+            <div style="margin-bottom: 20px;">Processing, please wait...</div>
+            <div class="spinner"></div>
+        </div>
+    </div>
+
     <div class="app-container">
         <!-- Sidebar -->
         <div class="sidebar">
@@ -749,7 +825,7 @@
             <div class="top-bar">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search across CRM...">
+                    <input type="text" id="globalSearch" placeholder="Search across CRM...">
                 </div>
                 
                 <div class="user-menu">
@@ -759,7 +835,7 @@
                     </div>
                     
                     <div class="user-profile">
-                        <div class="user-avatar">U</div>
+                        <div class="user-avatar" id="userAvatar">U</div>
                         <div class="user-info">
                             <div class="user-name" id="welcomeMsg">User Name</div>
                             <div class="user-role" style="font-size: 12px; color: var(--gray);">Administrator</div>
@@ -773,40 +849,40 @@
                 <div class="dashboard">
                     <div class="stat-card">
                         <div class="stat-card-header">
-                            <div class="stat-card-title">Total Revenue</div>
+                            <div class="stat-card-title">Total Tasks</div>
                             <div class="stat-card-icon" style="background: var(--secondary);">
-                                <i class="fas fa-dollar-sign"></i>
+                                <i class="fas fa-tasks"></i>
                             </div>
                         </div>
-                        <div class="stat-card-value">$142,845</div>
+                        <div class="stat-card-value" id="totalTasks">0</div>
                         <div class="stat-card-change change-positive">
-                            <i class="fas fa-arrow-up"></i> 12.5% from last month
+                            <i class="fas fa-arrow-up"></i> <span id="taskChange">0%</span> from last month
                         </div>
                     </div>
                     
                     <div class="stat-card">
                         <div class="stat-card-header">
-                            <div class="stat-card-title">New Deals</div>
+                            <div class="stat-card-title">Completed Tasks</div>
                             <div class="stat-card-icon" style="background: var(--accent);">
-                                <i class="fas fa-handshake"></i>
-                            </div>
-                        </div>
-                        <div class="stat-card-value">24</div>
-                        <div class="stat-card-change change-positive">
-                            <i class="fas fa-arrow-up"></i> 8.3% from last month
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-card-header">
-                            <div class="stat-card-title">Tasks Completed</div>
-                            <div class="stat-card-icon" style="background: var(--primary);">
                                 <i class="fas fa-check-circle"></i>
                             </div>
                         </div>
-                        <div class="stat-card-value">142</div>
+                        <div class="stat-card-value" id="completedTasks">0</div>
+                        <div class="stat-card-change change-positive">
+                            <i class="fas fa-arrow-up"></i> <span id="completedChange">0%</span> from last month
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <div class="stat-card-title">In Progress</div>
+                            <div class="stat-card-icon" style="background: var(--primary);">
+                                <i class="fas fa-spinner"></i>
+                            </div>
+                        </div>
+                        <div class="stat-card-value" id="inProgressTasks">0</div>
                         <div class="stat-card-change change-negative">
-                            <i class="fas fa-arrow-down"></i> 3.2% from last month
+                            <i class="fas fa-arrow-down"></i> <span id="progressChange">0%</span> from last month
                         </div>
                     </div>
                 </div>
@@ -814,113 +890,49 @@
                 <div class="charts-container">
                     <div class="chart-card">
                         <div class="chart-header">
-                            <div class="chart-title">Revenue Overview</div>
+                            <div class="chart-title">Tasks Overview</div>
                             <div class="chart-actions">
-                                <button class="btn btn-sm btn-light">This Year</button>
-                                <button class="btn btn-sm btn-light">Last Year</button>
+                                <button class="btn btn-sm btn-light" id="btnThisMonth">This Month</button>
+                                <button class="btn btn-sm btn-light" id="btnLastMonth">Last Month</button>
                             </div>
                         </div>
-                        <div id="revenueChart" style="height: 300px;">
+                        <div id="tasksChart" style="height: 300px;">
                             <!-- Chart will be rendered here -->
-                            <div style="display: flex; align-items: flex-end; height: 100%; gap: 30px; justify-content: center;">
-                                <div style="display: flex; flex-direction: column; align-items: center;">
-                                    <div style="background: var(--secondary); width: 40px; height: 120px; border-radius: 5px 5px 0 0;"></div>
-                                    <div style="margin-top: 10px;">Jan</div>
-                                </div>
-                                <div style="display: flex; flex-direction: column; align-items: center;">
-                                    <div style="background: var(--secondary); width: 40px; height: 160px; border-radius: 5px 5px 0 0;"></div>
-                                    <div style="margin-top: 10px;">Feb</div>
-                                </div>
-                                <div style="display: flex; flex-direction: column; align-items: center;">
-                                    <div style="background: var(--secondary); width: 40px; height: 200px; border-radius: 5px 5px 0 0;"></div>
-                                    <div style="margin-top: 10px;">Mar</div>
-                                </div>
-                                <div style="display: flex; flex-direction: column; align-items: center;">
-                                    <div style="background: var(--secondary); width: 40px; height: 180px; border-radius: 5px 5px 0 0;"></div>
-                                    <div style="margin-top: 10px;">Apr</div>
-                                </div>
-                                <div style="display: flex; flex-direction: column; align-items: center;">
-                                    <div style="background: var(--secondary); width: 40px; height: 220px; border-radius: 5px 5px 0 0;"></div>
-                                    <div style="margin-top: 10px;">May</div>
-                                </div>
-                                <div style="display: flex; flex-direction: column; align-items: center;">
-                                    <div style="background: var(--secondary); width: 40px; height: 240px; border-radius: 5px 5px 0 0;"></div>
-                                    <div style="margin-top: 10px;">Jun</div>
-                                </div>
-                            </div>
+                            <canvas id="tasksOverviewChart"></canvas>
                         </div>
                     </div>
                     
                     <div class="chart-card">
                         <div class="chart-header">
-                            <div class="chart-title">Deals by Stage</div>
+                            <div class="chart-title">Tasks by Status</div>
                         </div>
-                        <div id="dealStageChart" style="height: 300px;">
+                        <div id="tasksStatusChart" style="height: 300px;">
                             <!-- Chart will be rendered here -->
-                            <div style="display: flex; justify-content: center; align-items: center; height: 100%;">
-                                <div style="width: 200px; height: 200px; border-radius: 50%; background: conic-gradient(
-                                    var(--primary) 0% 30%, 
-                                    var(--secondary) 30% 55%, 
-                                    var(--accent) 55% 75%,
-                                    var(--warning) 75% 90%,
-                                    var(--success) 90% 100%
-                                ); position: relative;"></div>
-                            </div>
+                            <canvas id="tasksByStatusChart"></canvas>
                         </div>
                     </div>
                 </div>
                 
                 <div class="table-container">
                     <div class="table-header">
-                        <div class="table-title">Recent Activities</div>
-                        <button class="btn btn-primary">View All</button>
+                        <div class="table-title">Recent Tasks</div>
+                        <button class="btn btn-primary" id="viewAllTasks">View All</button>
                     </div>
                     
-                    <ul class="activity-list">
-                        <li class="activity-item">
-                            <div class="activity-icon" style="background: rgba(42, 157, 143, 0.1); color: var(--secondary);">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-title">Task Completed</div>
-                                <div class="activity-desc">Quarterly financial review for ABC Corp</div>
-                                <div class="activity-time">2 hours ago</div>
-                            </div>
-                        </li>
-                        
-                        <li class="activity-item">
-                            <div class="activity-icon" style="background: rgba(231, 111, 81, 0.1); color: var(--accent);">
-                                <i class="fas fa-handshake"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-title">New Deal</div>
-                                <div class="activity-desc">XYZ Enterprises - $25,000 deal created</div>
-                                <div class="activity-time">5 hours ago</div>
-                            </div>
-                        </li>
-                        
-                        <li class="activity-item">
-                            <div class="activity-icon" style="background: rgba(220, 53, 69, 0.1); color: var(--danger);">
-                                <i class="fas fa-times-circle"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-title">Deal Lost</div>
-                                <div class="activity-desc">Global Tech Solutions - Competitive bid</div>
-                                <div class="activity-time">Yesterday</div>
-                            </div>
-                        </li>
-                        
-                        <li class="activity-item">
-                            <div class="activity-icon" style="background: rgba(40, 167, 69, 0.1); color: var(--success);">
-                                <i class="fas fa-check-double"></i>
-                            </div>
-                            <div class="activity-content">
-                                <div class="activity-title">Deal Won</div>
-                                <div class="activity-desc">Nexus Industries - $42,000 contract signed</div>
-                                <div class="activity-time">2 days ago</div>
-                            </div>
-                        </li>
-                    </ul>
+                    <table id="recentTasksTable">
+                        <thead>
+                            <tr>
+                                <th>SINO</th>
+                                <th>Company</th>
+                                <th>Type of Work</th>
+                                <th>Status</th>
+                                <th>Due Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
             
@@ -929,6 +941,10 @@
                 <div class="table-header" style="margin-bottom: 20px;">
                     <div class="table-title">Task Management</div>
                     <button class="btn btn-primary" id="createTaskBtn"><i class="fas fa-plus"></i> Create Task</button>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <input type="text" id="taskSearchInput" placeholder="Search tasks..." class="form-control" style="width: 300px;">
                 </div>
                 
                 <div class="table-container">
@@ -945,45 +961,12 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>001</td>
-                                <td>ABC Corporation</td>
-                                <td>Financial Audit</td>
-                                <td><span class="badge badge-primary">Not Started</span></td>
-                                <td>You</td>
-                                <td>Jun 30, 2023</td>
-                                <td>
-                                    <button class="btn btn-sm btn-light"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm btn-light"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>002</td>
-                                <td>XYZ Enterprises</td>
-                                <td>Tax Consultation</td>
-                                <td><span class="badge badge-secondary">In Progress</span></td>
-                                <td>You</td>
-                                <td>Jul 15, 2023</td>
-                                <td>
-                                    <button class="btn btn-sm btn-light"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm btn-light"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>003</td>
-                                <td>Global Tech Solutions</td>
-                                <td>Compliance Review</td>
-                                <td><span class="badge badge-success">Complete</span></td>
-                                <td>You</td>
-                                <td>Jun 20, 2023</td>
-                                <td>
-                                    <button class="btn btn-sm btn-light"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm btn-light"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
+                            <!-- Will be populated by JavaScript -->
                         </tbody>
                     </table>
                 </div>
+
+                <div id="paginationControls" style="margin-top: 20px; text-align: center;"></div>
             </div>
             
             <!-- Other pages would go here (Leads, Contacts, Accounts, Deals, etc.) -->
@@ -1151,7 +1134,7 @@
         </div>
     </div>
     
-    <!-- Task Modal (from original code) -->
+    <!-- Task Modal -->
     <div id="taskModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1213,6 +1196,24 @@
                             <option value="Complete">Complete</option>
                         </select>
                     </div>
+
+                    <div class="form-group">
+                        <label class="form-label">WORK FOR</label>
+                        <select class="form-control" name="WORK FOR" id="workFor">
+                            <option value="">--Choose--</option>
+                            <option value="Yearly">Yearly</option>
+                            <option value="Monthly">Monthly</option>
+                            <option value="Quarterly">Quarterly</option>
+                            <option value="Bi-weekly">Bi-weekly</option>
+                            <option value="Weekly">Weekly</option>
+                            <option value="Custom">Custom</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Period/Year</label>
+                        <input type="text" class="form-control" name="Period" id="period" placeholder="Enter period (e.g., 2023, Q1 2023, Jan-Mar 2023)">
+                    </div>
                     
                     <div class="form-group">
                         <label class="form-label">Due Date</label>
@@ -1238,11 +1239,13 @@
         </div>
     </div>
 
-    <!-- Font Awesome for icons -->
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
-        // Firebase config (same as original)
+        // Firebase config
         const firebaseConfig = {
             apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
             authDomain: "task-manager-602da.firebaseapp.com",
@@ -1252,9 +1255,21 @@
             appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
         };
         
-        // Initialize Firebase (commented out for safety in this example)
-        // firebase.initializeApp(firebaseConfig);
-        // const db = firebase.firestore();
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // User session
+        const username = sessionStorage.getItem('username') || "Mohammed Faizal";
+        if (!sessionStorage.getItem('username')) {
+            sessionStorage.setItem('username', username);
+        }
+
+        // Update profile badge with username and avatar
+        const welcomeMsgEl = document.getElementById('welcomeMsg');
+        const userAvatarEl = document.getElementById('userAvatar');
+        welcomeMsgEl.textContent = username;
+        userAvatarEl.textContent = username.charAt(0).toUpperCase();
         
         // DOM elements
         const navItems = document.querySelectorAll('.nav-item');
@@ -1263,6 +1278,12 @@
         const taskModal = document.getElementById('taskModal');
         const cancelBtn = document.getElementById('cancelBtn');
         const modalClose = document.querySelector('.modal-close');
+        const submitTaskBtn = document.getElementById('submitTaskBtn');
+        const taskForm = document.getElementById('taskForm');
+        const toast = document.getElementById('toast');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const taskSearchInput = document.getElementById('taskSearchInput');
+        const globalSearch = document.getElementById('globalSearch');
         
         // Navigation
         navItems.forEach(item => {
@@ -1281,48 +1302,458 @@
                 // Show the selected page
                 const pageId = this.getAttribute('data-page');
                 document.getElementById(pageId).classList.add('active');
+                
+                // If tasks page is selected, load tasks
+                if (pageId === 'tasks') {
+                    loadTasks();
+                }
+                
+                // If dashboard is selected, load dashboard data
+                if (pageId === 'dashboard') {
+                    loadDashboardData();
+                }
             });
         });
         
+        // Show/hide loading overlay
+        function showLoading() {
+            loadingOverlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideLoading() {
+            loadingOverlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            toast.textContent = message;
+            toast.className = 'show';
+            setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
+        }
+        
         // Modal controls
-        createTaskBtn.addEventListener('click', () => {
+        createTaskBtn.addEventListener('click', async () => {
+            // Generate SINO
+            const newSINO = await generateSINO();
+            document.getElementById('SINO').value = newSINO;
+            
+            // Set default values
+            document.getElementById('Owner').value = username;
+            document.getElementById('Task').value = 'Daily Task';
+            
+            // Load dropdown options with current user's data
+            await loadDropdownOptions();
+            
+            // Show modal
             taskModal.style.display = 'flex';
+            document.querySelector('.modal-title').textContent = 'Create New Task';
         });
         
         cancelBtn.addEventListener('click', () => {
             taskModal.style.display = 'none';
+            taskForm.reset();
         });
         
         modalClose.addEventListener('click', () => {
             taskModal.style.display = 'none';
+            taskForm.reset();
         });
         
         // Close modal when clicking outside
         window.addEventListener('click', (e) => {
             if (e.target === taskModal) {
                 taskModal.style.display = 'none';
+                taskForm.reset();
             }
         });
         
-        // User session (simulated)
-        const username = "User Name"; // This would come from sessionStorage in real app
-        document.getElementById('welcomeMsg').textContent = username;
+        // Global search functionality
+        globalSearch.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                const searchTerm = globalSearch.value.toLowerCase().trim();
+                if (searchTerm) {
+                    // Switch to tasks page and search
+                    navItems.forEach(navItem => navItem.classList.remove('active'));
+                    document.querySelector('[data-page="tasks"]').classList.add('active');
+                    
+                    pages.forEach(page => page.classList.remove('active'));
+                    document.getElementById('tasks').classList.add('active');
+                    
+                    taskSearchInput.value = searchTerm;
+                    filterTasks(searchTerm);
+                }
+            }
+        });
         
-        // Generate SINO (simplified version for demo)
-        function generateSINO() {
-            return "004"; // In real app, this would query the database
+        // Task search functionality
+        taskSearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            filterTasks(searchTerm);
+        });
+        
+        // Filter tasks based on search term
+        function filterTasks(searchTerm) {
+            const rows = document.querySelectorAll('#tasksTable tbody tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         }
         
-        // Set up task form
-        document.getElementById('SINO').value = generateSINO();
-        document.getElementById('Owner').value = username;
-        document.getElementById('Task').value = 'Daily Task';
+        // Load tasks from Firebase
+        async function loadTasks() {
+            try {
+                showLoading();
+                const snapshot = await db.collection('tasks')
+                    .where('Owner', '==', username)
+                    .orderBy('SINO')
+                    .get();
+                
+                const tasksTableBody = document.querySelector('#tasksTable tbody');
+                tasksTableBody.innerHTML = '';
+                
+                if (snapshot.empty) {
+                    tasksTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No tasks found</td></tr>';
+                    return;
+                }
+                
+                snapshot.forEach(doc => {
+                    const task = doc.data();
+                    const tr = document.createElement('tr');
+                    
+                    const statusClass = task.Status === 'Complete' ? 'badge-success' : 
+                                      task.Status === 'In Progress' ? 'badge-secondary' : 'badge-primary';
+                    
+                    tr.innerHTML = `
+                        <td>${task.SINO || ''}</td>
+                        <td>${task['Existing Company Name'] || ''}</td>
+                        <td>${task['TYPE OF WORK'] || ''}</td>
+                        <td><span class="badge ${statusClass}">${task.Status || ''}</span></td>
+                        <td>${task.Owner || ''}</td>
+                        <td>${task['Due date'] || ''}</td>
+                        <td>
+                            <button class="btn btn-sm btn-light" data-id="${doc.id}"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-light" data-id="${doc.id}"><i class="fas fa-trash"></i></button>
+                        </td>
+                    `;
+                    
+                    tasksTableBody.appendChild(tr);
+                });
+                
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+                showToast('Error loading tasks');
+            } finally {
+                hideLoading();
+            }
+        }
         
-        // Form submission (would connect to Firebase in real app)
-        document.getElementById('submitTaskBtn').addEventListener('click', (e) => {
+        // Load dashboard data
+        async function loadDashboardData() {
+            try {
+                showLoading();
+                const snapshot = await db.collection('tasks')
+                    .where('Owner', '==', username)
+                    .get();
+                
+                const tasks = [];
+                snapshot.forEach(doc => {
+                    tasks.push(doc.data());
+                });
+                
+                // Update stats
+                document.getElementById('totalTasks').textContent = tasks.length;
+                document.getElementById('completedTasks').textContent = tasks.filter(t => t.Status === 'Complete').length;
+                document.getElementById('inProgressTasks').textContent = tasks.filter(t => t.Status === 'In Progress').length;
+                
+                // Update recent tasks table
+                const recentTasksTable = document.querySelector('#recentTasksTable tbody');
+                recentTasksTable.innerHTML = '';
+                
+                const recentTasks = tasks.slice(0, 5);
+                recentTasks.forEach(task => {
+                    const statusClass = task.Status === 'Complete' ? 'badge-success' : 
+                                      task.Status === 'In Progress' ? 'badge-secondary' : 'badge-primary';
+                    
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${task.SINO || ''}</td>
+                        <td>${task['Existing Company Name'] || ''}</td>
+                        <td>${task['TYPE OF WORK'] || ''}</td>
+                        <td><span class="badge ${statusClass}">${task.Status || ''}</span></td>
+                        <td>${task['Due date'] || ''}</td>
+                    `;
+                    recentTasksTable.appendChild(tr);
+                });
+                
+                // Create charts
+                createTasksChart(tasks);
+                createTasksByStatusChart(tasks);
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                showToast('Error loading dashboard data');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // Create tasks chart
+        function createTasksChart(tasks) {
+            const ctx = document.getElementById('tasksOverviewChart').getContext('2d');
+            
+            // Group tasks by month
+            const monthlyData = {};
+            tasks.forEach(task => {
+                if (task['Due date']) {
+                    const month = task['Due date'].substring(0, 7); // YYYY-MM
+                    if (!monthlyData[month]) {
+                        monthlyData[month] = 0;
+                    }
+                    monthlyData[month]++;
+                }
+            });
+            
+            const labels = Object.keys(monthlyData).sort();
+            const data = labels.map(month => monthlyData[month]);
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Tasks by Month',
+                        data: data,
+                        backgroundColor: '#2a9d8f',
+                        borderColor: '#23857a',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create tasks by status chart
+        function createTasksByStatusChart(tasks) {
+            const ctx = document.getElementById('tasksByStatusChart').getContext('2d');
+            
+            const statusCounts = {
+                'Not Started': 0,
+                'In Progress': 0,
+                'Complete': 0
+            };
+            
+            tasks.forEach(task => {
+                if (statusCounts.hasOwnProperty(task.Status)) {
+                    statusCounts[task.Status]++;
+                }
+            });
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Not Started', 'In Progress', 'Complete'],
+                    datasets: [{
+                        data: [statusCounts['Not Started'], statusCounts['In Progress'], statusCounts['Complete']],
+                        backgroundColor: [
+                            '#264653',
+                            '#f4a261',
+                            '#2a9d8f'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+        
+        // Generate SINO
+        async function generateSINO() {
+            const snapshot = await db.collection('tasks').get();
+            let maxNumber = 0;
+
+            snapshot.forEach(doc => {
+                const task = doc.data();
+                const sino = task.SINO;
+                if (sino) {
+                    const match = sino.match(/(\d+)$/);
+                    if (match) {
+                        const num = parseInt(match[1], 10);
+                        if (num > maxNumber) {
+                            maxNumber = num;
+                        }
+                    }
+                }
+            });
+
+            const nextNumber = maxNumber + 1;
+            return String(nextNumber).padStart(3, '0');
+        }
+        
+        // Load dropdown options
+        async function loadDropdownOptions() {
+            try {
+                const snapshot = await db.collection('tasks')
+                    .where('Owner', '==', username)
+                    .get();
+                
+                const companies = new Set();
+                const workTypes = new Set();
+                const accounts = new Set();
+                const assignedBys = new Set();
+                
+                snapshot.forEach(doc => {
+                    const task = doc.data();
+                    if (task['Existing Company Name']) companies.add(task['Existing Company Name']);
+                    if (task['TYPE OF WORK']) workTypes.add(task['TYPE OF WORK']);
+                    if (task['Accounts / Cards']) accounts.add(task['Accounts / Cards']);
+                    if (task['Assigned By']) assignedBys.add(task['Assigned By']);
+                });
+                
+                // Update datalists
+                const companyList = document.getElementById('companyList');
+                companyList.innerHTML = '';
+                companies.forEach(company => {
+                    const option = document.createElement('option');
+                    option.value = company;
+                    companyList.appendChild(option);
+                });
+                
+                const workTypeList = document.getElementById('workTypeList');
+                workTypeList.innerHTML = '';
+                workTypes.forEach(workType => {
+                    const option = document.createElement('option');
+                    option.value = workType;
+                    workTypeList.appendChild(option);
+                });
+                
+                const accountsList = document.getElementById('accountsCardsList');
+                accountsList.innerHTML = '';
+                accounts.forEach(account => {
+                    const option = document.createElement('option');
+                    option.value = account;
+                    accountsList.appendChild(option);
+                });
+                
+                const assignedByList = document.getElementById('assignedByList');
+                assignedByList.innerHTML = '';
+                assignedBys.forEach(assignedBy => {
+                    const option = document.createElement('option');
+                    option.value = assignedBy;
+                    assignedByList.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading dropdown options:', error);
+            }
+        }
+        
+        // Handle form submission
+        submitTaskBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            alert('Task would be saved to Firebase in the real application');
-            taskModal.style.display = 'none';
+            
+            try {
+                showLoading();
+                
+                const formData = new FormData(taskForm);
+                const taskData = Object.fromEntries(formData.entries());
+                
+                // Add timestamp and created by
+                taskData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                taskData.CreatedBy = username;
+                
+                // Save to Firestore
+                await db.collection('tasks').add(taskData);
+                
+                showToast('Task created successfully');
+                taskModal.style.display = 'none';
+                taskForm.reset();
+                
+                // Reload tasks if on tasks page
+                if (document.getElementById('tasks').classList.contains('active')) {
+                    loadTasks();
+                }
+                
+                // Reload dashboard if on dashboard page
+                if (document.getElementById('dashboard').classList.contains('active')) {
+                    loadDashboardData();
+                }
+            } catch (error) {
+                console.error('Error creating task:', error);
+                showToast('Error creating task');
+            } finally {
+                hideLoading();
+            }
+        });
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load dashboard data initially
+            loadDashboardData();
+            
+            // Set up WORK FOR dropdown change handler
+            document.getElementById('workFor').addEventListener('change', function(e) {
+                const periodInput = document.getElementById('period');
+                
+                switch(e.target.value) {
+                    case 'Yearly':
+                        periodInput.placeholder = 'Enter year (e.g., 2023)';
+                        break;
+                    case 'Monthly':
+                        periodInput.placeholder = 'Enter month and year (e.g., Jan 2023)';
+                        break;
+                    case 'Quarterly':
+                        periodInput.placeholder = 'Enter quarter and year (e.g., Q1 2023)';
+                        break;
+                    case 'Bi-weekly':
+                        periodInput.placeholder = 'Enter bi-weekly period (e.g., 1-15 Jan 2023)';
+                        break;
+                    case 'Weekly':
+                        periodInput.placeholder = 'Enter week and year (e.g., Week 5, 2023)';
+                        break;
+                    case 'Custom':
+                        periodInput.placeholder = 'Enter custom period (e.g., Jan-Mar 2023)';
+                        break;
+                    default:
+                        periodInput.placeholder = 'Enter period';
+                }
+                
+                periodInput.required = e.target.value !== '';
+            });
+            
+            // Set initial placeholder for period field
+            const workForSelect = document.getElementById('workFor');
+            const periodInput = document.getElementById('period');
+            
+            if (workForSelect.value) {
+                workForSelect.dispatchEvent(new Event('change'));
+            } else {
+                periodInput.placeholder = 'Select WORK FOR first';
+                periodInput.disabled = true;
+            }
+            
+            workForSelect.addEventListener('change', function() {
+                periodInput.disabled = !this.value;
+            });
         });
     </script>
 </body>
