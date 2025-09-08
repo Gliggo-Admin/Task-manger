@@ -34,6 +34,72 @@
         line-height: 1.6;
     }
     
+    /* Login Form */
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    }
+    
+    .login-form {
+        background: white;
+        border-radius: 10px;
+        padding: 30px;
+        width: 100%;
+        max-width: 400px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    .login-form h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: var(--primary);
+    }
+    
+    .login-form .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .login-form .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+    
+    .login-form .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        font-size: 16px;
+        transition: all 0.2s;
+    }
+    
+    .login-form .form-control:focus {
+        outline: none;
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 3px rgba(42, 157, 143, 0.2);
+    }
+    
+    .login-form .btn {
+        width: 100%;
+        padding: 12px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    
+    .login-form .btn:hover {
+        background: #1a3340;
+    }
+    
     /* Layout */
     .app-container {
         display: flex;
@@ -833,6 +899,56 @@
     .task-item:last-child {
         border-bottom: none;
     }
+
+    /* Deal card styles */
+    .deal-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+
+    .deal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .deal-title {
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .deal-value {
+        background: var(--accent);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 14px;
+    }
+
+    .deal-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .deal-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .deal-info-label {
+        font-size: 12px;
+        color: var(--gray);
+    }
+
+    .deal-info-value {
+        font-weight: 500;
+    }
 </style>
 </head>
 <body>
@@ -847,7 +963,24 @@
         </div>
     </div>
 
-    <div class="app-container">
+    <!-- Login Page -->
+    <div id="loginPage" class="login-container">
+        <div class="login-form">
+            <h2>CRM Login</h2>
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-control" id="loginUsername" placeholder="Enter your username">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" class="form-control" id="loginPassword" placeholder="Enter your password">
+            </div>
+            <button class="btn" id="loginBtn">Login</button>
+        </div>
+    </div>
+
+    <!-- App Container (initially hidden) -->
+    <div class="app-container" style="display: none;">
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">
@@ -944,6 +1077,9 @@
                             <div class="user-name" id="welcomeMsg">User Name</div>
                             <div class="user-role" style="font-size: 12px; color: var(--gray);">Administrator</div>
                         </div>
+                        <button id="logoutBtn" style="background: none; border: none; margin-left: 10px; cursor: pointer;" title="Logout">
+                            <i class="fas fa-sign-out-alt" style="color: var(--danger);"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1103,16 +1239,287 @@
                 </div>
             </div>
             
-            <!-- Other pages would go here (Deals, Contacts, etc.) -->
-            <div class="page" id="contacts">Contacts Content</div>
-            <div class="page" id="deals">Deals Content</div>
-            <div class="page" id="opportunities">Opportunities Content</div>
-            <div class="page" id="forecasts">Forecasts Content</div>
-            <div class="page" id="cases">Cases Content</div>
-            <div class="page" id="tickets">Tickets Content</div>
-            <div class="page" id="analytics">Analytics Content</div>
-            <div class="page" id="reports">Reports Content</div>
-            <div class="page" id="settings">Settings Content</div>
+            <!-- Deals Page -->
+            <div class="page" id="deals">
+                <div class="table-header" style="margin-bottom: 20px;">
+                    <div class="table-title">Deal Pipeline</div>
+                    <button class="btn btn-primary" id="addDealBtn"><i class="fas fa-plus"></i> Add Deal</button>
+                </div>
+                
+                <div id="dealsList">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Other pages would go here (Contacts, Opportunities, etc.) -->
+            <div class="page" id="contacts">
+                <div class="table-header" style="margin-bottom: 20px;">
+                    <div class="table-title">Contact Management</div>
+                    <button class="btn btn-primary" id="addContactBtn"><i class="fas fa-plus"></i> Add Contact</button>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Company</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>John Smith</td>
+                                <td>Nexus Industries</td>
+                                <td>john@nexus.com</td>
+                                <td>(555) 123-4567</td>
+                                <td><span class="badge badge-primary">Active</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-light"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-light"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="page" id="opportunities">
+                <div class="table-header" style="margin-bottom: 20px;">
+                    <div class="table-title">Opportunity Management</div>
+                    <button class="btn btn-primary"><i class="fas fa-plus"></i> Add Opportunity</button>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Company</th>
+                                <th>Value</th>
+                                <th>Stage</th>
+                                <th>Close Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Enterprise Plan</td>
+                                <td>ABC Corporation</td>
+                                <td>$25,000</td>
+                                <td><span class="badge badge-secondary">Proposal</span></td>
+                                <td>Jun 30, 2023</td>
+                                <td>
+                                    <button class="btn btn-sm btn-light"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-light"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="page" id="forecasts">
+                <div class="table-header" style="margin-bottom: 20px;">
+                    <div class="table-title">Sales Forecast</div>
+                    <button class="btn btn-primary"><i class="fas fa-sync"></i> Refresh</button>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">Quarterly Forecast</div>
+                    </div>
+                    <div id="forecastChart" style="height: 300px;">
+                        <!-- Chart will be rendered here -->
+                        <canvas id="quarterlyForecastChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="page" id="cases">
+                <div class="table-header" style="margin-bottom: 20px;">
+                    <div class="table-title">Case Management</div>
+                    <button class="btn btn-primary"><i class="fas fa-plus"></i> Add Case</button>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Case #</th>
+                                <th>Subject</th>
+                                <th>Company</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CS-001</td>
+                                <td>Login Issue</td>
+                                <td>XYZ Enterprises</td>
+                                <td><span class="badge badge-secondary">In Progress</span></td>
+                                <td><span class="badge badge-accent">High</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-light"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-light"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="page" id="tickets">
+                <div class="table-header" style="margin-bottom: 20px;">
+                    <div class="table-title">Ticket Management</div>
+                    <button class="btn btn-primary"><i class="fas fa-plus"></i> Add Ticket</button>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ticket #</th>
+                                <th>Subject</th>
+                                <th>Requester</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>TK-001</td>
+                                <td>Password Reset</td>
+                                <td>Sarah Johnson</td>
+                                <td><span class="badge badge-success">Resolved</span></td>
+                                <td><span class="badge badge-primary">Low</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-light"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-light"><i class="fas fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="page" id="analytics">
+                <div class="table-header" style="margin-bottom: 20px;">
+                    <div class="table-title">Analytics Dashboard</div>
+                    <button class="btn btn-primary"><i class="fas fa-download"></i> Export Report</button>
+                </div>
+                
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">Performance Metrics</div>
+                        </div>
+                        <div id="performanceChart" style="height: 300px;">
+                            <!-- Chart will be rendered here -->
+                            <canvas id="performanceMetricsChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">Conversion Rates</div>
+                        </div>
+                        <div id="conversionChart" style="height: 300px;">
+                            <!-- Chart will be rendered here -->
+                            <canvas id="conversionRatesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="page" id="reports">
+                <div class="table-header" style="margin-bottom: 20px;">
+                    <div class="table-title">Report Library</div>
+                    <button class="btn btn-primary"><i class="fas fa-plus"></i> Create Report</button>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Report Name</th>
+                                <th>Type</th>
+                                <th>Last Run</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Monthly Sales Performance</td>
+                                <td>Sales</td>
+                                <td>May 31, 2023</td>
+                                <td>
+                                    <button class="btn btn-sm btn-light"><i class="fas fa-play"></i> Run</button>
+                                    <button class="btn btn-sm btn-light"><i class="fas fa-download"></i> Export</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Customer Satisfaction</td>
+                                <td>Service</td>
+                                <td>May 15, 2023</td>
+                                <td>
+                                    <button class="btn btn-sm btn-light"><i class="fas fa-play"></i> Run</button>
+                                    <button class="btn btn-sm btn-light"><i class="fas fa-download"></i> Export</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="page" id="settings">
+                <div class="table-header" style="margin-bottom: 20px;">
+                    <div class="table-title">System Settings</div>
+                    <button class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <div class="chart-title">User Preferences</div>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div class="form-group">
+                            <label class="form-label">Theme</label>
+                            <select class="form-control">
+                                <option>Light</option>
+                                <option>Dark</option>
+                                <option>Auto</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Language</label>
+                            <select class="form-control">
+                                <option>English</option>
+                                <option>Spanish</option>
+                                <option>French</option>
+                                <option>German</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Notifications</label>
+                            <div>
+                                <input type="checkbox" id="emailNotif" checked>
+                                <label for="emailNotif">Email Notifications</label>
+                            </div>
+                            <div>
+                                <input type="checkbox" id="browserNotif" checked>
+                                <label for="browserNotif">Browser Notifications</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -1241,19 +1648,15 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
-        // User session
-        const username = sessionStorage.getItem('username') || "Mohammed Faizal";
-        if (!sessionStorage.getItem('username')) {
-            sessionStorage.setItem('username', username);
-        }
-
-        // Update profile badge with username and avatar
-        const welcomeMsgEl = document.getElementById('welcomeMsg');
-        const userAvatarEl = document.getElementById('userAvatar');
-        welcomeMsgEl.textContent = username;
-        userAvatarEl.textContent = username.charAt(0).toUpperCase();
+        // Global variables
+        let currentUser = null;
+        let allTasks = [];
         
         // DOM elements
+        const loginPage = document.getElementById('loginPage');
+        const appContainer = document.querySelector('.app-container');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
         const navItems = document.querySelectorAll('.nav-item');
         const pages = document.querySelectorAll('.page');
         const createTaskBtn = document.getElementById('createTaskBtn');
@@ -1267,6 +1670,63 @@
         const taskSearchInput = document.getElementById('taskSearchInput');
         const globalSearch = document.getElementById('globalSearch');
         const viewAllTasksBtn = document.getElementById('viewAllTasks');
+        
+        // Login functionality
+        loginBtn.addEventListener('click', () => {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                showToast('Please enter both username and password');
+                return;
+            }
+            
+            // Simple authentication (in a real app, this would verify against a database)
+            currentUser = username;
+            sessionStorage.setItem('username', username);
+            
+            // Hide login page, show app
+            loginPage.style.display = 'none';
+            appContainer.style.display = 'flex';
+            
+            // Update UI with username
+            document.getElementById('welcomeMsg').textContent = username;
+            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+            
+            // Load initial data
+            loadDashboardData();
+            
+            showToast(`Welcome back, ${username}!`);
+        });
+        
+        // Logout functionality
+        logoutBtn.addEventListener('click', () => {
+            currentUser = null;
+            sessionStorage.removeItem('username');
+            
+            // Hide app, show login page
+            appContainer.style.display = 'none';
+            loginPage.style.display = 'flex';
+            
+            // Clear login form
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            
+            showToast('You have been logged out');
+        });
+        
+        // Check if user is already logged in
+        function checkLoginStatus() {
+            const savedUsername = sessionStorage.getItem('username');
+            if (savedUsername) {
+                currentUser = savedUsername;
+                loginPage.style.display = 'none';
+                appContainer.style.display = 'flex';
+                document.getElementById('welcomeMsg').textContent = savedUsername;
+                document.getElementById('userAvatar').textContent = savedUsername.charAt(0).toUpperCase();
+                loadDashboardData();
+            }
+        }
         
         // Navigation
         navItems.forEach(item => {
@@ -1295,6 +1755,12 @@
                     loadLeadsData();
                 } else if (pageId === 'accounts') {
                     loadAccountsData();
+                } else if (pageId === 'deals') {
+                    loadDealsData();
+                } else if (pageId === 'forecasts') {
+                    loadForecastsData();
+                } else if (pageId === 'analytics') {
+                    loadAnalyticsData();
                 }
             });
         });
@@ -1319,12 +1785,17 @@
         
         // Modal controls
         createTaskBtn.addEventListener('click', async () => {
+            if (!currentUser) {
+                showToast('Please log in to create tasks');
+                return;
+            }
+            
             // Generate SINO
             const newSINO = await generateSINO();
             document.getElementById('SINO').value = newSINO;
             
             // Set default values
-            document.getElementById('Owner').value = username;
+            document.getElementById('Owner').value = currentUser;
             document.getElementById('Task').value = 'Daily Task';
             
             // Load dropdown options with current user's data
@@ -1403,29 +1874,35 @@
             });
         }
         
-        // Load tasks from Firebase
+        // Load tasks from Firebase for the current user
         async function loadTasks() {
+            if (!currentUser) return;
+            
             try {
                 showLoading();
                 const snapshot = await db.collection('tasks')
-                    .where('Owner', '==', username)
+                    .where('Owner', '==', currentUser)
                     .orderBy('SINO')
                     .get();
+                
+                allTasks = [];
+                snapshot.forEach(doc => {
+                    allTasks.push({id: doc.id, ...doc.data()});
+                });
                 
                 const tasksTableBody = document.querySelector('#tasksTable tbody');
                 tasksTableBody.innerHTML = '';
                 
-                if (snapshot.empty) {
+                if (allTasks.length === 0) {
                     tasksTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No tasks found</td></tr>';
                     return;
                 }
                 
-                snapshot.forEach(doc => {
-                    const task = doc.data();
-                    const tr = document.createElement('tr');
-                    
+                allTasks.forEach(task => {
                     const statusClass = task.Status === 'Complete' ? 'badge-success' : 
                                       task.Status === 'In Progress' ? 'badge-secondary' : 'badge-primary';
+                    
+                    const tr = document.createElement('tr');
                     
                     tr.innerHTML = `
                         <td>${task.SINO || ''}</td>
@@ -1435,8 +1912,8 @@
                         <td>${task.Owner || ''}</td>
                         <td>${task['Due date'] || ''}</td>
                         <td>
-                            <button class="btn btn-sm btn-light" data-id="${doc.id}"><i class="fas fa-edit"></i></button>
-                            <button class="btn btn-sm btn-light" data-id="${doc.id}"><i class="fas fa-trash"></i></button>
+                            <button class="btn btn-sm btn-light" data-id="${task.id}"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-light" data-id="${task.id}"><i class="fas fa-trash"></i></button>
                         </td>
                     `;
                     
@@ -1451,12 +1928,14 @@
             }
         }
         
-        // Load dashboard data
+        // Load dashboard data for the current user
         async function loadDashboardData() {
+            if (!currentUser) return;
+            
             try {
                 showLoading();
                 const snapshot = await db.collection('tasks')
-                    .where('Owner', '==', username)
+                    .where('Owner', '==', currentUser)
                     .get();
                 
                 const tasks = [];
@@ -1563,9 +2042,13 @@
         
         // Load accounts data (companies and works)
         async function loadAccountsData() {
+            if (!currentUser) return;
+            
             try {
                 showLoading();
-                const snapshot = await db.collection('tasks').get();
+                const snapshot = await db.collection('tasks')
+                    .where('Owner', '==', currentUser)
+                    .get();
                 
                 const tasks = [];
                 snapshot.forEach(doc => {
@@ -1617,6 +2100,215 @@
                 showToast('Error loading accounts data');
             } finally {
                 hideLoading();
+            }
+        }
+        
+        // Load deals data
+        async function loadDealsData() {
+            try {
+                showLoading();
+                // Sample deals data - in a real app, this would come from Firebase
+                const deals = [
+                    {
+                        title: 'Enterprise Plan',
+                        company: 'ABC Corporation',
+                        value: '$25,000',
+                        stage: 'Proposal',
+                        closeDate: '2023-06-30',
+                        owner: 'You'
+                    },
+                    {
+                        title: 'Premium Support',
+                        company: 'TechSolutions Inc',
+                        value: '$15,000',
+                        stage: 'Negotiation',
+                        closeDate: '2023-07-15',
+                        owner: 'You'
+                    },
+                    {
+                        title: 'Cloud Migration',
+                        company: 'Global Enterprises',
+                        value: '$42,000',
+                        stage: 'Qualification',
+                        closeDate: '2023-08-01',
+                        owner: 'John Smith'
+                    }
+                ];
+                
+                // Display deals
+                const dealsList = document.getElementById('dealsList');
+                dealsList.innerHTML = '';
+                
+                deals.forEach(deal => {
+                    const stageClass = deal.stage === 'Proposal' ? 'badge-secondary' : 
+                                     deal.stage === 'Negotiation' ? 'badge-accent' : 'badge-primary';
+                    
+                    const dealCard = document.createElement('div');
+                    dealCard.className = 'deal-card';
+                    
+                    dealCard.innerHTML = `
+                        <div class="deal-header">
+                            <div class="deal-title">${deal.title}</div>
+                            <div class="deal-value">${deal.value}</div>
+                        </div>
+                        <div class="deal-details">
+                            <div class="deal-info">
+                                <span class="deal-info-label">Company</span>
+                                <span class="deal-info-value">${deal.company}</span>
+                            </div>
+                            <div class="deal-info">
+                                <span class="deal-info-label">Stage</span>
+                                <span class="deal-info-value"><span class="badge ${stageClass}">${deal.stage}</span></span>
+                            </div>
+                            <div class="deal-info">
+                                <span class="deal-info-label">Close Date</span>
+                                <span class="deal-info-value">${deal.closeDate}</span>
+                            </div>
+                            <div class="deal-info">
+                                <span class="deal-info-label">Owner</span>
+                                <span class="deal-info-value">${deal.owner}</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    dealsList.appendChild(dealCard);
+                });
+                
+            } catch (error) {
+                console.error('Error loading deals data:', error);
+                showToast('Error loading deals data');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // Load forecasts data
+        async function loadForecastsData() {
+            try {
+                // Sample forecast data
+                const forecastData = {
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    values: [125000, 145000, 165000, 185000]
+                };
+                
+                // Create forecast chart
+                const ctx = document.getElementById('quarterlyForecastChart').getContext('2d');
+                
+                if (window.forecastChartInstance) {
+                    window.forecastChartInstance.destroy();
+                }
+                
+                window.forecastChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: forecastData.labels,
+                        datasets: [{
+                            label: 'Revenue Forecast',
+                            data: forecastData.values,
+                            backgroundColor: 'rgba(42, 157, 143, 0.2)',
+                            borderColor: '#2a9d8f',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(value) {
+                                        return '$' + value.toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error loading forecasts data:', error);
+            }
+        }
+        
+        // Load analytics data
+        async function loadAnalyticsData() {
+            try {
+                // Sample analytics data
+                const performanceData = {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    values: [85, 78, 92, 89, 95, 90]
+                };
+                
+                const conversionData = {
+                    labels: ['Website', 'Referral', 'Social Media', 'Email', 'Direct'],
+                    values: [25, 30, 15, 20, 10]
+                };
+                
+                // Create performance chart
+                const performanceCtx = document.getElementById('performanceMetricsChart').getContext('2d');
+                
+                if (window.performanceChartInstance) {
+                    window.performanceChartInstance.destroy();
+                }
+                
+                window.performanceChartInstance = new Chart(performanceCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: performanceData.labels,
+                        datasets: [{
+                            label: 'Performance Score',
+                            data: performanceData.values,
+                            backgroundColor: '#264653',
+                            borderColor: '#1a3340',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+                
+                // Create conversion chart
+                const conversionCtx = document.getElementById('conversionRatesChart').getContext('2d');
+                
+                if (window.conversionChartInstance) {
+                    window.conversionChartInstance.destroy();
+                }
+                
+                window.conversionChartInstance = new Chart(conversionCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: conversionData.labels,
+                        datasets: [{
+                            data: conversionData.values,
+                            backgroundColor: [
+                                '#264653',
+                                '#2a9d8f',
+                                '#e76f51',
+                                '#f4a261',
+                                '#6c757d'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error loading analytics data:', error);
             }
         }
         
@@ -1793,6 +2485,11 @@
         submitTaskBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             
+            if (!currentUser) {
+                showToast('Please log in to create tasks');
+                return;
+            }
+            
             try {
                 showLoading();
                 
@@ -1801,7 +2498,7 @@
                 
                 // Add timestamp and created by
                 taskData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                taskData.CreatedBy = username;
+                taskData.CreatedBy = currentUser;
                 
                 // Save to Firestore
                 await db.collection('tasks').add(taskData);
@@ -1831,8 +2528,8 @@
         
         // Initialize the application
         document.addEventListener('DOMContentLoaded', function() {
-            // Load dashboard data initially
-            loadDashboardData();
+            // Check if user is already logged in
+            checkLoginStatus();
             
             // Set up WORK FOR dropdown change handler
             document.getElementById('workFor').addEventListener('change', function(e) {
