@@ -729,6 +729,110 @@
         from {bottom: 30px; opacity: 1;}
         to {bottom: 0; opacity: 0;}
     }
+
+    /* Company card styles */
+    .company-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+
+    .company-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--light-gray);
+    }
+
+    .company-name {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    .task-count {
+        background: var(--secondary);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 14px;
+    }
+
+    .work-list {
+        list-style: none;
+    }
+
+    .work-item {
+        padding: 12px 15px;
+        border-bottom: 1px solid var(--light-gray);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .work-item:last-child {
+        border-bottom: none;
+    }
+
+    .work-type {
+        font-weight: 500;
+    }
+
+    .work-status {
+        font-size: 12px;
+        padding: 4px 8px;
+        border-radius: 20px;
+    }
+
+    /* Lead assignment styles */
+    .assignee-card {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 15px;
+    }
+
+    .assignee-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .assignee-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+    }
+
+    .assignee-name {
+        font-weight: 600;
+    }
+
+    .task-list {
+        list-style: none;
+    }
+
+    .task-item {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--light-gray);
+        font-size: 14px;
+    }
+
+    .task-item:last-child {
+        border-bottom: none;
+    }
 </style>
 </head>
 <body>
@@ -969,161 +1073,39 @@
                 <div id="paginationControls" style="margin-top: 20px; text-align: center;"></div>
             </div>
             
-            <!-- Other pages would go here (Leads, Contacts, Accounts, Deals, etc.) -->
+            <!-- Leads Page -->
             <div class="page" id="leads">
                 <div class="table-header" style="margin-bottom: 20px;">
                     <div class="table-title">Lead Management</div>
-                    <button class="btn btn-primary"><i class="fas fa-plus"></i> Add Lead</button>
+                    <button class="btn btn-primary" id="addLeadBtn"><i class="fas fa-plus"></i> Add Lead</button>
                 </div>
                 
                 <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Company</th>
-                                <th>Status</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                                <th>Owner</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>John Smith</td>
-                                <td>Nexus Industries</td>
-                                <td><span class="badge badge-primary">New</span></td>
-                                <td>john@nexus.com</td>
-                                <td>(555) 123-4567</td>
-                                <td>You</td>
-                                <td>
-                                    <button class="btn btn-sm btn-light"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm btn-light"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Sarah Johnson</td>
-                                <td>TechVision Inc</td>
-                                <td><span class="badge badge-secondary">Contacted</span></td>
-                                <td>sarah@techvision.com</td>
-                                <td>(555) 987-6543</td>
-                                <td>You</td>
-                                <td>
-                                    <button class="btn btn-sm btn-light"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm btn-light"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="table-header">
+                        <div class="table-title">Task Assignments</div>
+                    </div>
+                    
+                    <div id="assigneeList">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
                 </div>
             </div>
             
-            <div class="page" id="deals">
+            <!-- Accounts Page -->
+            <div class="page" id="accounts">
                 <div class="table-header" style="margin-bottom: 20px;">
-                    <div class="table-title">Deal Pipeline</div>
-                    <button class="btn btn-primary"><i class="fas fa-plus"></i> Add Deal</button>
+                    <div class="table-title">Account Management</div>
+                    <button class="btn btn-primary" id="addAccountBtn"><i class="fas fa-plus"></i> Add Account</button>
                 </div>
                 
-                <div class="kanban-board">
-                    <div class="kanban-column">
-                        <div class="kanban-header">
-                            <span>Prospecting</span>
-                            <span class="kanban-count">3</span>
-                        </div>
-                        <div class="kanban-items">
-                            <div class="kanban-item">
-                                <div class="kanban-item-title">ABC Corp - Enterprise Plan</div>
-                                <div class="kanban-item-desc">$25,000 • Closing in 30 days</div>
-                                <div class="kanban-item-meta">
-                                    <span>You</span>
-                                    <span>Jun 30</span>
-                                </div>
-                            </div>
-                            <div class="kanban-item">
-                                <div class="kanban-item-title">TechSolutions - Premium Support</div>
-                                <div class="kanban-item-desc">$15,000 • Closing in 15 days</div>
-                                <div class="kanban-item-meta">
-                                    <span>You</span>
-                                    <span>Jul 15</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="kanban-column">
-                        <div class="kanban-header">
-                            <span>Qualification</span>
-                            <span class="kanban-count">2</span>
-                        </div>
-                        <div class="kanban-items">
-                            <div class="kanban-item">
-                                <div class="kanban-item-title">Global Enterprises - Cloud Migration</div>
-                                <div class="kanban-item-desc">$42,000 • Closing in 45 days</div>
-                                <div class="kanban-item-meta">
-                                    <span>You</span>
-                                    <span>Aug 1</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="kanban-column">
-                        <div class="kanban-header">
-                            <span>Proposal</span>
-                            <span class="kanban-count">2</span>
-                        </div>
-                        <div class="kanban-items">
-                            <div class="kanban-item">
-                                <div class="kanban-item-title">DataSystems Inc - Analytics Package</div>
-                                <div class="kanban-item-desc">$35,000 • Closing in 20 days</div>
-                                <div class="kanban-item-meta">
-                                    <span>You</span>
-                                    <span>Jul 10</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="kanban-column">
-                        <div class="kanban-header">
-                            <span>Negotiation</span>
-                            <span class="kanban-count">1</span>
-                        </div>
-                        <div class="kanban-items">
-                            <div class="kanban-item">
-                                <div class="kanban-item-title">MobileFirst Tech - App Development</div>
-                                <div class="kanban-item-desc">$60,000 • Closing in 10 days</div>
-                                <div class="kanban-item-meta">
-                                    <span>You</span>
-                                    <span>Jun 30</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="kanban-column">
-                        <div class="kanban-header">
-                            <span>Closed Won</span>
-                            <span class="kanban-count">3</span>
-                        </div>
-                        <div class="kanban-items">
-                            <div class="kanban-item">
-                                <div class="kanban-item-title">FinanceCorp - System Integration</div>
-                                <div class="kanban-item-desc">$50,000 • Closed on Jun 15</div>
-                                <div class="kanban-item-meta">
-                                    <span>You</span>
-                                    <span>Won</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div id="companyList">
+                    <!-- Will be populated by JavaScript -->
                 </div>
             </div>
             
-            <!-- Add other page content here -->
+            <!-- Other pages would go here (Deals, Contacts, etc.) -->
             <div class="page" id="contacts">Contacts Content</div>
-            <div class="page" id="accounts">Accounts Content</div>
+            <div class="page" id="deals">Deals Content</div>
             <div class="page" id="opportunities">Opportunities Content</div>
             <div class="page" id="forecasts">Forecasts Content</div>
             <div class="page" id="cases">Cases Content</div>
@@ -1151,13 +1133,13 @@
                     <div class="form-group">
                         <label class="form-label">Company Name</label>
                         <input list="companyList" class="form-control" name="Existing Company Name" id="companyName" required>
-                        <datalist id="companyList"></datalist>
+                        <datalist id="companyDatalist"></datalist>
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label">TYPE OF WORK</label>
                         <input list="workTypeList" class="form-control" name="TYPE OF WORK" id="typeOfWork" required>
-                        <datalist id="workTypeList"></datalist>
+                        <datalist id="workTypeDatalist"></datalist>
                     </div>
                     
                     <div class="form-group">
@@ -1175,7 +1157,7 @@
                     <div class="form-group">
                         <label class="form-label">Account # / Cards</label>
                         <input list="accountsCardsList" class="form-control" name="Accounts / Cards" id="accountsCards">
-                        <datalist id="accountsCardsList"></datalist>
+                        <datalist id="accountsCardsDatalist"></datalist>
                     </div>
                     
                     <div class="form-group">
@@ -1223,7 +1205,7 @@
                     <div class="form-group">
                         <label class="form-label">Assigned By</label>
                         <input list="assignedByList" class="form-control" name="Assigned By" id="AssignedBy">
-                        <datalist id="assignedByList"></datalist>
+                        <datalist id="assignedByDatalist"></datalist>
                     </div>
                     
                     <div class="form-group">
@@ -1284,6 +1266,7 @@
         const loadingOverlay = document.getElementById('loadingOverlay');
         const taskSearchInput = document.getElementById('taskSearchInput');
         const globalSearch = document.getElementById('globalSearch');
+        const viewAllTasksBtn = document.getElementById('viewAllTasks');
         
         // Navigation
         navItems.forEach(item => {
@@ -1303,14 +1286,15 @@
                 const pageId = this.getAttribute('data-page');
                 document.getElementById(pageId).classList.add('active');
                 
-                // If tasks page is selected, load tasks
+                // Load data for the selected page
                 if (pageId === 'tasks') {
                     loadTasks();
-                }
-                
-                // If dashboard is selected, load dashboard data
-                if (pageId === 'dashboard') {
+                } else if (pageId === 'dashboard') {
                     loadDashboardData();
+                } else if (pageId === 'leads') {
+                    loadLeadsData();
+                } else if (pageId === 'accounts') {
+                    loadAccountsData();
                 }
             });
         });
@@ -1367,6 +1351,19 @@
                 taskModal.style.display = 'none';
                 taskForm.reset();
             }
+        });
+        
+        // View All Tasks button
+        viewAllTasksBtn.addEventListener('click', () => {
+            // Switch to tasks page
+            navItems.forEach(navItem => navItem.classList.remove('active'));
+            document.querySelector('[data-page="tasks"]').classList.add('active');
+            
+            pages.forEach(page => page.classList.remove('active'));
+            document.getElementById('tasks').classList.add('active');
+            
+            // Load tasks
+            loadTasks();
         });
         
         // Global search functionality
@@ -1464,7 +1461,7 @@
                 
                 const tasks = [];
                 snapshot.forEach(doc => {
-                    tasks.push(doc.data());
+                    tasks.push({id: doc.id, ...doc.data()});
                 });
                 
                 // Update stats
@@ -1504,6 +1501,125 @@
             }
         }
         
+        // Load leads data (task assignments)
+        async function loadLeadsData() {
+            try {
+                showLoading();
+                const snapshot = await db.collection('tasks').get();
+                
+                const tasks = [];
+                snapshot.forEach(doc => {
+                    tasks.push(doc.data());
+                });
+                
+                // Group tasks by assignee
+                const assigneeTasks = {};
+                tasks.forEach(task => {
+                    if (task.Owner) {
+                        if (!assigneeTasks[task.Owner]) {
+                            assigneeTasks[task.Owner] = [];
+                        }
+                        assigneeTasks[task.Owner].push(task);
+                    }
+                });
+                
+                // Display assignee cards
+                const assigneeList = document.getElementById('assigneeList');
+                assigneeList.innerHTML = '';
+                
+                for (const [assignee, tasks] of Object.entries(assigneeTasks)) {
+                    const assigneeCard = document.createElement('div');
+                    assigneeCard.className = 'assignee-card';
+                    
+                    assigneeCard.innerHTML = `
+                        <div class="assignee-header">
+                            <div class="assignee-avatar">${assignee.charAt(0).toUpperCase()}</div>
+                            <div class="assignee-name">${assignee}</div>
+                        </div>
+                        <ul class="task-list">
+                            ${tasks.map(task => `
+                                <li class="task-item">
+                                    <strong>${task['Existing Company Name'] || 'No Company'}</strong> - 
+                                    ${task['TYPE OF WORK'] || 'No Work Type'} 
+                                    <span class="badge ${task.Status === 'Complete' ? 'badge-success' : 
+                                                       task.Status === 'In Progress' ? 'badge-secondary' : 'badge-primary'}">
+                                        ${task.Status || 'No Status'}
+                                    </span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    `;
+                    
+                    assigneeList.appendChild(assigneeCard);
+                }
+                
+            } catch (error) {
+                console.error('Error loading leads data:', error);
+                showToast('Error loading leads data');
+            } finally {
+                hideLoading();
+            }
+        }
+        
+        // Load accounts data (companies and works)
+        async function loadAccountsData() {
+            try {
+                showLoading();
+                const snapshot = await db.collection('tasks').get();
+                
+                const tasks = [];
+                snapshot.forEach(doc => {
+                    tasks.push(doc.data());
+                });
+                
+                // Group tasks by company
+                const companyTasks = {};
+                tasks.forEach(task => {
+                    if (task['Existing Company Name']) {
+                        if (!companyTasks[task['Existing Company Name']]) {
+                            companyTasks[task['Existing Company Name']] = [];
+                        }
+                        companyTasks[task['Existing Company Name']].push(task);
+                    }
+                });
+                
+                // Display company cards
+                const companyList = document.getElementById('companyList');
+                companyList.innerHTML = '';
+                
+                for (const [company, tasks] of Object.entries(companyTasks)) {
+                    const companyCard = document.createElement('div');
+                    companyCard.className = 'company-card';
+                    
+                    companyCard.innerHTML = `
+                        <div class="company-header">
+                            <div class="company-name">${company}</div>
+                            <div class="task-count">${tasks.length} tasks</div>
+                        </div>
+                        <ul class="work-list">
+                            ${tasks.map(task => `
+                                <li class="work-item">
+                                    <div class="work-type">${task['TYPE OF WORK'] || 'No Work Type'}</div>
+                                    <div class="work-status badge ${task.Status === 'Complete' ? 'badge-success' : 
+                                                                   task.Status === 'In Progress' ? 'badge-secondary' : 'badge-primary'}">
+                                        ${task.Status || 'No Status'}
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    `;
+                    
+                    companyList.appendChild(companyCard);
+                }
+                
+            } catch (error) {
+                console.error('Error loading accounts data:', error);
+                showToast('Error loading accounts data');
+            } finally {
+                hideLoading();
+            }
+        }
+        
         // Create tasks chart
         function createTasksChart(tasks) {
             const ctx = document.getElementById('tasksOverviewChart').getContext('2d');
@@ -1523,7 +1639,11 @@
             const labels = Object.keys(monthlyData).sort();
             const data = labels.map(month => monthlyData[month]);
             
-            new Chart(ctx, {
+            if (window.tasksChartInstance) {
+                window.tasksChartInstance.destroy();
+            }
+            
+            window.tasksChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
@@ -1566,7 +1686,11 @@
                 }
             });
             
-            new Chart(ctx, {
+            if (window.statusChartInstance) {
+                window.statusChartInstance.destroy();
+            }
+            
+            window.statusChartInstance = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Not Started', 'In Progress', 'Complete'],
@@ -1613,9 +1737,7 @@
         // Load dropdown options
         async function loadDropdownOptions() {
             try {
-                const snapshot = await db.collection('tasks')
-                    .where('Owner', '==', username)
-                    .get();
+                const snapshot = await db.collection('tasks').get();
                 
                 const companies = new Set();
                 const workTypes = new Set();
@@ -1631,36 +1753,36 @@
                 });
                 
                 // Update datalists
-                const companyList = document.getElementById('companyList');
-                companyList.innerHTML = '';
+                const companyDatalist = document.getElementById('companyDatalist');
+                companyDatalist.innerHTML = '';
                 companies.forEach(company => {
                     const option = document.createElement('option');
                     option.value = company;
-                    companyList.appendChild(option);
+                    companyDatalist.appendChild(option);
                 });
                 
-                const workTypeList = document.getElementById('workTypeList');
-                workTypeList.innerHTML = '';
+                const workTypeDatalist = document.getElementById('workTypeDatalist');
+                workTypeDatalist.innerHTML = '';
                 workTypes.forEach(workType => {
                     const option = document.createElement('option');
                     option.value = workType;
-                    workTypeList.appendChild(option);
+                    workTypeDatalist.appendChild(option);
                 });
                 
-                const accountsList = document.getElementById('accountsCardsList');
-                accountsList.innerHTML = '';
+                const accountsCardsDatalist = document.getElementById('accountsCardsDatalist');
+                accountsCardsDatalist.innerHTML = '';
                 accounts.forEach(account => {
                     const option = document.createElement('option');
                     option.value = account;
-                    accountsList.appendChild(option);
+                    accountsCardsDatalist.appendChild(option);
                 });
                 
-                const assignedByList = document.getElementById('assignedByList');
-                assignedByList.innerHTML = '';
+                const assignedByDatalist = document.getElementById('assignedByDatalist');
+                assignedByDatalist.innerHTML = '';
                 assignedBys.forEach(assignedBy => {
                     const option = document.createElement('option');
                     option.value = assignedBy;
-                    assignedByList.appendChild(option);
+                    assignedByDatalist.appendChild(option);
                 });
             } catch (error) {
                 console.error('Error loading dropdown options:', error);
@@ -1688,14 +1810,16 @@
                 taskModal.style.display = 'none';
                 taskForm.reset();
                 
-                // Reload tasks if on tasks page
-                if (document.getElementById('tasks').classList.contains('active')) {
+                // Reload current page data
+                const activePage = document.querySelector('.page.active').id;
+                if (activePage === 'tasks') {
                     loadTasks();
-                }
-                
-                // Reload dashboard if on dashboard page
-                if (document.getElementById('dashboard').classList.contains('active')) {
+                } else if (activePage === 'dashboard') {
                     loadDashboardData();
+                } else if (activePage === 'leads') {
+                    loadLeadsData();
+                } else if (activePage === 'accounts') {
+                    loadAccountsData();
                 }
             } catch (error) {
                 console.error('Error creating task:', error);
