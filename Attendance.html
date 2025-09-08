@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --danger: #f72585;
+            --warning: #f8961e;
+            --info: #4895ef;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --sidebar-width: 250px;
+            --header-height: 70px;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            color: var(--dark);
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--primary);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            background: var(--secondary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sidebar-header h3 {
+            font-weight: 600;
+        }
+        
+        .sidebar-menu {
+            padding: 15px 0;
+        }
+        
+        .sidebar-menu ul {
+            list-style: none;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-menu a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background: var(--secondary);
+            border-left: 4px solid var(--success);
+        }
+        
+        .sidebar-menu i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 20px;
+        }
+        
+        /* Header */
+        .header {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            color: var(--primary);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        /* Cards */
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            color: var(--gray);
+        }
+        
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .card-content {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+        
+        .card-footer {
+            margin-top: 10px;
+            font-size: 14px;
+            color: var(--gray);
+        }
+        
+        /* Charts */
+        .chart-container {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chart-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+        
+        /* Actions */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        /* Table */
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            color: var(--gray);
+            font-weight: 600;
+        }
+        
+        tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .status {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-present {
+            background: #e6f7ee;
+            color: #00a65a;
+        }
+        
+        .status-absent {
+            background: #fcebea;
+            color: #e74c3c;
+        }
+        
+        .status-leave {
+            background: #fef5ec;
+            color: #f39c12;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            width: 500px;
+            max-width: 90%;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            color: var(--dark);
+        }
+        
+        .close {
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--gray);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--gray);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+            }
+            
+            .sidebar .sidebar-header h3, .sidebar .menu-text {
+                display: none;
+            }
+            
+            .sidebar .sidebar-menu a {
+                justify-content: center;
+            }
+            
+            .sidebar .sidebar-menu i {
+                margin-right: 0;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+            }
+            
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .card-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <i class="fas fa-calendar-check"></i>
+            <h3>Attendance System</h3>
+        </div>
+        <div class="sidebar-menu">
+            <ul>
+                <li><a href="#" class="active"><i class="fas fa-home"></i> <span class="menu-text">Dashboard</span></a></li>
+                <li><a href="#"><i class="fas fa-user-clock"></i> <span class="menu-text">Attendance</span></a></li>
+                <li><a href="#"><i class="fas fa-users"></i> <span class="menu-text">Employees</span></a></li>
+                <li><a href="#"><i class="fas fa-file-csv"></i> <span class="menu-text">CSV Upload</span></a></li>
+                <li><a href="#"><i class="fas fa-chart-pie"></i> <span class="menu-text">Reports</span></a></li>
+                <li><a href="#"><i class="fas fa-user-cog"></i> <span class="menu-text">Admin</span></a></li>
+                <li><a href="#"><i class="fas fa-cog"></i> <span class="menu-text">Settings</span></a></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="header">
+            <h1>Attendance Dashboard</h1>
+            <div class="user-info">
+                <div class="user-avatar">JD</div>
+                <div>
+                    <div>John Doe</div>
+                    <div style="font-size: 12px; color: var(--gray);">Admin</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="openModal('loginModal')">
+                <i class="fas fa-sign-in-alt"></i> Log In
+            </button>
+            <button class="btn btn-success" onclick="openModal('breakInModal')">
+                <i class="fas fa-coffee"></i> Break In
+            </button>
+            <button class="btn btn-warning" onclick="openModal('breakOutModal')">
+                <i class="fas fa-coffee"></i> Break Out
+            </button>
+            <button class="btn btn-danger" onclick="openModal('logOffModal')">
+                <i class="fas fa-sign-out-alt"></i> Log Off
+            </button>
+            <button class="btn btn-primary" onclick="openModal('leaveModal')">
+                <i class="fas fa-calendar-plus"></i> Apply Leave
+            </button>
+            <button class="btn btn-success" onclick="openModal('csvModal')">
+                <i class="fas fa-file-upload"></i> Upload CSV
+            </button>
+        </div>
+
+        <!-- Cards -->
+        <div class="card-container">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Total Employees</div>
+                    <div class="card-icon" style="background: var(--primary);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="card-content">42</div>
+                <div class="card-footer">+2 from last week</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Present Today</div>
+                    <div class="card-icon" style="background: var(--success);">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                </div>
+                <div class="card-content">36</div>
+                <div class="card-footer">85.7% attendance</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">On Leave</div>
+                    <div class="card-icon" style="background: var(--warning);">
+                        <i class="fas fa-bed"></i>
+                    </div>
+                </div>
+                <div class="card-content">4</div>
+                <div class="card-footer">2 approved, 2 pending</div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Absent</div>
+                    <div class="card-icon" style="background: var(--danger);">
+                        <i class="fas fa-user-times"></i>
+                    </div>
+                </div>
+                <div class="card-content">2</div>
+                <div class="card-footer">No notification</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-container">
+            <div class="chart-card">
+                <div class="chart-title">Weekly Attendance</div>
+                <canvas id="attendanceChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <div class="chart-title">Attendance Distribution</div>
+                <canvas id="distributionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <div class="chart-title">Recent Attendance Records</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Date</th>
+                        <th>Log In</th>
+                        <th>Log Out</th>
+                        <th>Breaks</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>John Doe</td>
+                        <td>2023-06-15</td>
+                        <td>09:05 AM</td>
+                        <td>05:30 PM</td>
+                        <td>3 (01:15)</td>
+                        <td><span class="status status-present">Present</span></td>
+                    </tr>
+                    <tr>
+                        <td>Jane Smith</td>
+                        <td>2023-06-15</td>
+                        <td>09:15 AM</td>
+                        <td>04:45 PM</td>
+                        <td>2 (00:45)</td>
+                        <td><span class="status status-present">Present</span></td>
+                    </tr>
+                    <tr>
+                        <td>Robert Johnson</td>
+                        <td>2023-06-15</td>
+                        <td>10:30 AM</td>
+                        <td>03:00 PM</td>
+                        <td>1 (00:30)</td>
+                        <td><span class="status status-leave">Sick Leave</span></td>
+                    </tr>
+                    <tr>
+                        <td>Sarah Williams</td>
+                        <td>2023-06-15</td>
+                        <td>08:45 AM</td>
+                        <td>05:45 PM</td>
+                        <td>4 (01:30)</td>
+                        <td><span class="status status-present">Present</span></td>
+                    </tr>
+                    <tr>
+                        <td>Michael Brown</td>
+                        <td>2023-06-15</td>
+                        <td>--</td>
+                        <td>--</td>
+                        <td>--</td>
+                        <td><span class="status status-absent">Absent</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- CSV Upload Modal -->
+    <div id="csvModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Upload Attendance CSV</h3>
+                <span class="close" onclick="closeModal('csvModal')">&times;</span>
+            </div>
+            <div class="form-group">
+                <label for="csvFile">Select CSV File</label>
+                <input type="file" id="csvFile" class="form-control" accept=".csv">
+            </div>
+            <div class="form-group">
+                <label>CSV Format:</label>
+                <div style="background: #f5f5f5; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px;">
+                    userId, date, logIn, logOut, breaks, status<br>
+                    user001, 2023-06-15, 09:00, 17:00, 2, present<br>
+                    user002, 2023-06-15, 08:45, 16:30, 3, present<br>
+                    user003, 2023-06-15, -, -, -, absent
+                </div>
+            </div>
+            <button class="btn btn-primary" style="width: 100%;">
+                <i class="fas fa-upload"></i> Upload CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Other Modals (simplified for example) -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Log In</h3>
+                <span class="close" onclick="closeModal('loginModal')">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>User: John Doe</label>
+                <label>Time: <span id="currentTime">09:00 AM</span></label>
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="closeModal('loginModal')">
+                <i class="fas fa-check"></i> Confirm Log In
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Function to open modal
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        // Function to close modal
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Weekly Attendance Chart
+            const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+            const attendanceChart = new Chart(attendanceCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                    datasets: [{
+                        label: 'Present',
+                        data: [35, 38, 36, 37, 36, 20],
+                        borderColor: '#4361ee',
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }, {
+                        label: 'Absent',
+                        data: [5, 2, 4, 3, 4, 15],
+                        borderColor: '#f72585',
+                        backgroundColor: 'rgba(247, 37, 133, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+
+            // Distribution Chart
+            const distributionCtx = document.getElementById('distributionChart').getContext('2d');
+            const distributionChart = new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Present', 'Absent', 'Leave', 'Late'],
+                    datasets: [{
+                        data: [75, 10, 12, 3],
+                        backgroundColor: [
+                            '#4361ee',
+                            '#f72585',
+                            '#f8961e',
+                            '#4cc9f0'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+
+            // Update current time
+            function updateTime() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('currentTime').textContent = timeStr;
+            }
+            
+            updateTime();
+            setInterval(updateTime, 60000);
+        });
+    </script>
+</body>
+</html>
