@@ -1,1163 +1,977 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Tracker</title>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --primary: #4361ee;
-            --secondary: #3f37c9;
-            --success: #4cc9f0;
-            --danger: #f72585;
-            --warning: #f8961e;
-            --info: #4895ef;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --gray: #6c757d;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: #f5f7fb;
-            color: var(--dark);
-            line-height: 1.6;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        header {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        .app-title {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .avatar {
-            width: 40px;
-            height: 40px;
-            background-color: white;
-            color: var(--primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-        
-        .dashboard {
-            display: grid;
-            grid-template-columns: 1fr 3fr;
-            gap: 20px;
-        }
-        
-        .sidebar {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-        
-        .nav-item {
-            padding: 12px 15px;
-            margin-bottom: 8px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .nav-item:hover, .nav-item.active {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .main-content {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-        
-        .card {
-            background-color: white;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 10px 0;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .btn-success {
-            background-color: var(--success);
-            color: white;
-        }
-        
-        .btn-danger {
-            background-color: var(--danger);
-            color: white;
-        }
-        
-        .btn-warning {
-            background-color: var(--warning);
-            color: white;
-        }
-        
-        .btn:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        
-        th {
-            background-color: var(--light);
-            font-weight: bold;
-        }
-        
-        tr:hover {
-            background-color: #f9f9f9;
-        }
-        
-        .chart-container {
-            height: 300px;
-            margin-top: 20px;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        
-        .modal-content {
-            background-color: white;
-            padding: 25px;
-            border-radius: 10px;
-            width: 400px;
-            max-width: 90%;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        
-        input, select, textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .badge {
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .badge-success {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-        
-        .badge-warning {
-            background-color: #fff8e1;
-            color: #f57c00;
-        }
-        
-        .badge-danger {
-            background-color: #ffebee;
-            color: #d32f2f;
-        }
-        
-        .login-container {
-            max-width: 400px;
-            margin: 100px auto;
-            padding: 30px;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-        
-        .login-title {
-            text-align: center;
-            margin-bottom: 20px;
-            color: var(--primary);
-        }
-        
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            color: var(--gray);
-            font-size: 14px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User Management - Task Manager</title>
+  <style>
+    /* === RESET & BASE === */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #dfe9f3, #ffffff);
+      height: 100vh;
+      overflow: hidden;
+      color: #2c3e50;
+    }
+
+    /* === TOPBAR === */
+    .topbar {
+      height: 60px;
+      background: linear-gradient(to right, #1abc9c, #16a085);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 10;
+      color: white;
+    }
+
+    .topbar .left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .topbar .left a {
+      color: white;
+      font-weight: bold;
+      text-decoration: none;
+      font-size: 18px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: rgba(255 255 255 / 0.2);
+      transition: background 0.3s;
+    }
+    .topbar .left a:hover {
+      background: rgba(255 255 255 / 0.4);
+    }
+
+    #dateTime {
+      font-weight: 600;
+      font-size: 16px;
+      min-width: 180px;
+      text-align: center;
+    }
+
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .profile img {
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    }
+
+    /* === MAIN CONTENT === */
+    main.main-content {
+      margin-left: 0;
+      padding: 80px 30px 30px;
+      background: linear-gradient(135deg, #fdfbfb, #e2e2f2, #cfd9df);
+      min-height: calc(100vh - 60px);
+      overflow-y: auto;
+      border-top-left-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      max-width: 1200px;
+      margin: 80px auto 30px;
+      position: relative;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #16a085;
+      display: inline-block;
+    }
+
+    /* Edit button */
+    .edit-btn {
+      float: right;
+      margin-left: 10px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #16a085;
+      user-select: none;
+      transition: color 0.3s;
+    }
+    .edit-btn:hover {
+      color: #1abc9c;
+    }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    table th, table td {
+      padding: 14px 18px;
+      border-bottom: 1px solid #ecf0f1;
+      text-align: left;
+      transition: background 0.3s;
+    }
+
+    table th {
+      background: #16a085;
+      color: #fff;
+      font-weight: 600;
+      user-select: none;
+    }
+
+    table tbody tr:hover {
+      background: #d1f0e7;
+    }
+
+    table td input[type="checkbox"] {
+      transform: scale(1.2);
+      cursor: pointer;
+    }
+
+    /* Editable cells */
+    td.editable {
+      background-color: #eafaf6;
+      cursor: text;
+    }
+
+    td.editable[contenteditable="true"]:focus {
+      outline: 2px solid #1abc9c;
+      background-color: #d0f0e7;
+    }
+
+    /* Floating Add button */
+    .add-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #1abc9c;
+      color: white;
+      font-size: 32px;
+      border: none;
+      border-radius: 50%;
+      width: 55px;
+      height: 55px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: background 0.3s;
+      z-index: 20;
+    }
+    .add-btn:hover {
+      background: #16a085;
+    }
+
+    /* Add User Form */
+    .form-popup {
+      display: none;
+      position: fixed;
+      bottom: 95px;
+      right: 30px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+      width: 320px;
+      z-index: 30;
+    }
+
+    .form-popup input, .form-popup select {
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 10px;
+      border: 1.8px solid #16a085;
+      border-radius: 8px;
+      font-size: 16px;
+      color: #2c3e50;
+      transition: border-color 0.3s;
+    }
+    .form-popup input:focus, .form-popup select:focus {
+      border-color: #1abc9c;
+      outline: none;
+      background: #eafaf6;
+    }
+
+    .form-popup button {
+      background: #16a085;
+      color: white;
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      transition: background 0.3s;
+    }
+    .form-popup button:hover {
+      background: #1abc9c;
+    }
+    
+    .del-btn { 
+      color: #e74c3c; 
+      cursor: pointer; 
+      font-size: 18px; 
+    }
+    .del-btn:hover { 
+      color: #c0392b; 
+    }
+    
+    /* Login Form */
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #1abc9c, #16a085);
+    }
+    
+    .login-form {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      width: 350px;
+    }
+    
+    .login-form h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #16a085;
+    }
+    
+    .login-form input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    
+    .login-form button {
+      width: 100%;
+      padding: 12px;
+      background: #16a085;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .login-form button:hover {
+      background: #1abc9c;
+    }
+    
+    .error-message {
+      color: #e74c3c;
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+    
+    /* User info in topbar */
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .user-role {
+      background: rgba(255, 255, 255, 0.3);
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+    }
+    
+    /* Attendance section */
+    .attendance-section {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+      margin-bottom: 20px;
+    }
+    
+    .attendance-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .attendance-btn {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    
+    .punch-in {
+      background: #2ecc71;
+      color: white;
+    }
+    
+    .punch-out {
+      background: #e74c3c;
+      color: white;
+    }
+    
+    .break-btn {
+      background: #f39c12;
+      color: white;
+    }
+    
+    .attendance-status {
+      font-weight: 600;
+      padding: 8px 12px;
+      border-radius: 8px;
+      display: inline-block;
+    }
+    
+    .status-present {
+      background: #e8f6f3;
+      color: #16a085;
+    }
+    
+    .status-absent {
+      background: #fdedec;
+      color: #e74c3c;
+    }
+    
+    .status-break {
+      background: #fef9e7;
+      color: #f39c12;
+    }
+  </style>
 </head>
 <body>
-    <!-- Login Screen (initially visible) -->
-    <div id="loginScreen" class="login-container">
-        <h2 class="login-title">Attendance Tracker Login</h2>
-        <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" placeholder="Enter your username">
+  <!-- Login Screen -->
+  <div id="loginScreen" class="login-container">
+    <div class="login-form">
+      <h2>User Login</h2>
+      <input type="text" id="loginUsername" placeholder="Username" />
+      <input type="password" id="loginPassword" placeholder="Password" />
+      <button onclick="login()">Login</button>
+      <div id="loginError" class="error-message"></div>
+    </div>
+  </div>
+
+  <!-- Main Application (Hidden Initially) -->
+  <div id="appContainer" style="display: none;">
+    <div class="topbar">
+      <div class="left">
+        <a href="#" id="homeLink">🏠 Home</a>
+        <a href="#" id="attendanceLink">📊 Attendance</a>
+      </div>
+      <div id="dateTime">Loading...</div>
+      <div class="profile">
+        <img src="https://i.pravatar.cc/40" alt="User" id="userAvatar" />
+        <div class="user-info">
+          <span id="loggedInUser">User</span>
+          <span class="user-role" id="userRole">Role</span>
+          <button onclick="logout()" style="background: none; border: none; color: white; cursor: pointer;">Logout</button>
         </div>
-        <button class="btn btn-primary" style="width: 100%;" onclick="login()">Login</button>
+      </div>
     </div>
 
-    <!-- Main App (initially hidden) -->
-    <div id="appContainer" style="display: none;">
-        <header>
-            <div class="app-title">
-                <h1>Attendance Tracker</h1>
-                <div class="user-info">
-                    <div class="avatar" id="userAvatar">U</div>
-                    <div>
-                        <div id="userName">User</div>
-                        <div id="currentDate"></div>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <div class="container">
-            <div class="dashboard">
-                <div class="sidebar">
-                    <div class="nav-item active" onclick="showSection('dashboard')">
-                        <span>📊 Dashboard</span>
-                    </div>
-                    <div class="nav-item" onclick="showSection('attendance')">
-                        <span>✅ Attendance</span>
-                    </div>
-                    <div class="nav-item" onclick="showSection('leaves')">
-                        <span>📅 Leaves</span>
-                    </div>
-                    <div class="nav-item" onclick="showSection('reports')">
-                        <span>📈 Reports</span>
-                    </div>
-                    <div class="nav-item" onclick="logout()">
-                        <span>🚪 Logout</span>
-                    </div>
-                </div>
-
-                <div class="main-content">
-                    <!-- Dashboard Section -->
-                    <div id="dashboardSection">
-                        <div class="stats">
-                            <div class="stat-card">
-                                <div>Today's Hours</div>
-                                <div class="stat-value" id="todayHours">0h 0m</div>
-                            </div>
-                            <div class="stat-card">
-                                <div>This Week</div>
-                                <div class="stat-value" id="weekHours">0h 0m</div>
-                            </div>
-                            <div class="stat-card">
-                                <div>Leaves Taken</div>
-                                <div class="stat-value" id="leavesTaken">0</div>
-                            </div>
-                            <div class="stat-card">
-                                <div>Current Status</div>
-                                <div class="stat-value" id="currentStatus">-</div>
-                            </div>
-                        </div>
-
-                        <div class="action-buttons">
-                            <button class="btn btn-primary" id="loginBtn" onclick="punchIn()">Punch In</button>
-                            <button class="btn btn-danger" id="logoutBtn" onclick="punchOut()" disabled>Punch Out</button>
-                            <button class="btn btn-warning" id="breakBtn" onclick="toggleBreak()">Start Break</button>
-                            <button class="btn btn-success" onclick="showApplyLeaveModal()">Apply Leave</button>
-                        </div>
-
-                        <div class="card">
-                            <h3>Today's Activity</h3>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Punch In</th>
-                                        <th>Punch Out</th>
-                                        <th>Break Time</th>
-                                        <th>Total Hours</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="todayActivity">
-                                    <!-- Will be populated by JavaScript -->
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="card">
-                            <h3>Weekly Overview</h3>
-                            <div class="chart-container">
-                                <canvas id="weeklyChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Attendance History Section -->
-                    <div id="attendanceSection" style="display: none;">
-                        <div class="card">
-                            <h2>Attendance History</h2>
-                            <div class="action-buttons">
-                                <input type="month" id="attendanceMonth" onchange="loadAttendanceData()">
-                            </div>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Day</th>
-                                        <th>Punch In</th>
-                                        <th>Punch Out</th>
-                                        <th>Break Time</th>
-                                        <th>Total Hours</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="attendanceHistory">
-                                    <!-- Will be populated by JavaScript -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Leaves Section -->
-                    <div id="leavesSection" style="display: none;">
-                        <div class="card">
-                            <h2>Leave Management</h2>
-                            <button class="btn btn-success" onclick="showApplyLeaveModal()">Apply for Leave</button>
-                            
-                            <h3 style="margin-top: 20px;">Your Leave Applications</h3>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>From</th>
-                                        <th>To</th>
-                                        <th>Type</th>
-                                        <th>Reason</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="leaveApplications">
-                                    <!-- Will be populated by JavaScript -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Reports Section -->
-                    <div id="reportsSection" style="display: none;">
-                        <div class="card">
-                            <h2>Attendance Reports</h2>
-                            <div class="action-buttons">
-                                <input type="month" id="reportMonth" onchange="generateReports()">
-                                <button class="btn btn-primary" onclick="generateReports()">Generate Report</button>
-                            </div>
-                            
-                            <div class="stats">
-                                <div class="stat-card">
-                                    <div>Working Days</div>
-                                    <div class="stat-value" id="workingDays">0</div>
-                                </div>
-                                <div class="stat-card">
-                                    <div>Present Days</div>
-                                    <div class="stat-value" id="presentDays">0</div>
-                                </div>
-                                <div class="stat-card">
-                                    <div>Leaves Taken</div>
-                                    <div class="stat-value" id="leavesCount">0</div>
-                                </div>
-                                <div class="stat-card">
-                                    <div>Absent Days</div>
-                                    <div class="stat-value" id="absentDays">0</div>
-                                </div>
-                            </div>
-                            
-                            <div class="chart-container">
-                                <canvas id="attendanceChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <main class="main-content">
+      <h1 id="pageTitle">Users</h1>
+      <span class="edit-btn" id="editToggle">✏️</span>
+      
+      <!-- Attendance Section (for regular users) -->
+      <div id="attendanceSection" class="attendance-section">
+        <h2>Today's Attendance</h2>
+        <div class="attendance-controls">
+          <button class="attendance-btn punch-in" id="punchInBtn" onclick="punchIn()">Punch In</button>
+          <button class="attendance-btn punch-out" id="punchOutBtn" onclick="punchOut()" disabled>Punch Out</button>
+          <button class="attendance-btn break-btn" id="breakBtn" onclick="toggleBreak()">Start Break</button>
         </div>
-
-        <footer>
-            <p>Attendance Tracker System &copy; 2023</p>
-        </footer>
-    </div>
-
-    <!-- Apply Leave Modal -->
-    <div id="applyLeaveModal" class="modal">
-        <div class="modal-content">
-            <h2>Apply for Leave</h2>
-            <div class="form-group">
-                <label for="leaveType">Leave Type</label>
-                <select id="leaveType">
-                    <option value="sick">Sick Leave</option>
-                    <option value="casual">Casual Leave</option>
-                    <option value="vacation">Vacation</option>
-                    <option value="other">Other</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="fromDate">From Date</label>
-                <input type="date" id="fromDate">
-            </div>
-            <div class="form-group">
-                <label for="toDate">To Date</label>
-                <input type="date" id="toDate">
-            </div>
-            <div class="form-group">
-                <label for="leaveReason">Reason</label>
-                <textarea id="leaveReason" rows="3"></textarea>
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-danger" onclick="closeModal('applyLeaveModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="applyLeave()">Submit</button>
-            </div>
+        <div>
+          <strong>Status: </strong>
+          <span class="attendance-status status-absent" id="attendanceStatus">Not Checked In</span>
         </div>
-    </div>
+        <div id="attendanceTime">
+          <p>Punch In: <span id="punchInTime">-</span></p>
+          <p>Punch Out: <span id="punchOutTime">-</span></p>
+          <p>Break Time: <span id="breakTime">0 minutes</span></p>
+        </div>
+      </div>
+      
+      <!-- User Management Section (for admins) -->
+      <div id="userManagementSection">
+        <table id="userTable" spellcheck="false">
+          <thead>
+            <tr>
+              <th>Edit?</th><th>Emp ID</th><th>Username</th><th>Password</th><th>Mail ID</th>
+              <th>Role</th><th>Passcode</th><th>Delete</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
 
-    <script>
-        // Firebase configuration and initialization
-        const firebaseConfig = {
-            apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-            authDomain: "task-manager-602da.firebaseapp.com",
-            projectId: "task-manager-602da",
-            storageBucket: "task-manager-602da.firebasestorage.app",
-            messagingSenderId: "438978699329",
-            appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0",
-            measurementId: "G-RK6GS598ES"
-        };
-        
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        
-        // Global variables
-        let currentUser = null;
-        let currentAttendanceId = null;
-        let isOnBreak = false;
-        let breakStartTime = null;
-        let totalBreakTime = 0;
-        let weeklyChart = null;
-        let attendanceChart = null;
-        
-        // Update current date
-        function updateCurrentDate() {
-            const now = new Date();
-            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-        }
-        
-        // Login function
-        function login() {
-            const username = document.getElementById('username').value.trim();
-            if (!username) {
-                alert('Please enter a username');
-                return;
-            }
-            
-            currentUser = username;
-            document.getElementById('userName').textContent = username;
-            document.getElementById('userAvatar').textContent = username.charAt(0).toUpperCase();
+      <div class="form-popup" id="formPopup">
+        <input id="empId" placeholder="Emp ID"/>
+        <input id="username" placeholder="Username"/>
+        <input id="password" placeholder="Password"/>
+        <input id="email" placeholder="Mail ID"/>
+        <select id="role">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+        <input id="passcode" placeholder="Passcode"/>
+        <button onclick="addUser()">Add User</button>
+      </div>
+      <button class="add-btn" onclick="toggleForm()">+</button>
+    </main>
+  </div>
+
+  <!-- Firebase scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script>
+    // Firebase initialization
+    const firebaseConfig = {
+      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+      authDomain: "task-manager-602da.firebaseapp.com",
+      projectId: "task-manager-602da",
+      storageBucket: "task-manager-602da.appspot.com",
+      messagingSenderId: "438978699329",
+      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Global variables
+    let currentUser = null;
+    let currentUserData = null;
+    let editMode = false;
+    let currentAttendanceId = null;
+    let isOnBreak = false;
+    let breakStartTime = null;
+    let totalBreakTime = 0;
+
+    // Update date and time
+    function updateDateTime() {
+      const now = new Date();
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      };
+      document.getElementById('dateTime').textContent = now.toLocaleDateString('en-US', options);
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // Login function
+    function login() {
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      
+      if (!username || !password) {
+        showLoginError('Please enter both username and password');
+        return;
+      }
+      
+      // Check user credentials
+      db.collection("users")
+        .where("username", "==", username)
+        .where("password", "==", password)
+        .get()
+        .then(snapshot => {
+          if (snapshot.empty) {
+            showLoginError('Invalid username or password');
+            return;
+          }
+          
+          // User found
+          snapshot.forEach(doc => {
+            currentUser = doc.id;
+            currentUserData = doc.data();
             
             // Hide login, show app
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('appContainer').style.display = 'block';
             
-            // Update UI
-            updateCurrentDate();
-            loadUserData();
+            // Update UI with user info
+            document.getElementById('loggedInUser').textContent = currentUserData.username;
+            document.getElementById('userRole').textContent = currentUserData.role;
+            document.getElementById('userAvatar').src = `https://i.pravatar.cc/40?u=${currentUserData.username}`;
+            
+            // Setup UI based on user role
+            setupUIForUserRole();
+            
+            // Check today's attendance
             checkTodayAttendance();
-            loadAttendanceData();
-            loadLeaveApplications();
             
-            // Set up real-time listener for attendance changes
-            setupRealtimeListeners();
+            // Load user data
+            loadUserData();
+          });
+        })
+        .catch(error => {
+          console.error("Error logging in:", error);
+          showLoginError('Error logging in. Please try again.');
+        });
+    }
+    
+    function showLoginError(message) {
+      document.getElementById('loginError').textContent = message;
+    }
+
+    // Logout function
+    function logout() {
+      currentUser = null;
+      currentUserData = null;
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('appContainer').style.display = 'none';
+      
+      // Clear login form
+      document.getElementById('loginUsername').value = '';
+      document.getElementById('loginPassword').value = '';
+      document.getElementById('loginError').textContent = '';
+    }
+
+    // Setup UI based on user role
+    function setupUIForUserRole() {
+      const isAdmin = currentUserData.role === 'admin';
+      
+      // Show/hide user management section
+      document.getElementById('userManagementSection').style.display = isAdmin ? 'block' : 'none';
+      document.querySelector('.add-btn').style.display = isAdmin ? 'block' : 'none';
+      document.getElementById('editToggle').style.display = isAdmin ? 'inline-block' : 'none';
+      
+      // Show/hide attendance section
+      document.getElementById('attendanceSection').style.display = isAdmin ? 'none' : 'block';
+      
+      // Update page title
+      document.getElementById('pageTitle').textContent = isAdmin ? 'User Management' : 'My Dashboard';
+    }
+
+    // Toggle form visibility
+    function toggleForm() {
+      const formPopup = document.getElementById('formPopup');
+      formPopup.style.display = formPopup.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // Clear form inputs
+    function clearForm() {
+      ['empId', 'username', 'password', 'email', 'role', 'passcode'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+    }
+
+    // Add new user (admin only)
+    function addUser() {
+      if (currentUserData.role !== 'admin') {
+        alert('Only administrators can add new users.');
+        return;
+      }
+      
+      const userData = {
+        empId: document.getElementById('empId').value.trim(),
+        username: document.getElementById('username').value.trim(),
+        password: document.getElementById('password').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        role: document.getElementById('role').value,
+        passcode: document.getElementById('passcode').value.trim()
+      };
+      
+      // Validate all fields are filled
+      if (Object.values(userData).some(value => !value)) {
+        alert('Please fill all fields');
+        return;
+      }
+      
+      // Add user to Firestore
+      db.collection("users").add(userData)
+        .then(() => {
+          alert('User added successfully!');
+          toggleForm();
+          clearForm();
+        })
+        .catch(error => {
+          console.error('Error adding user:', error);
+          alert('Error adding user. Please try again.');
+        });
+    }
+
+    // Load user data (admin only)
+    function loadUserData() {
+      if (currentUserData.role !== 'admin') return;
+      
+      // Set up real-time listener for users collection
+      db.collection("users").onSnapshot(snapshot => {
+        const tbody = document.querySelector("#userTable tbody");
+        tbody.innerHTML = "";
+        
+        // Show message if no users found
+        if (snapshot.empty) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No users found</td></tr>';
+          return;
         }
         
-        // Logout function
-        function logout() {
-            currentUser = null;
-            document.getElementById('loginScreen').style.display = 'block';
-            document.getElementById('appContainer').style.display = 'none';
-        }
-        
-        // Show/hide sections
-        function showSection(section) {
-            // Hide all sections
-            document.getElementById('dashboardSection').style.display = 'none';
-            document.getElementById('attendanceSection').style.display = 'none';
-            document.getElementById('leavesSection').style.display = 'none';
-            document.getElementById('reportsSection').style.display = 'none';
+        // Process each user document
+        snapshot.forEach(doc => {
+          const user = doc.data();
+          const tr = document.createElement("tr");
+          
+          // Create table row with user data
+          tr.innerHTML = `
+            <td><input type="checkbox" class="chk-edit" disabled></td>
+            <td>${user.empId || '-'}</td>
+            <td class="editable">${user.username}</td>
+            <td class="editable">${user.password}</td>
+            <td class="editable">${user.email}</td>
+            <td class="editable">${user.role}</td>
+            <td>${user.passcode || '-'}</td>
+            <td><span class="del-btn">🗑️</span></td>
+          `;
+          
+          // Set up edit functionality
+          const editCheckbox = tr.querySelector(".chk-edit");
+          editCheckbox.disabled = !editMode;
+          
+          editCheckbox.onchange = function(e) {
+            if (!e.target.checked) return;
             
-            // Remove active class from all nav items
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
+            const editableCells = tr.querySelectorAll(".editable");
+            editableCells.forEach(cell => {
+              cell.contentEditable = "true";
+              cell.focus();
             });
             
-            // Show selected section and set active nav item
-            document.getElementById(section + 'Section').style.display = 'block';
-            event.currentTarget.classList.add('active');
-            
-            // Load data if needed
-            if (section === 'reports') {
-                generateReports();
+            // Handle saving on blur
+            editableCells.forEach(cell => {
+              cell.onblur = function() {
+                const updatedData = {
+                  username: tr.children[2].textContent,
+                  password: tr.children[3].textContent,
+                  email: tr.children[4].textContent,
+                  role: tr.children[5].textContent
+                };
+                
+                // Update user in Firestore
+                db.collection("users").doc(doc.id).update(updatedData)
+                  .then(() => {
+                    e.target.checked = false;
+                    editableCells.forEach(c => c.contentEditable = "false");
+                  })
+                  .catch(error => {
+                    console.error("Error updating user:", error);
+                    alert("Error updating user. Please try again.");
+                  });
+              };
+            });
+          };
+          
+          // Set up delete functionality
+          tr.querySelector(".del-btn").onclick = function() {
+            if (confirm("Are you sure you want to delete this user?")) {
+              db.collection("users").doc(doc.id).delete()
+                .catch(error => {
+                  console.error("Error deleting user:", error);
+                  alert("Error deleting user. Please try again.");
+                });
             }
-        }
+          };
+          
+          tbody.appendChild(tr);
+        });
+      });
+    }
+
+    // Toggle edit mode (admin only)
+    document.getElementById("editToggle").onclick = function() {
+      if (currentUserData.role !== 'admin') return;
+      
+      editMode = !editMode;
+      document.querySelectorAll("#userTable tbody .chk-edit").forEach(checkbox => {
+        checkbox.disabled = !editMode;
+      });
+      
+      this.style.color = editMode ? "#27ae60" : "#16a085";
+    };
+
+    // Attendance functions
+    function punchIn() {
+      const now = new Date();
+      const punchInTime = now.toTimeString().split(' ')[0];
+      const today = now.toISOString().split('T')[0];
+      
+      // Create attendance record
+      db.collection("attendance").add({
+        userId: currentUser,
+        username: currentUserData.username,
+        date: today,
+        punchIn: punchInTime,
+        punchOut: null,
+        breaks: [],
+        totalBreakTime: 0,
+        status: 'present'
+      })
+      .then(docRef => {
+        currentAttendanceId = docRef.id;
+        document.getElementById('punchInBtn').disabled = true;
+        document.getElementById('punchOutBtn').disabled = false;
+        document.getElementById('attendanceStatus').textContent = 'Present';
+        document.getElementById('attendanceStatus').className = 'attendance-status status-present';
+        document.getElementById('punchInTime').textContent = punchInTime;
         
-        // Modal functions
-        function showApplyLeaveModal() {
-            document.getElementById('applyLeaveModal').style.display = 'flex';
-            // Set default dates (today and tomorrow)
+        // Update UI
+        checkTodayAttendance();
+      })
+      .catch(error => {
+        console.error("Error punching in:", error);
+        alert("Error punching in. Please try again.");
+      });
+    }
+
+    function punchOut() {
+      if (!currentAttendanceId) {
+        alert("No active attendance record found.");
+        return;
+      }
+      
+      const now = new Date();
+      const punchOutTime = now.toTimeString().split(' ')[0];
+      
+      // Calculate total hours worked
+      db.collection("attendance").doc(currentAttendanceId).get()
+        .then(doc => {
+          if (doc.exists) {
+            const data = doc.data();
+            const punchInTime = data.punchIn;
+            
+            // Calculate time difference
             const today = new Date().toISOString().split('T')[0];
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            document.getElementById('fromDate').value = today;
-            document.getElementById('toDate').value = tomorrow.toISOString().split('T')[0];
-        }
-        
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-        
-        // Punch in function
-        function punchIn() {
-            const now = new Date();
-            const punchInTime = now.toTimeString().split(' ')[0];
+            const punchInDate = new Date(`${today} ${punchInTime}`);
+            const punchOutDate = new Date(`${today} ${punchOutTime}`);
+            const diffMs = punchOutDate - punchInDate;
+            const diffHrs = Math.floor((diffMs % 86400000) / 3600000);
+            const diffMins = Math.round(((diffMs % 86400000) % 3600000) / 60000);
             
-            db.collection('attendance').add({
-                userId: currentUser,
-                date: now.toISOString().split('T')[0],
-                punchIn: punchInTime,
-                punchOut: null,
-                breaks: [],
-                totalBreakTime: 0,
-                status: 'present',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            })
-            .then(docRef => {
-                currentAttendanceId = docRef.id;
-                document.getElementById('loginBtn').disabled = true;
-                document.getElementById('logoutBtn').disabled = false;
-                document.getElementById('currentStatus').textContent = 'Working';
-                loadTodayActivity();
-            })
-            .catch(error => {
-                console.error('Error punching in:', error);
-                alert('Error punching in. Please try again.');
-            });
-        }
-        
-        // Punch out function
-        function punchOut() {
-            if (!currentAttendanceId) {
-                alert('No active attendance record found.');
-                return;
-            }
+            // Subtract break time
+            const netHrs = diffHrs - (totalBreakTime / 60);
             
-            const now = new Date();
-            const punchOutTime = now.toTimeString().split(' ')[0];
-            
-            // Calculate total hours worked
-            db.collection('attendance').doc(currentAttendanceId).get()
-            .then(doc => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    const punchInTime = data.punchIn;
-                    
-                    // Calculate time difference
-                    const punchInDate = new Date(`${data.date} ${punchInTime}`);
-                    const punchOutDate = new Date(`${data.date} ${punchOutTime}`);
-                    const diffMs = punchOutDate - punchInDate;
-                    const diffHrs = Math.floor((diffMs % 86400000) / 3600000);
-                    const diffMins = Math.round(((diffMs % 86400000) % 3600000) / 60000);
-                    
-                    // Subtract break time
-                    const netHrs = diffHrs - (totalBreakTime / 60);
-                    
-                    // Update the attendance record
-                    db.collection('attendance').doc(currentAttendanceId).update({
-                        punchOut: punchOutTime,
-                        totalHours: `${netHrs}h ${diffMins}m`,
-                        totalBreakTime: totalBreakTime
-                    })
-                    .then(() => {
-                        currentAttendanceId = null;
-                        isOnBreak = false;
-                        totalBreakTime = 0;
-                        document.getElementById('loginBtn').disabled = false;
-                        document.getElementById('logoutBtn').disabled = true;
-                        document.getElementById('breakBtn').textContent = 'Start Break';
-                        document.getElementById('currentStatus').textContent = 'Not Working';
-                        loadTodayActivity();
-                        loadAttendanceData();
-                    })
-                    .catch(error => {
-                        console.error('Error punching out:', error);
-                        alert('Error punching out. Please try again.');
-                    });
-                }
-            });
-        }
-        
-        // Break function
-        function toggleBreak() {
-            if (!currentAttendanceId) {
-                alert('You need to punch in first before taking a break.');
-                return;
-            }
-            
-            const now = new Date();
-            
-            if (!isOnBreak) {
-                // Start break
-                isOnBreak = true;
-                breakStartTime = now;
-                document.getElementById('breakBtn').textContent = 'End Break';
-                document.getElementById('currentStatus').textContent = 'On Break';
-                
-                // Record break start in Firestore
-                db.collection('attendance').doc(currentAttendanceId).update({
-                    breaks: firebase.firestore.FieldValue.arrayUnion({
-                        start: now.toTimeString().split(' ')[0],
-                        end: null
-                    })
-                });
-            } else {
-                // End break
-                isOnBreak = false;
-                const breakEndTime = now;
-                const breakDuration = Math.round((breakEndTime - breakStartTime) / 60000); // in minutes
-                totalBreakTime += breakDuration;
-                
-                document.getElementById('breakBtn').textContent = 'Start Break';
-                document.getElementById('currentStatus').textContent = 'Working';
-                
-                // Update break record in Firestore
-                db.collection('attendance').doc(currentAttendanceId).get()
-                .then(doc => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        const breaks = data.breaks || [];
-                        
-                        // Find the break that hasn't ended yet
-                        for (let i = 0; i < breaks.length; i++) {
-                            if (breaks[i].end === null) {
-                                breaks[i].end = breakEndTime.toTimeString().split(' ')[0];
-                                break;
-                            }
-                        }
-                        
-                        // Update the document
-                        db.collection('attendance').doc(currentAttendanceId).update({
-                            breaks: breaks,
-                            totalBreakTime: totalBreakTime
-                        });
-                    }
-                });
-            }
-        }
-        
-        // Apply for leave
-        function applyLeave() {
-            const leaveType = document.getElementById('leaveType').value;
-            const fromDate = document.getElementById('fromDate').value;
-            const toDate = document.getElementById('toDate').value;
-            const reason = document.getElementById('leaveReason').value;
-            
-            if (!fromDate || !toDate) {
-                alert('Please select both from and to dates.');
-                return;
-            }
-            
-            db.collection('leaves').add({
-                userId: currentUser,
-                type: leaveType,
-                fromDate: fromDate,
-                toDate: toDate,
-                reason: reason,
-                status: 'pending',
-                appliedDate: new Date().toISOString().split('T')[0],
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            // Update attendance record
+            db.collection("attendance").doc(currentAttendanceId).update({
+              punchOut: punchOutTime,
+              totalHours: `${netHrs}h ${diffMins}m`,
+              totalBreakTime: totalBreakTime
             })
             .then(() => {
-                alert('Leave application submitted successfully!');
-                closeModal('applyLeaveModal');
-                loadLeaveApplications();
+              currentAttendanceId = null;
+              isOnBreak = false;
+              totalBreakTime = 0;
+              
+              document.getElementById('punchInBtn').disabled = false;
+              document.getElementById('punchOutBtn').disabled = true;
+              document.getElementById('breakBtn').textContent = 'Start Break';
+              document.getElementById('breakBtn').classList.remove('break-active');
+              document.getElementById('attendanceStatus').textContent = 'Completed';
+              document.getElementById('punchOutTime').textContent = punchOutTime;
+              document.getElementById('breakTime').textContent = '0 minutes';
             })
             .catch(error => {
-                console.error('Error applying for leave:', error);
-                alert('Error applying for leave. Please try again.');
+              console.error("Error punching out:", error);
+              alert("Error punching out. Please try again.");
             });
-        }
+          }
+        });
+    }
+
+    function toggleBreak() {
+      if (!currentAttendanceId) {
+        alert("You need to punch in first before taking a break.");
+        return;
+      }
+      
+      const now = new Date();
+      
+      if (!isOnBreak) {
+        // Start break
+        isOnBreak = true;
+        breakStartTime = now;
+        document.getElementById('breakBtn').textContent = 'End Break';
+        document.getElementById('breakBtn').classList.add('break-active');
+        document.getElementById('attendanceStatus').textContent = 'On Break';
+        document.getElementById('attendanceStatus').className = 'attendance-status status-break';
         
-        // Check today's attendance
-        function checkTodayAttendance() {
-            const today = new Date().toISOString().split('T')[0];
-            
-            db.collection('attendance')
-                .where('userId', '==', currentUser)
-                .where('date', '==', today)
-                .get()
-                .then(querySnapshot => {
-                    if (!querySnapshot.empty) {
-                        querySnapshot.forEach(doc => {
-                            const data = doc.data();
-                            currentAttendanceId = doc.id;
-                            
-                            if (data.punchOut) {
-                                document.getElementById('loginBtn').disabled = false;
-                                document.getElementById('logoutBtn').disabled = true;
-                                document.getElementById('currentStatus').textContent = 'Completed';
-                            } else {
-                                document.getElementById('loginBtn').disabled = true;
-                                document.getElementById('logoutBtn').disabled = false;
-                                document.getElementById('currentStatus').textContent = 'Working';
-                                
-                                // Check if user is on break
-                                if (data.breaks && data.breaks.length > 0) {
-                                    const lastBreak = data.breaks[data.breaks.length - 1];
-                                    if (lastBreak.end === null) {
-                                        isOnBreak = true;
-                                        document.getElementById('breakBtn').textContent = 'End Break';
-                                        document.getElementById('currentStatus').textContent = 'On Break';
-                                    }
-                                }
-                                
-                                // Calculate total break time so far
-                                if (data.totalBreakTime) {
-                                    totalBreakTime = data.totalBreakTime;
-                                }
-                            }
-                        });
-                    } else {
-                        document.getElementById('loginBtn').disabled = false;
-                        document.getElementById('logoutBtn').disabled = true;
-                        document.getElementById('currentStatus').textContent = 'Not Started';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error checking attendance:', error);
-                });
-        }
+        // Record break start in Firestore
+        db.collection("attendance").doc(currentAttendanceId).update({
+          breaks: firebase.firestore.FieldValue.arrayUnion({
+            start: now.toTimeString().split(' ')[0],
+            end: null
+          })
+        });
+      } else {
+        // End break
+        isOnBreak = false;
+        const breakEndTime = now;
+        const breakDuration = Math.round((breakEndTime - breakStartTime) / 60000); // in minutes
+        totalBreakTime += breakDuration;
         
-        // Load user data
-        function loadUserData() {
-            // Calculate today's hours
-            const today = new Date().toISOString().split('T')[0];
-            
-            db.collection('attendance')
-                .where('userId', '==', currentUser)
-                .where('date', '==', today)
-                .get()
-                .then(querySnapshot => {
-                    if (!querySnapshot.empty) {
-                        querySnapshot.forEach(doc => {
-                            const data = doc.data();
-                            if (data.totalHours) {
-                                document.getElementById('todayHours').textContent = data.totalHours;
-                            }
-                        });
-                    }
-                });
-            
-            // Calculate this week's hours
-            const startOfWeek = new Date();
-            startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-            startOfWeek.setHours(0, 0, 0, 0);
-            
-            const endOfWeek = new Date();
-            endOfWeek.setDate(endOfWeek.getDate() + (6 - endOfWeek.getDay()));
-            endOfWeek.setHours(23, 59, 59, 999);
-            
-            db.collection('attendance')
-                .where('userId', '==', currentUser)
-                .where('date', '>=', startOfWeek.toISOString().split('T')[0])
-                .where('date', '<=', endOfWeek.toISOString().split('T')[0])
-                .get()
-                .then(querySnapshot => {
-                    let totalMinutes = 0;
-                    
-                    querySnapshot.forEach(doc => {
-                        const data = doc.data();
-                        if (data.totalHours) {
-                            const [hours, minutes] = data.totalHours.split('h ');
-                            totalMinutes += parseInt(hours) * 60 + parseInt(minutes);
-                        }
-                    });
-                    
-                    const hours = Math.floor(totalMinutes / 60);
-                    const minutes = totalMinutes % 60;
-                    document.getElementById('weekHours').textContent = `${hours}h ${minutes}m`;
-                });
-            
-            // Count leaves taken
-            db.collection('leaves')
-                .where('userId', '==', currentUser)
-                .where('status', '==', 'approved')
-                .get()
-                .then(querySnapshot => {
-                    document.getElementById('leavesTaken').textContent = querySnapshot.size;
-                });
-        }
+        document.getElementById('breakBtn').textContent = 'Start Break';
+        document.getElementById('breakBtn').classList.remove('break-active');
+        document.getElementById('attendanceStatus').textContent = 'Present';
+        document.getElementById('attendanceStatus').className = 'attendance-status status-present';
+        document.getElementById('breakTime').textContent = `${totalBreakTime} minutes`;
         
-        // Load today's activity
-        function loadTodayActivity() {
-            const today = new Date().toISOString().split('T')[0];
-            const tbody = document.getElementById('todayActivity');
-            tbody.innerHTML = '';
-            
-            db.collection('attendance')
-                .where('userId', '==', currentUser)
-                .where('date', '==', today)
-                .get()
-                .then(querySnapshot => {
-                    if (!querySnapshot.empty) {
-                        querySnapshot.forEach(doc => {
-                            const data = doc.data();
-                            const row = document.createElement('tr');
-                            
-                            row.innerHTML = `
-                                <td>${data.date}</td>
-                                <td>${data.punchIn || '-'}</td>
-                                <td>${data.punchOut || '-'}</td>
-                                <td>${data.totalBreakTime ? `${data.totalBreakTime} mins` : '-'}</td>
-                                <td>${data.totalHours || '-'}</td>
-                            `;
-                            
-                            tbody.appendChild(row);
-                        });
-                    } else {
-                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No attendance record for today</td></tr>';
-                    }
-                });
-        }
-        
-        // Load attendance data
-        function loadAttendanceData() {
-            const selectedMonth = document.getElementById('attendanceMonth').value || 
-                                new Date().toISOString().slice(0, 7);
-            const [year, month] = selectedMonth.split('-');
-            
-            const startDate = `${year}-${month}-01`;
-            const endDate = `${year}-${month}-${new Date(year, month, 0).getDate()}`;
-            
-            const tbody = document.getElementById('attendanceHistory');
-            tbody.innerHTML = '';
-            
-            db.collection('attendance')
-                .where('userId', '==', currentUser)
-                .where('date', '>=', startDate)
-                .where('date', '<=', endDate)
-                .orderBy('date', 'desc')
-                .get()
-                .then(querySnapshot => {
-                    if (!querySnapshot.empty) {
-                        querySnapshot.forEach(doc => {
-                            const data = doc.data();
-                            const date = new Date(data.date);
-                            const day = date.toLocaleDateString('en-US', { weekday: 'short' });
-                            
-                            const row = document.createElement('tr');
-                            
-                            row.innerHTML = `
-                                <td>${data.date}</td>
-                                <td>${day}</td>
-                                <td>${data.punchIn || '-'}</td>
-                                <td>${data.punchOut || '-'}</td>
-                                <td>${data.totalBreakTime ? `${data.totalBreakTime} mins` : '-'}</td>
-                                <td>${data.totalHours || '-'}</td>
-                                <td><span class="badge badge-success">${data.status || 'present'}</span></td>
-                            `;
-                            
-                            tbody.appendChild(row);
-                        });
-                    } else {
-                        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No attendance records found</td></tr>';
-                    }
-                });
-        }
-        
-        // Load leave applications
-        function loadLeaveApplications() {
-            const tbody = document.getElementById('leaveApplications');
-            tbody.innerHTML = '';
-            
-            db.collection('leaves')
-                .where('userId', '==', currentUser)
-                .orderBy('appliedDate', 'desc')
-                .get()
-                .then(querySnapshot => {
-                    if (!querySnapshot.empty) {
-                        querySnapshot.forEach(doc => {
-                            const data = doc.data();
-                            let statusClass = 'badge-warning';
-                            if (data.status === 'approved') statusClass = 'badge-success';
-                            if (data.status === 'rejected') statusClass = 'badge-danger';
-                            
-                            const row = document.createElement('tr');
-                            
-                            row.innerHTML = `
-                                <td>${data.fromDate}</td>
-                                <td>${data.toDate}</td>
-                                <td>${data.type}</td>
-                                <td>${data.reason}</td>
-                                <td><span class="badge ${statusClass}">${data.status}</span></td>
-                            `;
-                            
-                            tbody.appendChild(row);
-                        });
-                    } else {
-                        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">No leave applications found</td></tr>';
-                    }
-                });
-        }
-        
-        // Generate reports
-        function generateReports() {
-            const selectedMonth = document.getElementById('reportMonth').value || 
-                                new Date().toISOString().slice(0, 7);
-            const [year, month] = selectedMonth.split('-');
-            
-            const startDate = `${year}-${month}-01`;
-            const endDate = `${year}-${month}-${new Date(year, month, 0).getDate()}`;
-            
-            // Get all attendance records for the month
-            db.collection('attendance')
-                .where('userId', '==', currentUser)
-                .where('date', '>=', startDate)
-                .where('date', '<=', endDate)
-                .get()
-                .then(attendanceSnapshot => {
-                    const presentDays = attendanceSnapshot.size;
-                    
-                    // Get all approved leaves for the month
-                    db.collection('leaves')
-                        .where('userId', '==', currentUser)
-                        .where('status', '==', 'approved')
-                        .where('fromDate', '<=', endDate)
-                        .where('toDate', '>=', startDate)
-                        .get()
-                        .then(leavesSnapshot => {
-                            let leaveDays = 0;
-                            
-                            leavesSnapshot.forEach(doc => {
-                                const data = doc.data();
-                                const from = new Date(data.fromDate);
-                                const to = new Date(data.toDate);
-                                
-                                // Count only days in the selected month
-                                for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
-                                    if (d >= new Date(startDate) && d <= new Date(endDate)) {
-                                        leaveDays++;
-                                    }
-                                }
-                            });
-                            
-                            // Calculate working days in the month
-                            const start = new Date(startDate);
-                            const end = new Date(endDate);
-                            let workingDays = 0;
-                            
-                            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-                                // Skip weekends (Saturday=6, Sunday=0)
-                                if (d.getDay() !== 0 && d.getDay() !== 6) {
-                                    workingDays++;
-                                }
-                            }
-                            
-                            const absentDays = workingDays - presentDays - leaveDays;
-                            
-                            // Update UI
-                            document.getElementById('workingDays').textContent = workingDays;
-                            document.getElementById('presentDays').textContent = presentDays;
-                            document.getElementById('leavesCount').textContent = leaveDays;
-                            document.getElementById('absentDays').textContent = absentDays > 0 ? absentDays : 0;
-                            
-                            // Create chart
-                            createAttendanceChart(presentDays, leaveDays, absentDays);
-                        });
-                });
-        }
-        
-        // Create attendance chart
-        function createAttendanceChart(present, leaves, absent) {
-            const ctx = document.getElementById('attendanceChart').getContext('2d');
-            
-            if (attendanceChart) {
-                attendanceChart.destroy();
-            }
-            
-            attendanceChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: ['Present', 'Leaves', 'Absent'],
-                    datasets: [{
-                        data: [present, leaves, absent],
-                        backgroundColor: [
-                            '#4361ee',
-                            '#4cc9f0',
-                            '#f72585'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        },
-                        title: {
-                            display: true,
-                            text: 'Attendance Distribution'
-                        }
-                    }
+        // Update break record in Firestore
+        db.collection("attendance").doc(currentAttendanceId).get()
+          .then(doc => {
+            if (doc.exists) {
+              const data = doc.data();
+              const breaks = data.breaks || [];
+              
+              // Find the break that hasn't ended yet
+              for (let i = 0; i < breaks.length; i++) {
+                if (breaks[i].end === null) {
+                  breaks[i].end = breakEndTime.toTimeString().split(' ')[0];
+                  break;
                 }
+              }
+              
+              // Update the document
+              db.collection("attendance").doc(currentAttendanceId).update({
+                breaks: breaks,
+                totalBreakTime: totalBreakTime
+              });
+            }
+          });
+      }
+    }
+
+    function checkTodayAttendance() {
+      const today = new Date().toISOString().split('T')[0];
+      
+      db.collection("attendance")
+        .where("userId", "==", currentUser)
+        .where("date", "==", today)
+        .get()
+        .then(snapshot => {
+          if (!snapshot.empty) {
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              currentAttendanceId = doc.id;
+              
+              if (data.punchOut) {
+                // Already completed work day
+                document.getElementById('punchInBtn').disabled = true;
+                document.getElementById('punchOutBtn').disabled = true;
+                document.getElementById('attendanceStatus').textContent = 'Completed';
+                document.getElementById('attendanceStatus').className = 'attendance-status status-present';
+                document.getElementById('punchInTime').textContent = data.punchIn;
+                document.getElementById('punchOutTime').textContent = data.punchOut;
+                document.getElementById('breakTime').textContent = `${data.totalBreakTime} minutes`;
+              } else {
+                // Currently working
+                document.getElementById('punchInBtn').disabled = true;
+                document.getElementById('punchOutBtn').disabled = false;
+                document.getElementById('attendanceStatus').textContent = 'Present';
+                document.getElementById('attendanceStatus').className = 'attendance-status status-present';
+                document.getElementById('punchInTime').textContent = data.punchIn;
+                
+                // Check if user is on break
+                if (data.breaks && data.breaks.length > 0) {
+                  const lastBreak = data.breaks[data.breaks.length - 1];
+                  if (lastBreak.end === null) {
+                    isOnBreak = true;
+                    document.getElementById('breakBtn').textContent = 'End Break';
+                    document.getElementById('breakBtn').classList.add('break-active');
+                    document.getElementById('attendanceStatus').textContent = 'On Break';
+                    document.getElementById('attendanceStatus').className = 'attendance-status status-break';
+                  }
+                }
+                
+                // Calculate total break time so far
+                if (data.totalBreakTime) {
+                  totalBreakTime = data.totalBreakTime;
+                  document.getElementById('breakTime').textContent = `${totalBreakTime} minutes`;
+                }
+              }
             });
+          } else {
+            // No attendance record for today
+            document.getElementById('punchInBtn').disabled = false;
+            document.getElementById('punchOutBtn').disabled = true;
+            document.getElementById('attendanceStatus').textContent = 'Not Checked In';
+            document.getElementById('attendanceStatus').className = 'attendance-status status-absent';
+          }
+        })
+        .catch(error => {
+          console.error("Error checking attendance:", error);
+        });
+    }
+
+    // Initialize the application
+    window.onload = function() {
+      // Set up event listeners
+      document.getElementById('homeLink').addEventListener('click', function(e) {
+        e.preventDefault();
+        window.location.href = 'Home.html';
+      });
+      
+      document.getElementById('attendanceLink').addEventListener('click', function(e) {
+        e.preventDefault();
+        // In a real app, this would navigate to the attendance page
+        alert('Attendance page would open here');
+      });
+      
+      // Check if user is already logged in (from sessionStorage)
+      const savedUser = sessionStorage.getItem('currentUser');
+      if (savedUser) {
+        try {
+          currentUserData = JSON.parse(savedUser);
+          currentUser = currentUserData.id;
+          
+          // Hide login, show app
+          document.getElementById('loginScreen').style.display = 'none';
+          document.getElementById('appContainer').style.display = 'block';
+          
+          // Update UI with user info
+          document.getElementById('loggedInUser').textContent = currentUserData.username;
+          document.getElementById('userRole').textContent = currentUserData.role;
+          document.getElementById('userAvatar').src = `https://i.pravatar.cc/40?u=${currentUserData.username}`;
+          
+          // Setup UI based on user role
+          setupUIForUserRole();
+          
+          // Check today's attendance
+          checkTodayAttendance();
+          
+          // Load user data
+          loadUserData();
+        } catch (e) {
+          console.error('Error loading saved user:', e);
+          sessionStorage.removeItem('currentUser');
         }
-        
-        // Set up real-time listeners
-        function setupRealtimeListeners() {
-            // Listen for attendance changes
-            db.collection('attendance')
-                .where('userId', '==', currentUser)
-                .orderBy('date', 'desc')
-                .limit(10)
-                .onSnapshot(snapshot => {
-                    loadUserData();
-                    loadTodayActivity();
-                });
-            
-            // Listen for leave application changes
-            db.collection('leaves')
-                .where('userId', '==', currentUser)
-                .orderBy('appliedDate', 'desc')
-                .onSnapshot(snapshot => {
-                    loadLeaveApplications();
-                });
-        }
-        
-        // Initialize the app
-        window.onload = function() {
-            // Set default month values
-            const currentMonth = new Date().toISOString().slice(0, 7);
-            document.getElementById('attendanceMonth').value = currentMonth;
-            document.getElementById('reportMonth').value = currentMonth;
-            
-            // Set today as default for leave application
-            document.getElementById('fromDate').value = new Date().toISOString().split('T')[0];
-            
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            document.getElementById('toDate').value = tomorrow.toISOString().split('T')[0];
-        };
-    </script>
+      }
+    };
+  </script>
 </body>
 </html>
