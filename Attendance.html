@@ -6,6 +6,9 @@
     <title>Attendance Management System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -44,6 +47,7 @@
             position: fixed;
             transition: all 0.3s ease;
             z-index: 1000;
+            overflow-y: auto;
         }
         
         .sidebar-header {
@@ -77,6 +81,7 @@
             align-items: center;
             padding: 12px 20px;
             transition: all 0.3s;
+            cursor: pointer;
         }
         
         .sidebar-menu a:hover, .sidebar-menu a.active {
@@ -206,6 +211,7 @@
             display: flex;
             gap: 15px;
             margin-bottom: 25px;
+            flex-wrap: wrap;
         }
         
         .btn {
@@ -296,6 +302,11 @@
             color: #f39c12;
         }
         
+        .status-pending {
+            background: #ebf5fb;
+            color: #3498db;
+        }
+        
         /* Modal */
         .modal {
             display: none;
@@ -355,6 +366,30 @@
             font-size: 16px;
         }
         
+        /* Login Form */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+        
+        .login-form {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            max-width: 90%;
+        }
+        
+        .login-form h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        
         /* Responsive */
         @media (max-width: 992px) {
             .sidebar {
@@ -391,177 +426,226 @@
                 flex-wrap: wrap;
             }
         }
+        
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: white;
+            border-left: 4px solid var(--success);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 3000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast i {
+            color: var(--success);
+            font-size: 20px;
+        }
+        
+        .toast.error {
+            border-left-color: var(--danger);
+        }
+        
+        .toast.error i {
+            color: var(--danger);
+        }
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <i class="fas fa-calendar-check"></i>
-            <h3>Attendance System</h3>
-        </div>
-        <div class="sidebar-menu">
-            <ul>
-                <li><a href="#" class="active"><i class="fas fa-home"></i> <span class="menu-text">Dashboard</span></a></li>
-                <li><a href="#"><i class="fas fa-user-clock"></i> <span class="menu-text">Attendance</span></a></li>
-                <li><a href="#"><i class="fas fa-users"></i> <span class="menu-text">Employees</span></a></li>
-                <li><a href="#"><i class="fas fa-file-csv"></i> <span class="menu-text">CSV Upload</span></a></li>
-                <li><a href="#"><i class="fas fa-chart-pie"></i> <span class="menu-text">Reports</span></a></li>
-                <li><a href="#"><i class="fas fa-user-cog"></i> <span class="menu-text">Admin</span></a></li>
-                <li><a href="#"><i class="fas fa-cog"></i> <span class="menu-text">Settings</span></a></li>
-            </ul>
+    <!-- Login Screen (initially visible) -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-form">
+            <h2>Attendance System Login</h2>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" class="form-control" placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter your password">
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="login()">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </button>
+            <div id="loginError" style="color: var(--danger); margin-top: 15px; text-align: center; display: none;">
+                Invalid email or password
+            </div>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Header -->
-        <div class="header">
-            <h1>Attendance Dashboard</h1>
-            <div class="user-info">
-                <div class="user-avatar">JD</div>
-                <div>
-                    <div>John Doe</div>
-                    <div style="font-size: 12px; color: var(--gray);">Admin</div>
-                </div>
+    <!-- App Content (initially hidden) -->
+    <div id="appContent" style="display: none;">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-calendar-check"></i>
+                <h3>Attendance System</h3>
+            </div>
+            <div class="sidebar-menu">
+                <ul>
+                    <li><a href="#" class="active" data-section="dashboard"><i class="fas fa-home"></i> <span class="menu-text">Dashboard</span></a></li>
+                    <li><a href="#" data-section="attendance"><i class="fas fa-user-clock"></i> <span class="menu-text">Attendance</span></a></li>
+                    <li><a href="#" data-section="employees"><i class="fas fa-users"></i> <span class="menu-text">Employees</span></a></li>
+                    <li><a href="#" data-section="csv-upload"><i class="fas fa-file-csv"></i> <span class="menu-text">CSV Upload</span></a></li>
+                    <li><a href="#" data-section="reports"><i class="fas fa-chart-pie"></i> <span class="menu-text">Reports</span></a></li>
+                    <li><a href="#" data-section="admin" id="adminMenuItem" style="display: none;"><i class="fas fa-user-cog"></i> <span class="menu-text">Admin</span></a></li>
+                    <li><a href="#" data-section="settings"><i class="fas fa-cog"></i> <span class="menu-text">Settings</span></a></li>
+                    <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> <span class="menu-text">Logout</span></a></li>
+                </ul>
             </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-            <button class="btn btn-primary" onclick="openModal('loginModal')">
-                <i class="fas fa-sign-in-alt"></i> Log In
-            </button>
-            <button class="btn btn-success" onclick="openModal('breakInModal')">
-                <i class="fas fa-coffee"></i> Break In
-            </button>
-            <button class="btn btn-warning" onclick="openModal('breakOutModal')">
-                <i class="fas fa-coffee"></i> Break Out
-            </button>
-            <button class="btn btn-danger" onclick="openModal('logOffModal')">
-                <i class="fas fa-sign-out-alt"></i> Log Off
-            </button>
-            <button class="btn btn-primary" onclick="openModal('leaveModal')">
-                <i class="fas fa-calendar-plus"></i> Apply Leave
-            </button>
-            <button class="btn btn-success" onclick="openModal('csvModal')">
-                <i class="fas fa-file-upload"></i> Upload CSV
-            </button>
-        </div>
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h1 id="pageTitle">Attendance Dashboard</h1>
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">JD</div>
+                    <div>
+                        <div id="userName">John Doe</div>
+                        <div id="userRole" style="font-size: 12px; color: var(--gray);">Admin</div>
+                    </div>
+                </div>
+            </div>
 
-        <!-- Cards -->
-        <div class="card-container">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Total Employees</div>
-                    <div class="card-icon" style="background: var(--primary);">
-                        <i class="fas fa-users"></i>
-                    </div>
+            <!-- Dashboard Section -->
+            <div id="dashboardSection">
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="openModal('loginModal')" id="loginBtn">
+                        <i class="fas fa-sign-in-alt"></i> Log In
+                    </button>
+                    <button class="btn btn-success" onclick="openModal('breakInModal')" id="breakInBtn">
+                        <i class="fas fa-coffee"></i> Break In
+                    </button>
+                    <button class="btn btn-warning" onclick="openModal('breakOutModal')" id="breakOutBtn">
+                        <i class="fas fa-coffee"></i> Break Out
+                    </button>
+                    <button class="btn btn-danger" onclick="openModal('logOffModal')" id="logOffBtn">
+                        <i class="fas fa-sign-out-alt"></i> Log Off
+                    </button>
+                    <button class="btn btn-primary" onclick="openModal('leaveModal')">
+                        <i class="fas fa-calendar-plus"></i> Apply Leave
+                    </button>
+                    <button class="btn btn-success" onclick="openModal('csvModal')" id="csvUploadBtn">
+                        <i class="fas fa-file-upload"></i> Upload CSV
+                    </button>
                 </div>
-                <div class="card-content">42</div>
-                <div class="card-footer">+2 from last week</div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Present Today</div>
-                    <div class="card-icon" style="background: var(--success);">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                </div>
-                <div class="card-content">36</div>
-                <div class="card-footer">85.7% attendance</div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">On Leave</div>
-                    <div class="card-icon" style="background: var(--warning);">
-                        <i class="fas fa-bed"></i>
-                    </div>
-                </div>
-                <div class="card-content">4</div>
-                <div class="card-footer">2 approved, 2 pending</div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">Absent</div>
-                    <div class="card-icon" style="background: var(--danger);">
-                        <i class="fas fa-user-times"></i>
-                    </div>
-                </div>
-                <div class="card-content">2</div>
-                <div class="card-footer">No notification</div>
-            </div>
-        </div>
 
-        <!-- Charts -->
-        <div class="chart-container">
-            <div class="chart-card">
-                <div class="chart-title">Weekly Attendance</div>
-                <canvas id="attendanceChart"></canvas>
-            </div>
-            <div class="chart-card">
-                <div class="chart-title">Attendance Distribution</div>
-                <canvas id="distributionChart"></canvas>
-            </div>
-        </div>
+                <!-- Cards -->
+                <div class="card-container">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Total Employees</div>
+                            <div class="card-icon" style="background: var(--primary);">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="card-content" id="totalEmployees">0</div>
+                        <div class="card-footer">+0 from last week</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Present Today</div>
+                            <div class="card-icon" style="background: var(--success);">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                        </div>
+                        <div class="card-content" id="presentToday">0</div>
+                        <div class="card-footer">0% attendance</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">On Leave</div>
+                            <div class="card-icon" style="background: var(--warning);">
+                                <i class="fas fa-bed"></i>
+                            </div>
+                        </div>
+                        <div class="card-content" id="onLeave">0</div>
+                        <div class="card-footer">0 approved, 0 pending</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">Absent</div>
+                            <div class="card-icon" style="background: var(--danger);">
+                                <i class="fas fa-user-times"></i>
+                            </div>
+                        </div>
+                        <div class="card-content" id="absentToday">0</div>
+                        <div class="card-footer">No notification</div>
+                    </div>
+                </div>
 
-        <!-- Table -->
-        <div class="table-container">
-            <div class="chart-title">Recent Attendance Records</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Employee</th>
-                        <th>Date</th>
-                        <th>Log In</th>
-                        <th>Log Out</th>
-                        <th>Breaks</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>John Doe</td>
-                        <td>2023-06-15</td>
-                        <td>09:05 AM</td>
-                        <td>05:30 PM</td>
-                        <td>3 (01:15)</td>
-                        <td><span class="status status-present">Present</span></td>
-                    </tr>
-                    <tr>
-                        <td>Jane Smith</td>
-                        <td>2023-06-15</td>
-                        <td>09:15 AM</td>
-                        <td>04:45 PM</td>
-                        <td>2 (00:45)</td>
-                        <td><span class="status status-present">Present</span></td>
-                    </tr>
-                    <tr>
-                        <td>Robert Johnson</td>
-                        <td>2023-06-15</td>
-                        <td>10:30 AM</td>
-                        <td>03:00 PM</td>
-                        <td>1 (00:30)</td>
-                        <td><span class="status status-leave">Sick Leave</span></td>
-                    </tr>
-                    <tr>
-                        <td>Sarah Williams</td>
-                        <td>2023-06-15</td>
-                        <td>08:45 AM</td>
-                        <td>05:45 PM</td>
-                        <td>4 (01:30)</td>
-                        <td><span class="status status-present">Present</span></td>
-                    </tr>
-                    <tr>
-                        <td>Michael Brown</td>
-                        <td>2023-06-15</td>
-                        <td>--</td>
-                        <td>--</td>
-                        <td>--</td>
-                        <td><span class="status status-absent">Absent</span></td>
-                    </tr>
-                </tbody>
-            </table>
+                <!-- Charts -->
+                <div class="chart-container">
+                    <div class="chart-card">
+                        <div class="chart-title">Weekly Attendance</div>
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">Attendance Distribution</div>
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="table-container">
+                    <div class="chart-title">Recent Attendance Records</div>
+                    <div id="attendanceTable">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Date</th>
+                                    <th>Log In</th>
+                                    <th>Log Out</th>
+                                    <th>Breaks</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceTableBody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center;">Loading data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Sections (initially hidden) -->
+            <div id="otherSections" style="display: none;">
+                <!-- Content for other sections will be loaded here -->
+            </div>
         </div>
     </div>
 
@@ -585,13 +669,13 @@
                     user003, 2023-06-15, -, -, -, absent
                 </div>
             </div>
-            <button class="btn btn-primary" style="width: 100%;">
+            <button class="btn btn-primary" style="width: 100%;" onclick="uploadCSV()">
                 <i class="fas fa-upload"></i> Upload CSV
             </button>
         </div>
     </div>
 
-    <!-- Other Modals (simplified for example) -->
+    <!-- Other Modals -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -599,38 +683,315 @@
                 <span class="close" onclick="closeModal('loginModal')">&times;</span>
             </div>
             <div class="form-group">
-                <label>User: John Doe</label>
+                <label>User: <span id="currentUserName">John Doe</span></label>
                 <label>Time: <span id="currentTime">09:00 AM</span></label>
             </div>
-            <button class="btn btn-primary" style="width: 100%;" onclick="closeModal('loginModal')">
+            <button class="btn btn-primary" style="width: 100%;" onclick="recordAttendance('login')">
                 <i class="fas fa-check"></i> Confirm Log In
             </button>
         </div>
     </div>
 
+    <!-- Break In Modal -->
+    <div id="breakInModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Break In</h3>
+                <span class="close" onclick="closeModal('breakInModal')">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>User: <span id="breakInUserName">John Doe</span></label>
+                <label>Time: <span id="breakInTime">09:00 AM</span></label>
+            </div>
+            <button class="btn btn-success" style="width: 100%;" onclick="recordAttendance('breakIn')">
+                <i class="fas fa-check"></i> Confirm Break In
+            </button>
+        </div>
+    </div>
+
+    <!-- Break Out Modal -->
+    <div id="breakOutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Break Out</h3>
+                <span class="close" onclick="closeModal('breakOutModal')">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>User: <span id="breakOutUserName">John Doe</span></label>
+                <label>Time: <span id="breakOutTime">09:00 AM</span></label>
+            </div>
+            <button class="btn btn-warning" style="width: 100%;" onclick="recordAttendance('breakOut')">
+                <i class="fas fa-check"></i> Confirm Break Out
+            </button>
+        </div>
+    </div>
+
+    <!-- Log Off Modal -->
+    <div id="logOffModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Log Off</h3>
+                <span class="close" onclick="closeModal('logOffModal')">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>User: <span id="logOffUserName">John Doe</span></label>
+                <label>Time: <span id="logOffTime">09:00 AM</span></label>
+            </div>
+            <button class="btn btn-danger" style="width: 100%;" onclick="recordAttendance('logOff')">
+                <i class="fas fa-check"></i> Confirm Log Off
+            </button>
+        </div>
+    </div>
+
+    <!-- Leave Application Modal -->
+    <div id="leaveModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Apply for Leave</h3>
+                <span class="close" onclick="closeModal('leaveModal')">&times;</span>
+            </div>
+            <div class="form-group">
+                <label for="leaveType">Leave Type</label>
+                <select id="leaveType" class="form-control">
+                    <option value="sick">Sick Leave</option>
+                    <option value="vacation">Vacation</option>
+                    <option value="personal">Personal</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="leaveStart">Start Date</label>
+                <input type="date" id="leaveStart" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="leaveEnd">End Date</label>
+                <input type="date" id="leaveEnd" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="leaveReason">Reason</label>
+                <textarea id="leaveReason" class="form-control" rows="3" placeholder="Provide a reason for your leave"></textarea>
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="applyForLeave()">
+                <i class="fas fa-paper-plane"></i> Submit Leave Request
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i class="fas fa-check-circle"></i>
+        <div id="toastMessage">Operation completed successfully</div>
+    </div>
+
     <script>
-        // Function to open modal
-        function openModal(id) {
-            document.getElementById(id).style.display = 'flex';
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
+            authDomain: "task-manager-602da.firebaseapp.com",
+            projectId: "task-manager-602da",
+            storageBucket: "task-manager-602da.firebasestorage.app",
+            messagingSenderId: "438978699329",
+            appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0",
+            measurementId: "G-RK6GS598ES"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const auth = firebase.auth();
+
+        // Global variables
+        let currentUser = null;
+        let attendanceChart = null;
+        let distributionChart = null;
+
+        // Initialize the application
+        function initApp() {
+            // Check if user is logged in
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    currentUser = user;
+                    loadUserData(user.uid);
+                    showAppContent();
+                } else {
+                    showLoginScreen();
+                }
+            });
+
+            // Update current time every minute
+            setInterval(updateAllTimes, 60000);
+            updateAllTimes();
         }
 
-        // Function to close modal
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
+        // Login function
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const loginError = document.getElementById('loginError');
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    loginError.style.display = 'none';
+                })
+                .catch((error) => {
+                    loginError.style.display = 'block';
+                    console.error('Login error:', error);
+                });
         }
 
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
+        // Logout function
+        function logout() {
+            auth.signOut().then(() => {
+                showLoginScreen();
+            });
+        }
+
+        // Show login screen
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('appContent').style.display = 'none';
+        }
+
+        // Show app content
+        function showAppContent() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContent').style.display = 'block';
+        }
+
+        // Load user data from Firestore
+        function loadUserData(userId) {
+            // Show loading state
+            document.getElementById('attendanceTableBody').innerHTML = '<tr><td colspan="6" style="text-align: center;">Loading data...</td></tr>';
+
+            // Load user profile
+            db.collection('users').doc(userId).get()
+                .then((doc) => {
+                    if (doc.exists) {
+                        const userData = doc.data();
+                        document.getElementById('userName').textContent = userData.name;
+                        document.getElementById('userAvatar').textContent = userData.name.split(' ').map(n => n[0]).join('');
+                        document.getElementById('userRole').textContent = userData.role;
+                        
+                        // Update all modals with user name
+                        document.querySelectorAll('[id$="UserName"]').forEach(el => {
+                            el.textContent = userData.name;
+                        });
+
+                        // Show admin menu item if user is admin
+                        if (userData.role === 'admin') {
+                            document.getElementById('adminMenuItem').style.display = 'block';
+                            document.getElementById('csvUploadBtn').style.display = 'block';
+                        } else {
+                            document.getElementById('adminMenuItem').style.display = 'none';
+                            document.getElementById('csvUploadBtn').style.display = 'none';
+                        }
+
+                        // Load attendance data based on user role
+                        if (userData.role === 'admin') {
+                            loadAllAttendanceData();
+                            loadDashboardData();
+                        } else {
+                            loadUserAttendanceData(userId);
+                            loadUserDashboardData(userId);
+                        }
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error loading user data:', error);
+                    showToast('Error loading user data', true);
+                });
+        }
+
+        // Load all attendance data (for admin)
+        function loadAllAttendanceData() {
+            db.collection('attendance').orderBy('date', 'desc').limit(10).get()
+                .then((querySnapshot) => {
+                    const attendanceData = [];
+                    querySnapshot.forEach((doc) => {
+                        attendanceData.push(doc.data());
+                    });
+                    populateAttendanceTable(attendanceData);
+                })
+                .catch((error) => {
+                    console.error('Error loading attendance data:', error);
+                    showToast('Error loading attendance data', true);
+                });
+        }
+
+        // Load user-specific attendance data
+        function loadUserAttendanceData(userId) {
+            db.collection('attendance').where('userId', '==', userId).orderBy('date', 'desc').limit(10).get()
+                .then((querySnapshot) => {
+                    const attendanceData = [];
+                    querySnapshot.forEach((doc) => {
+                        attendanceData.push(doc.data());
+                    });
+                    populateAttendanceTable(attendanceData);
+                })
+                .catch((error) => {
+                    console.error('Error loading attendance data:', error);
+                    showToast('Error loading attendance data', true);
+                });
+        }
+
+        // Load dashboard data (for admin)
+        function loadDashboardData() {
+            // In a real app, you would fetch this data from Firestore
+            document.getElementById('totalEmployees').textContent = '42';
+            document.getElementById('presentToday').textContent = '36';
+            document.getElementById('onLeave').textContent = '4';
+            document.getElementById('absentToday').textContent = '2';
+            
+            initCharts();
+        }
+
+        // Load user-specific dashboard data
+        function loadUserDashboardData(userId) {
+            // In a real app, you would fetch user-specific data from Firestore
+            document.getElementById('totalEmployees').textContent = 'N/A';
+            document.getElementById('presentToday').textContent = '36';
+            document.getElementById('onLeave').textContent = '1';
+            document.getElementById('absentToday').textContent = '0';
+            
+            initCharts();
+        }
+
+        // Populate attendance table with data
+        function populateAttendanceTable(data) {
+            const tableBody = document.getElementById('attendanceTableBody');
+            
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No attendance records found</td></tr>';
+                return;
             }
+            
+            let tableHTML = '';
+            
+            data.forEach(record => {
+                let statusClass = 'status-present';
+                if (record.status === 'absent') statusClass = 'status-absent';
+                if (record.status === 'leave') statusClass = 'status-leave';
+                if (record.status === 'pending') statusClass = 'status-pending';
+                
+                tableHTML += `
+                    <tr>
+                        <td>${record.userName || 'Unknown'}</td>
+                        <td>${record.date || 'N/A'}</td>
+                        <td>${record.logIn || '--'}</td>
+                        <td>${record.logOut || '--'}</td>
+                        <td>${record.breaks || '0'} (${record.breakDuration || '00:00'})</td>
+                        <td><span class="status ${statusClass}">${record.status || 'Unknown'}</span></td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = tableHTML;
         }
 
         // Initialize charts
-        document.addEventListener('DOMContentLoaded', function() {
-            // Weekly Attendance Chart
+        function initCharts() {
             const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
-            const attendanceChart = new Chart(attendanceCtx, {
+            attendanceChart = new Chart(attendanceCtx, {
                 type: 'line',
                 data: {
                     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
@@ -660,9 +1021,8 @@
                 }
             });
 
-            // Distribution Chart
             const distributionCtx = document.getElementById('distributionChart').getContext('2d');
-            const distributionChart = new Chart(distributionCtx, {
+            distributionChart = new Chart(distributionCtx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Present', 'Absent', 'Leave', 'Late'],
@@ -685,17 +1045,112 @@
                     }
                 }
             });
+        }
 
-            // Update current time
-            function updateTime() {
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                document.getElementById('currentTime').textContent = timeStr;
+        // Update all time displays
+        function updateAllTimes() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            
+            document.getElementById('currentTime').textContent = timeStr;
+            document.getElementById('breakInTime').textContent = timeStr;
+            document.getElementById('breakOutTime').textContent = timeStr;
+            document.getElementById('logOffTime').textContent = timeStr;
+        }
+
+        // Open modal
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        // Close modal
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // Record attendance action
+        function recordAttendance(action) {
+            const date = new Date().toISOString().split('T')[0];
+            const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            
+            // In a real app, you would save this to Firestore
+            console.log(`Recording ${action} at ${time} on ${date} for user ${currentUser.uid}`);
+            
+            closeModal(`${action}Modal`);
+            showToast(`${action.charAt(0).toUpperCase() + action.slice(1)} recorded successfully`);
+            
+            // Refresh attendance data
+            if (currentUser) {
+                loadUserData(currentUser.uid);
+            }
+        }
+
+        // Apply for leave
+        function applyForLeave() {
+            const leaveType = document.getElementById('leaveType').value;
+            const startDate = document.getElementById('leaveStart').value;
+            const endDate = document.getElementById('leaveEnd').value;
+            const reason = document.getElementById('leaveReason').value;
+            
+            // In a real app, you would save this to Firestore
+            console.log(`Applying for ${leaveType} leave from ${startDate} to ${endDate} for reason: ${reason}`);
+            
+            closeModal('leaveModal');
+            showToast('Leave application submitted successfully');
+            
+            // Clear form
+            document.getElementById('leaveStart').value = '';
+            document.getElementById('leaveEnd').value = '';
+            document.getElementById('leaveReason').value = '';
+        }
+
+        // Upload CSV
+        function uploadCSV() {
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showToast('Please select a CSV file', true);
+                return;
             }
             
-            updateTime();
-            setInterval(updateTime, 60000);
-        });
+            // In a real app, you would process the CSV and upload to Firestore
+            console.log(`Uploading CSV file: ${file.name}`);
+            
+            closeModal('csvModal');
+            showToast('CSV file uploaded successfully');
+            
+            // Clear file input
+            fileInput.value = '';
+            
+            // Refresh data
+            if (currentUser) {
+                loadUserData(currentUser.uid);
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            
+            if (isError) {
+                toast.classList.add('error');
+            } else {
+                toast.classList.remove('error');
+            }
+            
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initialize the app when the page loads
+        window.onload = initApp;
     </script>
 </body>
 </html>
