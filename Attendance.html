@@ -843,612 +843,466 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Check if user is logged in with fallback
-const username = sessionStorage.getItem('username') || 'testUser'; // Fallback for testing
-const fullName = sessionStorage.getItem('fullName') || username || 'Test User';
-if (!sessionStorage.getItem('username')) {
-    alert('No username found. Using testUser for demo. Please log in for full access.');
-    sessionStorage.setItem('username', 'testUser');
-    sessionStorage.setItem('fullName', 'Test User');
-}
-document.getElementById('user-name').textContent = fullName;
-document.getElementById('user-avatar').textContent = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
-
-// Show section function
-function showSection(sectionId) {
-    document.querySelectorAll('.content-area > div').forEach(section => {
-        section.style.display = 'none';
-    });
-    const section = document.getElementById(sectionId);
-    if (section) section.style.display = 'block';
-    document.querySelectorAll('.sidebar-menu a').forEach(item => {
-        item.classList.remove('active');
-    });
-    if (event.currentTarget) event.currentTarget.classList.add('active');
-}
-
-// Update current time function with IST
-function updateCurrentTime() {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
-    const dateString = now.toLocaleDateString('en-IN', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        timeZone: 'Asia/Kolkata'
-    });
-    document.querySelectorAll('.current-time-display').forEach(display => {
-        display.textContent = `${dateString} | ${timeString} IST`;
-    });
-}
-
-// Refresh data function with delay
-async function refreshData() {
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Delay to ensure Firebase readiness
-    try {
-        await Promise.all([
-            loadDashboardData(),
-            loadAttendanceHistory(),
-            loadBreakHistory(),
-            loadLeaveBalance(),
-            loadHolidays()
-        ]);
-        alert('Data refreshed successfully!');
-    } catch (error) {
-        console.error('Error refreshing data:', error);
-        alert('Error refreshing data: ' + error.message);
+// Handle DOM content load to ensure elements are available
+document.addEventListener('DOMContentLoaded', () => {
+    // Check and set username with fallback
+    const storedUsername = sessionStorage.getItem('username');
+    const username = storedUsername || 'testUser';
+    if (!storedUsername) {
+        sessionStorage.setItem('username', 'testUser');
+        console.log('No username in sessionStorage, set to testUser');
     }
-}
+    const fullName = sessionStorage.getItem('fullName') || username || 'Test User';
+    if (!sessionStorage.getItem('fullName')) {
+        sessionStorage.setItem('fullName', 'Test User');
+        console.log('No fullName in sessionStorage, set to Test User');
+    }
 
-// Load dashboard data with real-time updates
-async function loadDashboardData() {
-    try {
+    // Update username and avatar in DOM if elements exist
+    const userNameElement = document.getElementById('user-name');
+    const userAvatarElement = document.getElementById('user-avatar');
+    if (userNameElement) userNameElement.textContent = fullName;
+    if (userAvatarElement) userAvatarElement.textContent = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+    console.log('Username set to:', fullName);
+
+    // Show section function
+    function showSection(sectionId) {
+        document.querySelectorAll('.content-area > div').forEach(section => {
+            section.style.display = 'none';
+        });
+        const section = document.getElementById(sectionId);
+        if (section) section.style.display = 'block';
+        document.querySelectorAll('.sidebar-menu a').forEach(item => {
+            item.classList.remove('active');
+        });
+        if (event.currentTarget) event.currentTarget.classList.add('active');
+    }
+
+    // Update current time function with IST
+    function updateCurrentTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
+        const dateString = now.toLocaleDateString('en-IN', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            timeZone: 'Asia/Kolkata'
+        });
+        document.querySelectorAll('.current-time-display').forEach(display => {
+            if (display) display.textContent = `${dateString} | ${timeString} IST`;
+        });
+    }
+
+    // Refresh data function with delay
+    async function refreshData() {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Delay to ensure Firebase readiness
+        try {
+            await Promise.all([
+                loadDashboardData(),
+                loadAttendanceHistory(),
+                loadBreakHistory(),
+                loadLeaveBalance(),
+                loadHolidays()
+            ]);
+            alert('Data refreshed successfully!');
+        } catch (error) {
+            console.error('Error refreshing data:', error);
+            alert('Error refreshing data: ' + error.message);
+        }
+    }
+
+    // Load dashboard data with real-time updates
+    async function loadDashboardData() {
+        try {
+            const userId = username;
+            const today = new Date().toISOString().split('T')[0];
+
+            // Days present
+            db.collection('attendance').where('userId', '==', userId).where('type', '==', 'check-in')
+                .onSnapshot(snapshot => {
+                    const daysPresent = document.getElementById('days-present');
+                    if (daysPresent) daysPresent.textContent = snapshot.size || 0;
+                }, error => console.error('Error onSnapshot days-present:', error));
+
+            // Leaves taken
+            db.collection('leaves').where('userId', '==', userId).where('status', '==', 'approved')
+                .onSnapshot(snapshot => {
+                    const leavesTaken = document.getElementById('leaves-taken');
+                    if (leavesTaken) leavesTaken.textContent = snapshot.size || 0;
+                }, error => console.error('Error onSnapshot leaves-taken:', error));
+
+            // Breaks today
+            db.collection('breaks').where('userId', '==', userId).where('date', '==', today)
+                .onSnapshot(snapshot => {
+                    const breaksToday = document.getElementById('breaks-today');
+                    const breaksCount = document.getElementById('breaks-count');
+                    const totalBreakTime = document.getElementById('total-break-time');
+                    if (breaksToday && breaksCount && totalBreakTime) {
+                        const size = snapshot.size || 0;
+                        breaksToday.textContent = size;
+                        breaksCount.textContent = size;
+                        let totalTime = 0;
+                        snapshot.forEach(doc => totalTime += doc.data().duration || 0);
+                        totalBreakTime.textContent = `${totalTime} minutes`;
+                    }
+                }, error => console.error('Error onSnapshot breaks-today:', error));
+
+            // Today's check-in
+            db.collection('attendance').where('userId', '==', userId).where('date', '==', today).where('type', '==', 'check-in')
+                .onSnapshot(snapshot => {
+                    const checkInTime = document.getElementById('check-in-time');
+                    const currentStatus = document.getElementById('current-status');
+                    if (checkInTime && currentStatus) {
+                        if (!snapshot.empty) {
+                            checkInTime.textContent = snapshot.docs[0].data().time;
+                            currentStatus.textContent = 'Working';
+                            currentStatus.className = 'status-badge status-present';
+                        } else {
+                            checkInTime.textContent = '-';
+                            currentStatus.textContent = 'Not Checked In';
+                            currentStatus.className = 'status-badge status-absent';
+                        }
+                    }
+                }, error => console.error('Error onSnapshot check-in:', error));
+
+            // Upcoming holidays
+            db.collection('holidays').where('date', '>=', today)
+                .onSnapshot(snapshot => {
+                    const upcomingHolidays = document.getElementById('upcoming-holidays');
+                    if (upcomingHolidays) upcomingHolidays.textContent = snapshot.size || 0;
+                }, error => console.error('Error onSnapshot holidays:', error));
+
+            // Recent attendance
+            db.collection('attendance').where('userId', '==', userId).orderBy('date', 'desc').limit(5)
+                .onSnapshot(snapshot => {
+                    const attendanceTableBody = document.getElementById('attendance-table-body');
+                    if (attendanceTableBody) {
+                        attendanceTableBody.innerHTML = '';
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            const row = `
+                                <tr>
+                                    <td>${data.date}</td>
+                                    <td><span class="status-badge status-${data.type === 'check-in' ? 'present' : 'absent'}">${data.type === 'check-in' ? 'Present' : 'Absent'}</span></td>
+                                    <td>${data.type === 'check-in' ? data.time : '-'}</td>
+                                    <td>${data.type === 'check-out' ? data.time : '-'}</td>
+                                    <td>-</td>
+                                </tr>
+                            `;
+                            attendanceTableBody.innerHTML += row;
+                        });
+                    }
+                }, error => console.error('Error onSnapshot recent-attendance:', error));
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+            alert('Failed to load dashboard data. Check console for details.');
+        }
+    }
+
+    // Mark attendance function
+    async function markAttendance() {
+        const currentTime = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
         const userId = username;
         const today = new Date().toISOString().split('T')[0];
 
-        // Days present
-        db.collection('attendance').where('userId', '==', userId).where('type', '==', 'check-in')
-            .onSnapshot(snapshot => {
-                document.getElementById('days-present').textContent = snapshot.size || 0;
-            }, error => console.error('Error onSnapshot days-present:', error));
-
-        // Leaves taken
-        db.collection('leaves').where('userId', '==', userId).where('status', '==', 'approved')
-            .onSnapshot(snapshot => {
-                document.getElementById('leaves-taken').textContent = snapshot.size || 0;
-            }, error => console.error('Error onSnapshot leaves-taken:', error));
-
-        // Breaks today
-        db.collection('breaks').where('userId', '==', userId).where('date', '==', today)
-            .onSnapshot(snapshot => {
-                const size = snapshot.size || 0;
-                document.getElementById('breaks-today').textContent = size;
-                document.getElementById('breaks-count').textContent = size;
-                let totalBreakTime = 0;
-                snapshot.forEach(doc => totalBreakTime += doc.data().duration || 0);
-                document.getElementById('total-break-time').textContent = `${totalBreakTime} minutes`;
-            }, error => console.error('Error onSnapshot breaks-today:', error));
-
-        // Today's check-in
-        db.collection('attendance').where('userId', '==', userId).where('date', '==', today).where('type', '==', 'check-in')
-            .onSnapshot(snapshot => {
-                if (!snapshot.empty) {
-                    const checkInTime = snapshot.docs[0].data().time;
-                    document.getElementById('check-in-time').textContent = checkInTime;
-                    document.getElementById('current-status').textContent = 'Working';
-                    document.getElementById('current-status').className = 'status-badge status-present';
-                } else {
-                    document.getElementById('check-in-time').textContent = '-';
-                    document.getElementById('current-status').textContent = 'Not Checked In';
-                    document.getElementById('current-status').className = 'status-badge status-absent';
-                }
-            }, error => console.error('Error onSnapshot check-in:', error));
-
-        // Upcoming holidays
-        db.collection('holidays').where('date', '>=', today)
-            .onSnapshot(snapshot => {
-                document.getElementById('upcoming-holidays').textContent = snapshot.size || 0;
-            }, error => console.error('Error onSnapshot holidays:', error));
-
-        // Recent attendance
-        db.collection('attendance').where('userId', '==', userId).orderBy('date', 'desc').limit(5)
-            .onSnapshot(snapshot => {
-                const attendanceTableBody = document.getElementById('attendance-table-body');
-                if (attendanceTableBody) {
-                    attendanceTableBody.innerHTML = '';
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const row = `
-                            <tr>
-                                <td>${data.date}</td>
-                                <td><span class="status-badge status-${data.type === 'check-in' ? 'present' : 'absent'}">${data.type === 'check-in' ? 'Present' : 'Absent'}</span></td>
-                                <td>${data.type === 'check-in' ? data.time : '-'}</td>
-                                <td>${data.type === 'check-out' ? data.time : '-'}</td>
-                                <td>-</td>
-                            </tr>
-                        `;
-                        attendanceTableBody.innerHTML += row;
-                    });
-                }
-            }, error => console.error('Error onSnapshot recent-attendance:', error));
-    } catch (error) {
-        console.error('Error loading dashboard data:', error);
-        alert('Failed to load dashboard data. Check console for details.');
-    }
-}
-
-// Mark attendance function
-async function markAttendance() {
-    const currentTime = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
-    const userId = username;
-    const today = new Date().toISOString().split('T')[0];
-
-    try {
-        await db.collection('attendance').add({
-            date: today,
-            time: currentTime,
-            type: 'check-in',
-            userId: userId
-        });
-        alert('Check-in recorded at ' + currentTime);
-        await loadDashboardData(); // Refresh to update UI
-    } catch (error) {
-        console.error('Error recording check-in:', error);
-        alert('Error recording check-in: ' + error.message);
-    }
-}
-
-// Mark checkout function
-async function markCheckOut() {
-    const currentTime = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
-    const userId = username;
-    const today = new Date().toISOString().split('T')[0];
-
-    try {
-        await db.collection('attendance').add({
-            date: today,
-            time: currentTime,
-            type: 'check-out',
-            userId: userId
-        });
-        alert('Check-out recorded at ' + currentTime);
-        await loadDashboardData(); // Refresh to update UI
-    } catch (error) {
-        console.error('Error recording check-out:', error);
-        alert('Error recording check-out: ' + error.message);
-    }
-}
-
-// Break tracking functions
-let breakStatus = false;
-let breakStartTime = null;
-
-async function breakIn() {
-    if (breakStatus) {
-        alert('You are already on a break!');
-        return;
+        try {
+            await db.collection('attendance').add({
+                date: today,
+                time: currentTime,
+                type: 'check-in',
+                userId: userId
+            });
+            alert('Check-in recorded at ' + currentTime);
+            await loadDashboardData(); // Refresh to update UI
+        } catch (error) {
+            console.error('Error recording check-in:', error);
+            alert('Error recording check-in: ' + error.message);
+        }
     }
 
-    breakStatus = true;
-    breakStartTime = new Date();
-    const currentTime = breakStartTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
+    // Mark checkout function
+    async function markCheckOut() {
+        const currentTime = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
+        const userId = username;
+        const today = new Date().toISOString().split('T')[0];
 
-    document.getElementById('break-status').textContent = 'You are currently on a break';
-    document.getElementById('break-status').style.color = '#f39c12';
-    document.getElementById('breakInBtn').disabled = true;
-    document.getElementById('breakOutBtn').disabled = false;
-
-    alert('Break started at ' + currentTime);
-}
-
-async function breakOut() {
-    if (!breakStatus) {
-        alert('You are not on a break!');
-        return;
+        try {
+            await db.collection('attendance').add({
+                date: today,
+                time: currentTime,
+                type: 'check-out',
+                userId: userId
+            });
+            alert('Check-out recorded at ' + currentTime);
+            await loadDashboardData(); // Refresh to update UI
+        } catch (error) {
+            console.error('Error recording check-out:', error);
+            alert('Error recording check-out: ' + error.message);
+        }
     }
 
-    breakStatus = false;
-    const breakEndTime = new Date();
-    const breakDuration = Math.round((breakEndTime - breakStartTime) / 60000);
-    const currentTime = breakEndTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
-    const userId = username;
-    const today = new Date().toISOString().split('T')[0];
+    // Break tracking functions
+    let breakStatus = false;
+    let breakStartTime = null;
 
-    try {
-        await db.collection('breaks').add({
-            date: today,
-            startTime: breakStartTime.toISOString(),
-            endTime: breakEndTime.toISOString(),
-            duration: breakDuration,
-            userId: userId
-        });
-
-        document.getElementById('break-status').textContent = 'You are currently working';
-        document.getElementById('break-status').style.color = '#2c3e50';
-        document.getElementById('breakInBtn').disabled = false;
-        document.getElementById('breakOutBtn').disabled = true;
-
-        const breakList = document.getElementById('breakList');
-        if (breakList) {
-            const breakItem = document.createElement('div');
-            breakItem.className = 'break-item';
-            breakItem.innerHTML = `
-                <span>Break ${document.getElementById('breaks-count').textContent}</span>
-                <span>${breakStartTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - 
-                      ${breakEndTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} 
-                      (${breakDuration}m)</span>
-            `;
-            breakList.appendChild(breakItem);
+    async function breakIn() {
+        if (breakStatus) {
+            alert('You are already on a break!');
+            return;
         }
 
-        await loadDashboardData();
-        alert('Break ended at ' + currentTime + '. Duration: ' + breakDuration + ' minutes');
-    } catch (error) {
-        console.error('Error recording break:', error);
-        alert('Error recording break: ' + error.message);
-    }
-}
+        breakStatus = true;
+        breakStartTime = new Date();
+        const currentTime = breakStartTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
 
-// Load break history with real-time updates
-async function loadBreakHistory() {
-    try {
+        const breakStatusElement = document.getElementById('break-status');
+        if (breakStatusElement) {
+            breakStatusElement.textContent = 'You are currently on a break';
+            breakStatusElement.style.color = '#f39c12';
+        }
+        document.getElementById('breakInBtn').disabled = true;
+        document.getElementById('breakOutBtn').disabled = false;
+
+        alert('Break started at ' + currentTime);
+    }
+
+    async function breakOut() {
+        if (!breakStatus) {
+            alert('You are not on a break!');
+            return;
+        }
+
+        breakStatus = false;
+        const breakEndTime = new Date();
+        const breakDuration = Math.round((breakEndTime - breakStartTime) / 60000);
+        const currentTime = breakEndTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
         const userId = username;
-        db.collection('breaks').where('userId', '==', userId).orderBy('date', 'desc').limit(5)
-            .onSnapshot(snapshot => {
-                const breakHistoryBody = document.getElementById('break-history-body');
-                if (breakHistoryBody) {
-                    breakHistoryBody.innerHTML = '';
-                    const breaksByDate = {};
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        if (!breaksByDate[data.date]) {
-                            breaksByDate[data.date] = { count: 0, totalDuration: 0 };
-                        }
-                        breaksByDate[data.date].count += 1;
-                        breaksByDate[data.date].totalDuration += data.duration || 0;
-                    });
-                    for (const [date, info] of Object.entries(breaksByDate)) {
-                        const avgBreak = (info.totalDuration / info.count).toFixed(1);
-                        breakHistoryBody.innerHTML += `
-                            <tr>
-                                <td>${date}</td>
-                                <td>${info.count}</td>
-                                <td>${info.totalDuration}m</td>
-                                <td>${avgBreak}m</td>
-                            </tr>
-                        `;
-                    }
-                }
-            }, error => console.error('Error onSnapshot break-history:', error));
-    } catch (error) {
-        console.error('Error loading break history:', error);
-    }
-}
-
-// Apply leave function
-async function applyLeave() {
-    const leaveType = document.getElementById('leaveType').value;
-    const startDate = document.getElementById('startDate').value;
-    const endDate = document.getElementById('endDate').value;
-    const reason = document.getElementById('reason').value;
-    const userId = username;
-
-    if (!leaveType || !startDate || !endDate || !reason) {
-        alert('Please fill all fields');
-        return;
-    }
-
-    try {
-        await db.collection('leaves').add({
-            leaveType,
-            startDate,
-            endDate,
-            reason,
-            status: 'pending',
-            userId,
-            appliedDate: new Date().toISOString()
-        });
-        alert('Leave application submitted successfully!');
-        document.getElementById('leaveForm').reset();
-        await loadLeaveBalance();
-    } catch (error) {
-        console.error('Error applying for leave:', error);
-        alert('Error submitting leave application: ' + error.message);
-    }
-}
-
-// Load leave balance with real-time updates
-async function loadLeaveBalance() {
-    try {
-        const userId = username;
-        db.collection('leaves').where('userId', '==', userId).where('status', '==', 'approved')
-            .onSnapshot(snapshot => {
-                const leaveBalanceBody = document.getElementById('leave-balance-body');
-                if (leaveBalanceBody) {
-                    leaveBalanceBody.innerHTML = '';
-                    const leaveTypes = {
-                        sick: { total: 12, used: 0 },
-                        casual: { total: 10, used: 0 },
-                        vacation: { total: 15, used: 0 },
-                        personal: { total: 5, used: 0 }
-                    };
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        if (leaveTypes[data.leaveType]) leaveTypes[data.leaveType].used += 1;
-                    });
-                    for (const [type, info] of Object.entries(leaveTypes)) {
-                        const balance = info.total - info.used;
-                        leaveBalanceBody.innerHTML += `
-                            <tr>
-                                <td>${type.charAt(0).toUpperCase() + type.slice(1)} Leave</td>
-                                <td>${info.total}</td>
-                                <td>${info.used}</td>
-                                <td>${balance}</td>
-                            </tr>
-                        `;
-                    }
-                }
-            }, error => console.error('Error onSnapshot leave-balance:', error));
-    } catch (error) {
-        console.error('Error loading leave balance:', error);
-    }
-}
-
-// Load holidays with real-time updates
-async function loadHolidays() {
-    try {
         const today = new Date().toISOString().split('T')[0];
-        db.collection('holidays').where('date', '>=', today).orderBy('date')
-            .onSnapshot(snapshot => {
-                const holidayTableBody = document.getElementById('holiday-table-body');
-                if (holidayTableBody) {
-                    holidayTableBody.innerHTML = '';
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const date = new Date(data.date);
-                        holidayTableBody.innerHTML += `
-                            <tr>
-                                <td>${data.date}</td>
-                                <td>${data.name}</td>
-                                <td>${date.toLocaleDateString('en-IN', { weekday: 'long' })}</td>
-                                <td>${data.type}</td>
-                            </tr>
-                        `;
-                    });
-                }
-            }, error => console.error('Error onSnapshot holidays:', error));
-    } catch (error) {
-        console.error('Error loading holidays:', error);
-    }
-}
 
-// Load attendance history with real-time updates
-async function loadAttendanceHistory() {
-    try {
-        const userId = username;
-        db.collection('attendance').where('userId', '==', userId).orderBy('date', 'desc').limit(10)
-            .onSnapshot(snapshot => {
-                const attendanceHistoryBody = document.getElementById('attendance-history-body');
-                if (attendanceHistoryBody) {
-                    attendanceHistoryBody.innerHTML = '';
-                    const attendanceByDate = {};
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        if (!attendanceByDate[data.date]) {
-                            attendanceByDate[data.date] = { checkIn: null, checkOut: null };
+        try {
+            await db.collection('breaks').add({
+                date: today,
+                startTime: breakStartTime.toISOString(),
+                endTime: breakEndTime.toISOString(),
+                duration: breakDuration,
+                userId: userId
+            });
+
+            const breakStatusElement = document.getElementById('break-status');
+            if (breakStatusElement) {
+                breakStatusElement.textContent = 'You are currently working';
+                breakStatusElement.style.color = '#2c3e50';
+            }
+            document.getElementById('breakInBtn').disabled = false;
+            document.getElementById('breakOutBtn').disabled = true;
+
+            const breakList = document.getElementById('breakList');
+            if (breakList) {
+                const breakItem = document.createElement('div');
+                breakItem.className = 'break-item';
+                breakItem.innerHTML = `
+                    <span>Break ${document.getElementById('breaks-count').textContent}</span>
+                    <span>${breakStartTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - 
+                          ${breakEndTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} 
+                          (${breakDuration}m)</span>
+                `;
+                breakList.appendChild(breakItem);
+            }
+
+            await loadDashboardData();
+            alert('Break ended at ' + currentTime + '. Duration: ' + breakDuration + ' minutes');
+        } catch (error) {
+            console.error('Error recording break:', error);
+            alert('Error recording break: ' + error.message);
+        }
+    }
+
+    // Load break history with real-time updates
+    async function loadBreakHistory() {
+        try {
+            const userId = username;
+            db.collection('breaks').where('userId', '==', userId).orderBy('date', 'desc').limit(5)
+                .onSnapshot(snapshot => {
+                    const breakHistoryBody = document.getElementById('break-history-body');
+                    if (breakHistoryBody) {
+                        breakHistoryBody.innerHTML = '';
+                        const breaksByDate = {};
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            if (!breaksByDate[data.date]) {
+                                breaksByDate[data.date] = { count: 0, totalDuration: 0 };
+                            }
+                            breaksByDate[data.date].count += 1;
+                            breaksByDate[data.date].totalDuration += data.duration || 0;
+                        });
+                        for (const [date, info] of Object.entries(breaksByDate)) {
+                            const avgBreak = (info.totalDuration / info.count).toFixed(1);
+                            breakHistoryBody.innerHTML += `
+                                <tr>
+                                    <td>${date}</td>
+                                    <td>${info.count}</td>
+                                    <td>${info.totalDuration}m</td>
+                                    <td>${avgBreak}m</td>
+                                </tr>
+                            `;
                         }
-                        if (data.type === 'check-in') attendanceByDate[data.date].checkIn = data.time;
-                        else if (data.type === 'check-out') attendanceByDate[data.date].checkOut = data.time;
-                    });
-                    for (const [date, info] of Object.entries(attendanceByDate)) {
-                        const status = info.checkIn ? 'Present' : 'Absent';
-                        const checkIn = info.checkIn || '-';
-                        const checkOut = info.checkOut || '-';
-                        const hours = info.checkIn && info.checkOut ? 
-                            ((new Date(`2025-01-01 ${info.checkOut}`) - new Date(`2025-01-01 ${info.checkIn}`)) / 3600000).toFixed(1) : '-';
-                        attendanceHistoryBody.innerHTML += `
-                            <tr>
-                                <td>${date}</td>
-                                <td>${new Date(date).toLocaleDateString('en-IN', { weekday: 'long' })}</td>
-                                <td><span class="status-badge status-${status.toLowerCase()}">${status}</span></td>
-                                <td>${checkIn}</td>
-                                <td>${checkOut}</td>
-                                <td>-</td>
-                                <td>${hours}</td>
-                            </tr>
-                        `;
                     }
-                }
-            }, error => console.error('Error onSnapshot attendance-history:', error));
-    } catch (error) {
-        console.error('Error loading attendance history:', error);
+                }, error => console.error('Error onSnapshot break-history:', error));
+        } catch (error) {
+            console.error('Error loading break history:', error);
+        }
     }
-}
 
-// Generate payslip function
-async function generatePayslip() {
-    const monthSelect = document.getElementById('payslipMonth');
-    const monthIndex = parseInt(monthSelect.value);
-    const monthName = monthSelect.options[monthSelect.selectedIndex].text;
-    const year = 2025;
-    const userId = username;
+    // Apply leave function
+    async function applyLeave() {
+        const leaveType = document.getElementById('leaveType').value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const reason = document.getElementById('reason').value;
+        const userId = username;
 
-    try {
-        const attendanceSnapshot = await db.collection('attendance')
-            .where('userId', '==', userId)
-            .where('date', '>=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`)
-            .where('date', '<=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-31`)
-            .get();
+        if (!leaveType || !startDate || !endDate || !reason) {
+            alert('Please fill all fields');
+            return;
+        }
 
-        const leaveSnapshot = await db.collection('leaves')
-            .where('userId', '==', userId)
-            .where('startDate', '>=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`)
-            .where('startDate', '<=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-31`)
-            .where('status', '==', 'approved')
-            .get();
-
-        const daysPresent = attendanceSnapshot.docs.filter(doc => doc.data().type === 'check-in').length;
-        const leavesTaken = leaveSnapshot.size;
-
-        const payslipHTML = `
-            <div class="payslip-container">
-                <div class="payslip-header">
-                    <h2>GLIGGO TECHNOLOGIES INDIA PRIVATE LIMITED</h2>
-                    <p>123 Tech Park, Bangalore, India - 560001</p>
-                    <h3>PAYSLIP FOR ${monthName.toUpperCase()}</h3>
-                </div>
-                <div class="payslip-details">
-                    <div>
-                        <p><strong>Employee Name:</strong> ${fullName}</p>
-                        <p><strong>Employee ID:</strong> GLG00123</p>
-                        <p><strong>Department:</strong> Development</p>
-                    </div>
-                    <div>
-                        <p><strong>Bank Account:</strong> XXXX XXXX 4567</p>
-                        <p><strong>PAN Number:</strong> ABCPS1234D</p>
-                        <p><strong>Pay Date:</strong> 5th ${monthName} ${year}</p>
-                    </div>
-                </div>
-                <div class="payslip-earnings">
-                    <h4>EARNINGS</h4>
-                    <table style="width: 100%;">
-                        <tr><td>Basic Salary</td><td style="text-align: right;">₹45,000.00</td></tr>
-                        <tr><td>House Rent Allowance</td><td style="text-align: right;">₹18,000.00</td></tr>
-                        <tr><td>Conveyance Allowance</td><td style="text-align: right;">₹1,600.00</td></tr>
-                        <tr><td>Medical Allowance</td><td style="text-align: right;">₹1,250.00</td></tr>
-                        <tr><td>Special Allowance</td><td style="text-align: right;">₹14,150.00</td></tr>
-                        <tr style="font-weight: bold;"><td>Total Earnings</td><td style="text-align: right;">₹80,000.00</td></tr>
-                    </table>
-                </div>
-                <div class="payslip-deductions">
-                    <h4>DEDUCTIONS</h4>
-                    <table style="width: 100%;">
-                        <tr><td>Provident Fund</td><td style="text-align: right;">₹5,400.00</td></tr>
-                        <tr><td>Professional Tax</td><td style="text-align: right;">₹200.00</td></tr>
-                        <tr><td>TDS</td><td style="text-align: right;">₹7,200.00</td></tr>
-                        <tr style="font-weight: bold;"><td>Total Deductions</td><td style="text-align: right;">₹12,800.00</td></tr>
-                    </table>
-                </div>
-                <div class="payslip-summary">
-                    <div><p><strong>Days Present:</strong> ${daysPresent}</p><p><strong>Leaves Taken:</strong> ${leavesTaken}</p></div>
-                    <div style="text-align: right;"><h3>Net Salary: ₹67,200.00</h3><p>(Rupees Sixty Seven Thousand Two Hundred Only)</p></div>
-                </div>
-                <div class="payslip-footer">
-                    <p>This is a system generated payslip and does not require signature.</p>
-                    <div class="signature-area">
-                        <div class="signature"><p>Employee Signature</p><div class="signature-line"></div></div>
-                        <div class="signature"><p>Authorized Signature</p><div class="signature-line"></div></div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('payslipResult').innerHTML = payslipHTML;
-    } catch (error) {
-        console.error('Error generating payslip:', error);
-        alert('Error generating payslip: ' + error.message);
+        try {
+            await db.collection('leaves').add({
+                leaveType,
+                startDate,
+                endDate,
+                reason,
+                status: 'pending',
+                userId,
+                appliedDate: new Date().toISOString()
+            });
+            alert('Leave application submitted successfully!');
+            document.getElementById('leaveForm').reset();
+            await loadLeaveBalance();
+        } catch (error) {
+            console.error('Error applying for leave:', error);
+            alert('Error submitting leave application: ' + error.message);
+        }
     }
-}
 
-// Generate report function
-async function generateReport() {
-    const reportType = document.getElementById('reportType').value;
-    const monthSelect = document.getElementById('reportMonth');
-    const monthIndex = parseInt(monthSelect.value);
-    const monthName = monthSelect.options[monthSelect.selectedIndex].text;
-    const year = 2025;
-    const userId = username;
+    // Load leave balance with real-time updates
+    async function loadLeaveBalance() {
+        try {
+            const userId = username;
+            db.collection('leaves').where('userId', '==', userId).where('status', '==', 'approved')
+                .onSnapshot(snapshot => {
+                    const leaveBalanceBody = document.getElementById('leave-balance-body');
+                    if (leaveBalanceBody) {
+                        leaveBalanceBody.innerHTML = '';
+                        const leaveTypes = {
+                            sick: { total: 12, used: 0 },
+                            casual: { total: 10, used: 0 },
+                            vacation: { total: 15, used: 0 },
+                            personal: { total: 5, used: 0 }
+                        };
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            if (leaveTypes[data.leaveType]) leaveTypes[data.leaveType].used += 1;
+                        });
+                        for (const [type, info] of Object.entries(leaveTypes)) {
+                            const balance = info.total - info.used;
+                            leaveBalanceBody.innerHTML += `
+                                <tr>
+                                    <td>${type.charAt(0).toUpperCase() + type.slice(1)} Leave</td>
+                                    <td>${info.total}</td>
+                                    <td>${info.used}</td>
+                                    <td>${balance}</td>
+                                </tr>
+                            `;
+                        }
+                    }
+                }, error => console.error('Error onSnapshot leave-balance:', error));
+        } catch (error) {
+            console.error('Error loading leave balance:', error);
+        }
+    }
 
-    try {
-        let reportHTML = '';
+    // Load holidays with real-time updates
+    async function loadHolidays() {
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            db.collection('holidays').where('date', '>=', today).orderBy('date')
+                .onSnapshot(snapshot => {
+                    const holidayTableBody = document.getElementById('holiday-table-body');
+                    if (holidayTableBody) {
+                        holidayTableBody.innerHTML = '';
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            const date = new Date(data.date);
+                            holidayTableBody.innerHTML += `
+                                <tr>
+                                    <td>${data.date}</td>
+                                    <td>${data.name}</td>
+                                    <td>${date.toLocaleDateString('en-IN', { weekday: 'long' })}</td>
+                                    <td>${data.type}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                }, error => console.error('Error onSnapshot holidays:', error));
+        } catch (error) {
+            console.error('Error loading holidays:', error);
+        }
+    }
 
-        if (reportType === 'monthly') {
-            const attendanceSnapshot = await db.collection('attendance')
-                .where('userId', '==', userId)
-                .where('date', '>=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`)
-                .where('date', '<=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-31`)
-                .orderBy('date')
-                .get();
+    // Load attendance history with real-time updates
+    async function loadAttendanceHistory() {
+        try {
+            const userId = username;
+            db.collection('attendance').where('userId', '==', userId).orderBy('date', 'desc').limit(10)
+                .onSnapshot(snapshot => {
+                    const attendanceHistoryBody = document.getElementById('attendance-history-body');
+                    if (attendanceHistoryBody) {
+                        attendanceHistoryBody.innerHTML = '';
+                        const attendanceByDate = {};
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            if (!attendanceByDate[data.date]) {
+                                attendanceByDate[data.date] = { checkIn: null, checkOut: null };
+                            }
+                            if (data.type === 'check-in') attendanceByDate[data.date].checkIn = data.time;
+                            else if (data.type === 'check-out') attendanceByDate[data.date].checkOut = data.time;
+                        });
+                        for (const [date, info] of Object.entries(attendanceByDate)) {
+                            const status = info.checkIn ? 'Present' : 'Absent';
+                            const checkIn = info.checkIn || '-';
+                            const checkOut = info.checkOut || '-';
+                            const hours = info.checkIn && info.checkOut ? 
+                                ((new Date(`2025-01-01 ${info.checkOut}`) - new Date(`2025-01-01 ${info.checkIn}`)) / 3600000).toFixed(1) : '-';
+                            attendanceHistoryBody.innerHTML += `
+                                <tr>
+                                    <td>${date}</td>
+                                    <td>${new Date(date).toLocaleDateString('en-IN', { weekday: 'long' })}</td>
+                                    <td><span class="status-badge status-${status.toLowerCase()}">${status}</span></td>
+                                    <td>${checkIn}</td>
+                                    <td>${checkOut}</td>
+                                    <td>-</td>
+                                    <td>${hours}</td>
+                                </tr>
+                            `;
+                        }
+                    }
+                }, error => console.error('Error onSnapshot attendance-history:', error));
+        } catch (error) {
+            console.error('Error loading attendance history:', error);
+        }
+    }
 
-            let totalHours = 0;
-            let workingDays = 0;
-            let leaves = 0;
-            let holidays = 0;
-            const attendanceByDate = {};
+    // Generate payslip function
+    async function generatePayslip() {
+        const monthSelect = document.getElementById('payslipMonth');
+        const monthIndex = parseInt(monthSelect.value);
+        const monthName = monthSelect.options[monthSelect.selectedIndex].text;
+        const year = 2025;
+        const userId = username;
 
-            attendanceSnapshot.forEach(doc => {
-                const data = doc.data();
-                if (!attendanceByDate[data.date]) attendanceByDate[data.date] = { checkIn: null, checkOut: null };
-                if (data.type === 'check-in') { attendanceByDate[data.date].checkIn = data.time; workingDays++; }
-                else if (data.type === 'check-out') attendanceByDate[data.date].checkOut = data.time;
-            });
-
-            const leaveSnapshot = await db.collection('leaves')
-                .where('userId', '==', userId)
-                .where('startDate', '>=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`)
-                .where('startDate', '<=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-31`)
-                .where('status', '==', 'approved')
-                .get();
-            leaves = leaveSnapshot.size;
-
-            const holidaySnapshot = await db.collection('holidays')
-                .where('date', '>=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`)
-                .where('date', '<=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-31`)
-                .get();
-            holidays = holidaySnapshot.size;
-
-            reportHTML = `<h3>Monthly Attendance Report for ${monthName}</h3><table class="table"><thead><tr><th>Date</th><th>Status</th><th>Check-in</th><th>Check-out</th><th>Hours Worked</th></tr></thead><tbody>`;
-            for (const [date, info] of Object.entries(attendanceByDate)) {
-                const status = info.checkIn ? 'Present' : 'Absent';
-                const checkIn = info.checkIn || '-';
-                const checkOut = info.checkOut || '-';
-                const hours = info.checkIn && info.checkOut ? ((new Date(`2025-01-01 ${info.checkOut}`) - new Date(`2025-01-01 ${info.checkIn}`)) / 3600000).toFixed(1) : '-';
-                if (hours !== '-') totalHours += parseFloat(hours);
-                reportHTML += `<tr><td>${date}</td><td><span class="status-badge status-${status.toLowerCase()}">${status}</span></td><td>${checkIn}</td><td>${checkOut}</td><td>${hours}</td></tr>`;
-            }
-            reportHTML += `</tbody></table><div style="margin-top: 20px;"><p><strong>Summary:</strong> ${workingDays} Working Days, ${leaves} Leaves, ${holidays} Holidays</p><p><strong>Total Hours:</strong> ${totalHours.toFixed(1)}</p><p><strong>Average Hours/Day:</strong> ${(totalHours / workingDays || 0).toFixed(1)}</p></div>`;
-        } else if (reportType === 'breaks') {
-            const breakSnapshot = await db.collection('breaks')
-                .where('userId', '==', userId)
-                .where('date', '>=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`)
-                .where('date', '<=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-31`)
-                .orderBy('date')
-                .get();
-
-            const breaksByDate = {};
-            breakSnapshot.forEach(doc => {
-                const data = doc.data();
-                if (!breaksByDate[data.date]) breaksByDate[data.date] = { count: 0, totalDuration: 0 };
-                breaksByDate[data.date].count += 1;
-                breaksByDate[data.date].totalDuration += data.duration || 0;
-            });
-
-            reportHTML = `<h3>Break Analysis Report for ${monthName}</h3><table class="table"><thead><tr><th>Date</th><th>Total Breaks</th><th>Break Time</th><th>Average Break</th></tr></thead><tbody>`;
-            for (const [date, info] of Object.entries(breaksByDate)) {
-                const avgBreak = (info.totalDuration / info.count).toFixed(1);
-                reportHTML += `<tr><td>${date}</td><td>${info.count}</td><td>${info.totalDuration}m</td><td>${avgBreak}m</td></tr>`;
-            }
-            reportHTML += `</tbody></table><div style="margin-top: 20px;"><p><strong>Average Breaks/Day:</strong> ${(Object.keys(breaksByDate).length ? Object.values(breaksByDate).reduce((sum, b) => sum + b.count, 0) / Object.keys(breaksByDate).length : 0).toFixed(1)}</p><p><strong>Average Break Time/Day:</strong> ${(Object.keys(breaksByDate).length ? Object.values(breaksByDate).reduce((sum, b) => sum + b.totalDuration, 0) / Object.keys(breaksByDate).length : 0).toFixed(1)} minutes</p></div>`;
-        } else if (reportType === 'leave') {
-            const leaveSnapshot = await db.collection('leaves')
-                .where('userId', '==', userId)
-                .orderBy('startDate', 'desc')
-                .limit(10)
-                .get();
-
-            reportHTML = `<h3>Leave History Report</h3><table class="table"><thead><tr><th>Leave Type</th><th>Start Date</th><th>End Date</th><th>Days</th><th>Status</th></tr></thead><tbody>`;
-            leaveSnapshot.forEach(doc => {
-                const data = doc.data();
-                const startDate = new Date(data.startDate);
-                const endDate = new Date(data.endDate);
-                const days = ((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-                reportHTML += `<tr><td>${data.leaveType.charAt(0).toUpperCase() + data.leaveType.slice(1)}</td><td>${data.startDate}</td><td>${data.endDate}</td><td>${days}</td><td><span class="status-badge status-${data.status === 'approved' ? 'present' : 'leave'}">${data.status.charAt(0).toUpperCase() + data.status.slice(1)}</span></td></tr>`;
-            });
-            const pendingLeaves = leaveSnapshot.docs.filter(doc => doc.data().status === 'pending').length;
-            const totalLeaves = leaveSnapshot.size;
-            reportHTML += `</tbody></table><div style="margin-top: 20px;"><p><strong>Total Leaves Taken:</strong> ${totalLeaves} days</p><p><strong>Leaves Pending Approval:</strong> ${pendingLeaves} days</p></div>`;
-        } else {
+        try {
             const attendanceSnapshot = await db.collection('attendance')
                 .where('userId', '==', userId)
                 .where('date', '>=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`)
@@ -1464,32 +1318,207 @@ async function generateReport() {
 
             const daysPresent = attendanceSnapshot.docs.filter(doc => doc.data().type === 'check-in').length;
             const leavesTaken = leaveSnapshot.size;
-            const absences = 30 - daysPresent - leavesTaken;
 
-            reportHTML = `<h3>Attendance Summary Report for ${monthName}</h3><div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;"><div style="background: #e6f7ee; padding: 15px; border-radius: 8px; text-align: center;"><h4 style="color: #00a65a; margin-bottom: 5px;">${daysPresent}</h4><p>Days Present</p></div><div style="background: #fef5ec; padding: 15px; border-radius: 8px; text-align: center;"><h4 style="color: #f8961e; margin-bottom: 5px;">${leavesTaken}</h4><p>Leaves Taken</p></div><div style="background: #fcebea; padding: 15px; border-radius: 8px; text-align: center;"><h4 style="color: #e74c3c; margin-bottom: 5px;">${absences}</h4><p>Absences</p></div></div><div style="margin-top: 20px;"><p><strong>Total Working Hours:</strong> ${(daysPresent * 8).toFixed(1)} hours</p><p><strong>Average Hours/Day:</strong> 8.0 hours</p><p><strong>Regularity Score:</strong> ${((daysPresent / 30) * 100).toFixed(0)}%</p></div>`;
+            const payslipHTML = `
+                <div class="payslip-container">
+                    <div class="payslip-header">
+                        <h2>GLIGGO TECHNOLOGIES INDIA PRIVATE LIMITED</h2>
+                        <p>123 Tech Park, Bangalore, India - 560001</p>
+                        <h3>PAYSLIP FOR ${monthName.toUpperCase()}</h3>
+                    </div>
+                    <div class="payslip-details">
+                        <div>
+                            <p><strong>Employee Name:</strong> ${fullName}</p>
+                            <p><strong>Employee ID:</strong> GLG00123</p>
+                            <p><strong>Department:</strong> Development</p>
+                        </div>
+                        <div>
+                            <p><strong>Bank Account:</strong> XXXX XXXX 4567</p>
+                            <p><strong>PAN Number:</strong> ABCPS1234D</p>
+                            <p><strong>Pay Date:</strong> 5th ${monthName} ${year}</p>
+                        </div>
+                    </div>
+                    <div class="payslip-earnings">
+                        <h4>EARNINGS</h4>
+                        <table style="width: 100%;">
+                            <tr><td>Basic Salary</td><td style="text-align: right;">₹45,000.00</td></tr>
+                            <tr><td>House Rent Allowance</td><td style="text-align: right;">₹18,000.00</td></tr>
+                            <tr><td>Conveyance Allowance</td><td style="text-align: right;">₹1,600.00</td></tr>
+                            <tr><td>Medical Allowance</td><td style="text-align: right;">₹1,250.00</td></tr>
+                            <tr><td>Special Allowance</td><td style="text-align: right;">₹14,150.00</td></tr>
+                            <tr style="font-weight: bold;"><td>Total Earnings</td><td style="text-align: right;">₹80,000.00</td></tr>
+                        </table>
+                    </div>
+                    <div class="payslip-deductions">
+                        <h4>DEDUCTIONS</h4>
+                        <table style="width: 100%;">
+                            <tr><td>Provident Fund</td><td style="text-align: right;">₹5,400.00</td></tr>
+                            <tr><td>Professional Tax</td><td style="text-align: right;">₹200.00</td></tr>
+                            <tr><td>TDS</td><td style="text-align: right;">₹7,200.00</td></tr>
+                            <tr style="font-weight: bold;"><td>Total Deductions</td><td style="text-align: right;">₹12,800.00</td></tr>
+                        </table>
+                    </div>
+                    <div class="payslip-summary">
+                        <div><p><strong>Days Present:</strong> ${daysPresent}</p><p><strong>Leaves Taken:</strong> ${leavesTaken}</p></div>
+                        <div style="text-align: right;"><h3>Net Salary: ₹67,200.00</h3><p>(Rupees Sixty Seven Thousand Two Hundred Only)</p></div>
+                    </div>
+                    <div class="payslip-footer">
+                        <p>This is a system generated payslip and does not require signature.</p>
+                        <div class="signature-area">
+                            <div class="signature"><p>Employee Signature</p><div class="signature-line"></div></div>
+                            <div class="signature"><p>Authorized Signature</p><div class="signature-line"></div></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('payslipResult').innerHTML = payslipHTML;
+        } catch (error) {
+            console.error('Error generating payslip:', error);
+            alert('Error generating payslip: ' + error.message);
         }
-
-        document.getElementById('reportResult').innerHTML = reportHTML;
-    } catch (error) {
-        console.error('Error generating report:', error);
-        alert('Error generating report: ' + error.message);
     }
-}
 
-// Initialize the application
-async function initApp() {
-    try {
-        updateCurrentTime();
-        setInterval(updateCurrentTime, 1000);
-        await refreshData();
-        console.log('Gliggo Attendance System initialized');
-    } catch (error) {
-        console.error('Error initializing app:', error);
-        alert('Failed to initialize app. Check console for details.');
+    // Generate report function
+    async function generateReport() {
+        const reportType = document.getElementById('reportType').value;
+        const monthSelect = document.getElementById('reportMonth');
+        const monthIndex = parseInt(monthSelect.value);
+        const monthName = monthSelect.options[monthSelect.selectedIndex].text;
+        const year = 2025;
+        const userId = username;
+
+        try {
+            let reportHTML = '';
+
+            if (reportType === 'monthly') {
+                const attendanceSnapshot = await db.collection('attendance')
+                    .where('userId', '==', userId)
+                    .where('date', '>=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`)
+                    .where('date', '<=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-31`)
+                    .orderBy('date')
+                    .get();
+
+                let totalHours = 0;
+                let workingDays = 0;
+                let leaves = 0;
+                let holidays = 0;
+                const attendanceByDate = {};
+
+                attendanceSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (!attendanceByDate[data.date]) attendanceByDate[data.date] = { checkIn: null, checkOut: null };
+                    if (data.type === 'check-in') { attendanceByDate[data.date].checkIn = data.time; workingDays++; }
+                    else if (data.type === 'check-out') attendanceByDate[data.date].checkOut = data.time;
+                });
+
+                const leaveSnapshot = await db.collection('leaves')
+                    .where('userId', '==', userId)
+                    .where('startDate', '>=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`)
+                    .where('startDate', '<=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-31`)
+                    .where('status', '==', 'approved')
+                    .get();
+                leaves = leaveSnapshot.size;
+
+                const holidaySnapshot = await db.collection('holidays')
+                    .where('date', '>=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`)
+                    .where('date', '<=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-31`)
+                    .get();
+                holidays = holidaySnapshot.size;
+
+                reportHTML = `<h3>Monthly Attendance Report for ${monthName}</h3><table class="table"><thead><tr><th>Date</th><th>Status</th><th>Check-in</th><th>Check-out</th><th>Hours Worked</th></tr></thead><tbody>`;
+                for (const [date, info] of Object.entries(attendanceByDate)) {
+                    const status = info.checkIn ? 'Present' : 'Absent';
+                    const checkIn = info.checkIn || '-';
+                    const checkOut = info.checkOut || '-';
+                    const hours = info.checkIn && info.checkOut ? ((new Date(`2025-01-01 ${info.checkOut}`) - new Date(`2025-01-01 ${info.checkIn}`)) / 3600000).toFixed(1) : '-';
+                    if (hours !== '-') totalHours += parseFloat(hours);
+                    reportHTML += `<tr><td>${date}</td><td><span class="status-badge status-${status.toLowerCase()}">${status}</span></td><td>${checkIn}</td><td>${checkOut}</td><td>${hours}</td></tr>`;
+                }
+                reportHTML += `</tbody></table><div style="margin-top: 20px;"><p><strong>Summary:</strong> ${workingDays} Working Days, ${leaves} Leaves, ${holidays} Holidays</p><p><strong>Total Hours:</strong> ${totalHours.toFixed(1)}</p><p><strong>Average Hours/Day:</strong> ${(totalHours / workingDays || 0).toFixed(1)}</p></div>`;
+            } else if (reportType === 'breaks') {
+                const breakSnapshot = await db.collection('breaks')
+                    .where('userId', '==', userId)
+                    .where('date', '>=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`)
+                    .where('date', '<=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-31`)
+                    .orderBy('date')
+                    .get();
+
+                const breaksByDate = {};
+                breakSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (!breaksByDate[data.date]) breaksByDate[data.date] = { count: 0, totalDuration: 0 };
+                    breaksByDate[data.date].count += 1;
+                    breaksByDate[data.date].totalDuration += data.duration || 0;
+                });
+
+                reportHTML = `<h3>Break Analysis Report for ${monthName}</h3><table class="table"><thead><tr><th>Date</th><th>Total Breaks</th><th>Break Time</th><th>Average Break</th></tr></thead><tbody>`;
+                for (const [date, info] of Object.entries(breaksByDate)) {
+                    const avgBreak = (info.totalDuration / info.count).toFixed(1);
+                    reportHTML += `<tr><td>${date}</td><td>${info.count}</td><td>${info.totalDuration}m</td><td>${avgBreak}m</td></tr>`;
+                }
+                reportHTML += `</tbody></table><div style="margin-top: 20px;"><p><strong>Average Breaks/Day:</strong> ${(Object.keys(breaksByDate).length ? Object.values(breaksByDate).reduce((sum, b) => sum + b.count, 0) / Object.keys(breaksByDate).length : 0).toFixed(1)}</p><p><strong>Average Break Time/Day:</strong> ${(Object.keys(breaksByDate).length ? Object.values(breaksByDate).reduce((sum, b) => sum + b.totalDuration, 0) / Object.keys(breaksByDate).length : 0).toFixed(1)} minutes</p></div>`;
+            } else if (reportType === 'leave') {
+                const leaveSnapshot = await db.collection('leaves')
+                    .where('userId', '==', userId)
+                    .orderBy('startDate', 'desc')
+                    .limit(10)
+                    .get();
+
+                reportHTML = `<h3>Leave History Report</h3><table class="table"><thead><tr><th>Leave Type</th><th>Start Date</th><th>End Date</th><th>Days</th><th>Status</th></tr></thead><tbody>`;
+                leaveSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const startDate = new Date(data.startDate);
+                    const endDate = new Date(data.endDate);
+                    const days = ((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+                    reportHTML += `<tr><td>${data.leaveType.charAt(0).toUpperCase() + data.leaveType.slice(1)}</td><td>${data.startDate}</td><td>${data.endDate}</td><td>${days}</td><td><span class="status-badge status-${data.status === 'approved' ? 'present' : 'leave'}">${data.status.charAt(0).toUpperCase() + data.status.slice(1)}</span></td></tr>`;
+                });
+                const pendingLeaves = leaveSnapshot.docs.filter(doc => doc.data().status === 'pending').length;
+                const totalLeaves = leaveSnapshot.size;
+                reportHTML += `</tbody></table><div style="margin-top: 20px;"><p><strong>Total Leaves Taken:</strong> ${totalLeaves} days</p><p><strong>Leaves Pending Approval:</strong> ${pendingLeaves} days</p></div>`;
+            } else {
+                const attendanceSnapshot = await db.collection('attendance')
+                    .where('userId', '==', userId)
+                    .where('date', '>=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`)
+                    .where('date', '<=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-31`)
+                    .get();
+
+                const leaveSnapshot = await db.collection('leaves')
+                    .where('userId', '==', userId)
+                    .where('startDate', '>=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-01`)
+                    .where('startDate', '<=', `${year}-${String(monthIndex + 1).padStart(2, '0')}-31`)
+                    .where('status', '==', 'approved')
+                    .get();
+
+                const daysPresent = attendanceSnapshot.docs.filter(doc => doc.data().type === 'check-in').length;
+                const leavesTaken = leaveSnapshot.size;
+                const absences = 30 - daysPresent - leavesTaken;
+
+                reportHTML = `<h3>Attendance Summary Report for ${monthName}</h3><div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px;"><div style="background: #e6f7ee; padding: 15px; border-radius: 8px; text-align: center;"><h4 style="color: #00a65a; margin-bottom: 5px;">${daysPresent}</h4><p>Days Present</p></div><div style="background: #fef5ec; padding: 15px; border-radius: 8px; text-align: center;"><h4 style="color: #f8961e; margin-bottom: 5px;">${leavesTaken}</h4><p>Leaves Taken</p></div><div style="background: #fcebea; padding: 15px; border-radius: 8px; text-align: center;"><h4 style="color: #e74c3c; margin-bottom: 5px;">${absences}</h4><p>Absences</p></div></div><div style="margin-top: 20px;"><p><strong>Total Working Hours:</strong> ${(daysPresent * 8).toFixed(1)} hours</p><p><strong>Average Hours/Day:</strong> 8.0 hours</p><p><strong>Regularity Score:</strong> ${((daysPresent / 30) * 100).toFixed(0)}%</p></div>`;
+            }
+
+            document.getElementById('reportResult').innerHTML = reportHTML;
+        } catch (error) {
+            console.error('Error generating report:', error);
+            alert('Error generating report: ' + error.message);
+        }
     }
-}
 
-window.onload = initApp;
+    // Initialize the application
+    async function initApp() {
+        try {
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            await refreshData();
+            console.log('Gliggo Attendance System initialized');
+        } catch (error) {
+            console.error('Error initializing app:', error);
+            alert('Failed to initialize app. Check console for details.');
+        }
+    }
+
+    initApp(); // Call initApp after DOM is loaded
+});
     </script>
 </body>
 </html>
