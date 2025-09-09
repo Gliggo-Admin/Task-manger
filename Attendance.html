@@ -848,7 +848,7 @@
         const fullName = sessionStorage.getItem('fullName') || 'User';
         if (!username) {
             alert('Please log in to access the attendance system.');
-            window.location.href = 'login.html'; // Redirect to login page
+            window.location.href = 'index.html'; // Redirect to login page
         } else {
             // Update user info in header
             document.getElementById('user-name').textContent = fullName;
