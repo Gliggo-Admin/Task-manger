@@ -828,15 +828,14 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script>
-        // Firebase configuration
+       // Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
     authDomain: "task-manager-602da.firebaseapp.com",
     projectId: "task-manager-602da",
-    storageBucket: "task-manager-602da.firebasestorage.app",
+    storageBucket: "task-manager-602da.appspot.com",
     messagingSenderId: "438978699329",
-    appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0",
-    measurementId: "G-RK6GS598ES"
+    appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
 };
 
 // Initialize Firebase
@@ -915,7 +914,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load dashboard data with real-time updates
     async function loadDashboardData() {
         try {
-            const userId = username;
+            const userId = username; // Use username as userId to match users collection
             const today = new Date().toISOString().split('T')[0];
 
             // Days present
@@ -1003,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mark attendance function
     async function markAttendance() {
         const currentTime = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
-        const userId = username;
+        const userId = username; // Use username as userId
         const today = new Date().toISOString().split('T')[0];
 
         try {
@@ -1024,7 +1023,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mark checkout function
     async function markCheckOut() {
         const currentTime = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
-        const userId = username;
+        const userId = username; // Use username as userId
         const today = new Date().toISOString().split('T')[0];
 
         try {
@@ -1077,7 +1076,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const breakEndTime = new Date();
         const breakDuration = Math.round((breakEndTime - breakStartTime) / 60000);
         const currentTime = breakEndTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true });
-        const userId = username;
+        const userId = username; // Use username as userId
         const today = new Date().toISOString().split('T')[0];
 
         try {
@@ -1121,7 +1120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load break history with real-time updates
     async function loadBreakHistory() {
         try {
-            const userId = username;
+            const userId = username; // Use username as userId
             db.collection('breaks').where('userId', '==', userId).orderBy('date', 'desc').limit(5)
                 .onSnapshot(snapshot => {
                     const breakHistoryBody = document.getElementById('break-history-body');
@@ -1160,7 +1159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const startDate = document.getElementById('startDate').value;
         const endDate = document.getElementById('endDate').value;
         const reason = document.getElementById('reason').value;
-        const userId = username;
+        const userId = username; // Use username as userId
 
         if (!leaveType || !startDate || !endDate || !reason) {
             alert('Please fill all fields');
@@ -1189,7 +1188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load leave balance with real-time updates
     async function loadLeaveBalance() {
         try {
-            const userId = username;
+            const userId = username; // Use username as userId
             db.collection('leaves').where('userId', '==', userId).where('status', '==', 'approved')
                 .onSnapshot(snapshot => {
                     const leaveBalanceBody = document.getElementById('leave-balance-body');
@@ -1254,7 +1253,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load attendance history with real-time updates
     async function loadAttendanceHistory() {
         try {
-            const userId = username;
+            const userId = username; // Use username as userId
             db.collection('attendance').where('userId', '==', userId).orderBy('date', 'desc').limit(10)
                 .onSnapshot(snapshot => {
                     const attendanceHistoryBody = document.getElementById('attendance-history-body');
@@ -1300,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const monthIndex = parseInt(monthSelect.value);
         const monthName = monthSelect.options[monthSelect.selectedIndex].text;
         const year = 2025;
-        const userId = username;
+        const userId = username; // Use username as userId
 
         try {
             const attendanceSnapshot = await db.collection('attendance')
@@ -1386,7 +1385,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const monthIndex = parseInt(monthSelect.value);
         const monthName = monthSelect.options[monthSelect.selectedIndex].text;
         const year = 2025;
-        const userId = username;
+        const userId = username; // Use username as userId
 
         try {
             let reportHTML = '';
@@ -1510,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateCurrentTime();
             setInterval(updateCurrentTime, 1000);
             await refreshData();
-            console.log('Gliggo Attendance System initialized');
+            console.log('Gliggo Attendance System initialized for:', username);
         } catch (error) {
             console.error('Error initializing app:', error);
             alert('Failed to initialize app. Check console for details.');
