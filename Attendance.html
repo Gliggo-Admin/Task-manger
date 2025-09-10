@@ -1,1369 +1,323 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Attendance Management</title>
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <!-- Chart.js -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- SheetJS (for import/export functionality) -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  
-  <style>
-    * { box-sizing: border-box; }
-    body, html {
-      margin: 0; padding: 0; height: 100%;
-      font-family: Arial, sans-serif;
-      background: #f9f9f9;
-      color: #2c3e50;
-      overflow-x: hidden;
-    }
-    .topbar {
-      position: fixed; top: 0; left: 0; right: 0;
-      height: 60px; background: #007BFF;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 0 20px; z-index: 1001;
-    }
-    #dateTime { font-weight: bold; font-size: 16px; color: #fafafa; display: flex; align-items: center; }
-
-    #sidebarToggle {
-      font-size: 24px;
-      color: #fafafa;
-      background: none;
-      border: none;
-      cursor: pointer;
-      margin-right: 10px;
-      display: block;
-    }
-
-    .profile {
-      position: relative; cursor: pointer; display: flex; align-items: center;
-      width: 40px; height: 40px;
-      background: #0056b3; border-radius: 50%;
-      color: white; font-weight: bold; font-size: 20px;
-      justify-content: center; text-transform: uppercase;
-    }
-
-    #profileDropdown {
-      display: none; position: absolute; top: 50px; right: 0;
-      background: white; border: 1px solid #ccc; border-radius: 6px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 140px; z-index: 1002;
-    }
-    #profileDropdown a, #profileDropdown button {
-      display: block; width: 100%;
-      padding: 10px 15px; text-align: left;
-      border: none; background: none; color: #333; font-size: 14px; cursor: pointer;
-    }
-    #profileDropdown button { color: #e74c3c; }
-    a:hover, button:hover { background: #f0f0f0; }
-
-    .sidebar {
-      position: fixed; top: 60px; left: 0;
-      width: 220px; height: calc(100% - 60px);
-      background: #2c3e50; color: white;
-      padding: 20px; box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
-      z-index: 1000;
-    }
-    .sidebar.visible { transform: translateX(0); }
-    .sidebar ul { list-style: none; padding: 0; margin: 0; }
-    .sidebar .menu-item { margin-bottom: 12px; }
-    .sidebar .menu-item a {
-      color: #ecf0f1; text-decoration: none; font-weight: 600;
-      padding: 10px; display: block; border-radius: 6px;
-    }
-    .sidebar .menu-item a:hover { background: #34495e; }
-
-    .main-content {
-      margin-top: 60px; padding: 30px;
-      transition: margin-left 0.3s ease; margin-left: 0;
-    }
-    .main-content.shifted { margin-left: 220px; }
-    
-    .attendance-container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    .attendance-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 15px;
-    }
-    
-    .date-filter {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-    
-    .date-filter select, .date-filter input {
-      padding: 8px 12px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-    }
-    
-    .import-export-section {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
-    }
-    
-    .import-export-buttons {
-      display: flex;
-      gap: 15px;
-      margin-top: 15px;
-    }
-    
-    .action-btn {
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    
-    .btn-import {
-      background: #17a2b8;
-      color: white;
-    }
-    
-    .btn-export {
-      background: #28a745;
-      color: white;
-    }
-    
-    .attendance-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-    
-    .stat-card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-    
-    .stat-value {
-      font-size: 24px;
-      font-weight: bold;
-      margin: 10px 0;
-    }
-    
-    .stat-label {
-      color: #7f8c8d;
-      font-size: 14px;
-    }
-    
-    .attendance-actions {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
-    }
-    
-    .action-buttons {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 15px;
-    }
-    
-    .btn-login {
-      background: #27ae60;
-      color: white;
-    }
-    
-    .btn-logout {
-      background: #e74c3c;
-      color: white;
-    }
-    
-    .btn-break {
-      background: #f39c12;
-      color: white;
-    }
-    
-    .btn-resume {
-      background: #3498db;
-      color: white;
-    }
-    
-    .action-btn:disabled {
-      background: #bdc3c7;
-      cursor: not-allowed;
-    }
-    
-    .attendance-table {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
-      overflow-x: auto;
-    }
-    
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #eee;
-    }
-    
-    th {
-      background: #f8f9fa;
-      font-weight: bold;
-    }
-    
-    .chart-container {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
-    }
-    
-    .leave-section {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    
-    .leave-form {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin-bottom: 20px;
-    }
-    
-    .leave-form input, .leave-form select, .leave-form textarea {
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-    }
-    
-    .leave-form textarea {
-      grid-column: 1 / -1;
-    }
-    
-    .btn-apply {
-      background: #9b59b6;
-      color: white;
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      grid-column: 1 / -1;
-    }
-    
-    .status-present { color: #27ae60; }
-    .status-absent { color: #e74c3c; }
-    .status-leave { color: #9b59b6; }
-    .status-break { color: #f39c12; }
-    
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1002;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0,0,0,0.5);
-    }
-    
-    .modal-content {
-      background-color: #fefefe;
-      margin: 10% auto;
-      padding: 20px;
-      border: 1px solid #888;
-      width: 80%;
-      max-width: 500px;
-      border-radius: 8px;
-    }
-    
-    .close {
-      color: #aaa;
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    
-    .close:hover {
-      color: black;
-    }
-    
-    .import-preview {
-      margin-top: 15px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-  </style>
 </head>
-<body>
-  <div class="topbar">
-    <button id="sidebarToggle" aria-label="Toggle menu">&#9776;</button>
-    <div id="dateTime">Loading date/time...</div>
-    <div class="profile" id="profileDiv" tabindex="0" aria-haspopup="true" aria-expanded="false" title="User menu">
-      <div id="profileInitial" aria-label="User initial" role="img"></div>
-      <div id="profileDropdown" role="menu" aria-label="Profile options">
-        <a href="Change Password.html" onclick="handleNavigation(event, 'Change Password.html')" role="menuitem">Settings</a>
-        <a href="Home.html" onclick="handleNavigation(event, 'Home.html')" role="menuitem">Dashboard</a>
-        <button id="logoutBtn" role="menuitem">Logout</button>
-      </div>
-    </div>
+<body class="bg-gray-100 flex">
+  <!-- Sidebar -->
+  <div id="sidebar" class="w-64 bg-gray-800 text-white h-screen p-4">
+    <h2 class="text-xl font-bold mb-6">Attendance Dashboard</h2>
+    <nav>
+      <ul>
+        <li><button id="attendance-btn" class="w-full text-left py-2 px-4 hover:bg-gray-700">Attendance Registry</button></li>
+        <li><button id="leave-btn" class="w-full text-left py-2 px-4 hover:bg-gray-700">Leave</button></li>
+        <li><button id="vacation-btn" class="w-full text-left py-2 px-4 hover:bg-gray-700">Vacation</button></li>
+        <li><button id="chart-btn" class="w-full text-left py-2 px-4 hover:bg-gray-700">Chart View</button></li>
+        <li><button id="report-btn" class="w-full text-left py-2 px-4 hover:bg-gray-700">Report</button></li>
+      </ul>
+    </nav>
   </div>
 
-  <nav class="sidebar" id="sidebar" aria-label="Main navigation">
-    <ul>
-      <li class="menu-item"><a href="Home.html" onclick="handleNavigation(event, 'Home.html')">Dashboard</a></li>
-      <li class="menu-item"><a href="Users.html" onclick="handleNavigation(event, 'Users.html')">Users</a></li>
-      <li class="menu-item"><a href="tasks.html" onclick="handleNavigation(event, 'tasks.html')">All Tasks</a></li>
-      <li class="menu-item"><a href="Attendance.html" onclick="handleNavigation(event, 'Attendance.html')">Attendance</a></li>
-      <li class="menu-item"><a href="Chart.html" onclick="handleNavigation(event, 'Chart.html')">Charts</a></li>
-      <li class="menu-item"><a href="AssignTask.html" onclick="handleNavigation(event, 'AssignTask.html')">Assign Task</a></li>
-      <li class="menu-item"><a href="Genrate Report.html" onclick="handleNavigation(event, 'Genrate Report.html')">Report</a></li>
-    </ul>
-  </nav>
-
-  <main class="main-content" id="mainContent">
-    <div class="attendance-container">
-      <h1>Attendance Management</h1>
-      
-      <div class="import-export-section">
-        <h2>Import/Export Data</h2>
-        <p>Import attendance data from Excel or CSV files. Download template for guidance.</p>
-        <div class="import-export-buttons">
-          <button id="importBtn" class="action-btn btn-import">Import Data</button>
-          <button id="exportBtn" class="action-btn btn-export">Export Data</button>
-          <button id="downloadTemplateBtn" class="action-btn">Download Template</button>
-        </div>
-      </div>
-      
-      <div class="attendance-stats">
-        <div class="stat-card">
-          <div class="stat-label">This Month</div>
-          <div class="stat-value" id="monthPresent">0</div>
-          <div class="stat-label">Days Present</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">This Month</div>
-          <div class="stat-value" id="monthAbsent">0</div>
-          <div class="stat-label">Days Absent</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Average Hours</div>
-          <div class="stat-value" id="avgHours">0h 0m</div>
-          <div class="stat-label">Per Day</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Leave Balance</div>
-          <div class="stat-value" id="leaveBalance">0</div>
-          <div class="stat-label">Days Remaining</div>
-        </div>
-      </div>
-      
-      <div class="attendance-actions">
-        <h2>Today's Attendance</h2>
-        <div class="action-buttons">
-          <button id="loginBtn" class="action-btn btn-login">Login</button>
-          <button id="logoutBtnAttendance" class="action-btn btn-logout" disabled>Logout</button>
-          <button id="breakBtn" class="action-btn btn-break" disabled>Break Start</button>
-          <button id="resumeBtn" class="action-btn btn-resume" disabled>Break End</button>
-        </div>
-        <div style="margin-top: 15px;">
-          <div>Status: <span id="attendanceStatus">Not Logged In</span></div>
-          <div>Work Hours: <span id="workHours">0h 0m</span></div>
-          <div>Break Time: <span id="breakTime">0h 0m</span></div>
-        </div>
-      </div>
-      
-      <div class="attendance-header">
-        <h2>Attendance History</h2>
-        <div class="date-filter">
-          <select id="monthFilter">
-            <option value="0">January</option>
-            <option value="1">February</option>
-            <option value="2">March</option>
-            <option value="3">April</option>
-            <option value="4">May</option>
-            <option value="5">June</option>
-            <option value="6">July</option>
-            <option value="7">August</option>
-            <option value="8">September</option>
-            <option value="9">October</option>
-            <option value="10">November</option>
-            <option value="11">December</option>
-          </select>
-          <select id="yearFilter">
-            <!-- Options will be populated by JavaScript -->
-          </select>
-        </div>
-      </div>
-      
-      <div class="attendance-table">
-        <table id="attendanceTable">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Login Time</th>
-              <th>Logout Time</th>
-              <th>Work Hours</th>
-              <th>Break Time</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colspan="6">Loading attendance data...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      
-      <div class="chart-container">
-        <h2>Monthly Attendance Overview</h2>
-        <canvas id="attendanceChart" height="100"></canvas>
-      </div>
-      
-      <div class="leave-section">
-        <h2>Leave Management</h2>
-        <div class="leave-form">
-          <select id="leaveType" required>
-            <option value="">Select Leave Type</option>
-            <option value="sick">Sick Leave</option>
-            <option value="casual">Casual Leave</option>
-            <option value="annual">Annual Leave</option>
-            <option value="other">Other</option>
-          </select>
-          <input type="date" id="leaveStart" required placeholder="Start Date">
-          <input type="date" id="leaveEnd" required placeholder="End Date">
-          <textarea id="leaveReason" placeholder="Reason for leave" rows="3"></textarea>
-          <button class="btn-apply" id="applyLeaveBtn">Apply for Leave</button>
-        </div>
-        
-        <h3>Leave History</h3>
-        <table id="leaveTable">
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Start Date</th>
-              <th>End Date</th>
-              <th>Days</th>
-              <th>Reason</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td colspan="6">No leave records found</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+  <!-- Main Content -->
+  <div class="flex-1 p-6">
+    <!-- Login Section -->
+    <div id="login-section" class="hidden">
+      <h2 class="text-2xl font-bold mb-4">Login</h2>
+      <input id="email" type="email" placeholder="Email" class="border p-2 mb-2 w-full">
+      <input id="password" type="password" placeholder="Password" class="border p-2 mb-2 w-full">
+      <button id="login" class="bg-blue-500 text-white px-4 py-2 rounded">Login</button>
+      <button id="logout" class="bg-red-500 text-white px-4 py-2 rounded hidden">Logout</button>
     </div>
-  </main>
 
-  <!-- Import Modal -->
-  <div id="importModal" class="modal">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <h2>Import Attendance Data</h2>
-      <p>Select an Excel or CSV file to import. Make sure it follows the template format.</p>
-      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
-      <div class="import-preview" id="importPreview"></div>
-      <button id="confirmImportBtn" class="action-btn btn-import" style="margin-top: 15px;">Import Data</button>
+    <!-- Attendance Section -->
+    <div id="attendance-section" class="hidden">
+      <h2 class="text-2xl font-bold mb-4">Attendance Registry</h2>
+      <button id="login-btn" class="bg-green-500 text-white px-4 py-2 rounded mr-2">Log In</button>
+      <button id="break-in-btn" class="bg-blue-500 text-white px-4 py-2 rounded mr-2">Break In</button>
+      <button id="break-out-btn" class="bg-blue-500 text-white px-4 py-2 rounded mr-2">Break Out</button>
+      <button id="logoff-btn" class="bg-red-500 text-white px-4 py-2 rounded">Log Off</button>
+      <h3 class="text-xl mt-4">Attendance Records</h3>
+      <ul id="attendance-records" class="mt-2"></ul>
+    </div>
+
+    <!-- Leave Section -->
+    <div id="leave-section" class="hidden">
+      <h2 class="text-2xl font-bold mb-4">Request Leave</h2>
+      <input id="leave-date" type="date" class="border p-2 mb-2 w-full">
+      <textarea id="leave-reason" placeholder="Reason for leave" class="border p-2 mb-2 w-full"></textarea>
+      <button id="submit-leave" class="bg-blue-500 text-white px-4 py-2 rounded">Submit Leave</button>
+      <h3 class="text-xl mt-4">Leave Records</h3>
+      <ul id="leave-records" class="mt-2"></ul>
+    </div>
+
+    <!-- Vacation Section -->
+    <div id="vacation-section" class="hidden">
+      <h2 class="text-2xl font-bold mb-4">Request Vacation</h2>
+      <input id="vacation-start" type="date" class="border p-2 mb-2 w-full">
+      <input id="vacation-end" type="date" class="border p-2 mb-2 w-full">
+      <textarea id="vacation-reason" placeholder="Reason for vacation" class="border p-2 mb-2 w-full"></textarea>
+      <button id="submit-vacation" class="bg-blue-500 text-white px-4 py-2 rounded">Submit Vacation</button>
+      <h3 class="text-xl mt-4">Vacation Records</h3>
+      <ul id="vacation-records" class="mt-2"></ul>
+    </div>
+
+    <!-- Chart View Section -->
+    <div id="chart-section" class="hidden">
+      <h2 class="text-2xl font-bold mb-4">Attendance Chart</h2>
+      <canvas id="attendance-chart" class="w-full h-64"></canvas>
+    </div>
+
+    <!-- Report Section -->
+    <div id="report-section" class="hidden">
+      <h2 class="text-2xl font-bold mb-4">Generate Report</h2>
+      <input id="report-start" type="date" class="border p-2 mb-2 w-full">
+      <input id="report-end" type="date" class="border p-2 mb-2 w-full">
+      <button id="generate-report" class="bg-blue-500 text-white px-4 py-2 rounded">Generate Report</button>
+      <h3 class="text-xl mt-4">Report</h3>
+      <div id="report-output" class="mt-2"></div>
     </div>
   </div>
 
   <script>
+    // Firebase Configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
-      authDomain: "task-manager-602da.firebaseapp.com",
-      projectId: "task-manager-602da",
-      storageBucket: "task-manager-602da.appspot.com",
-      messagingSenderId: "438978699329",
-      appId: "1:438978699329:web:9f475d04352bbdaa5ce6c0"
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
     };
+
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
     const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    // Set authentication persistence
-    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
-      .then(() => console.log("Auth persistence set to SESSION"))
-      .catch((error) => console.error("Error setting auth persistence:", error));
+    // DOM Elements
+    const loginSection = document.getElementById('login-section');
+    const attendanceSection = document.getElementById('attendance-section');
+    const leaveSection = document.getElementById('leave-section');
+    const vacationSection = document.getElementById('vacation-section');
+    const chartSection = document.getElementById('chart-section');
+    const reportSection = document.getElementById('report-section');
+    const loginBtn = document.getElementById('login');
+    const logoutBtn = document.getElementById('logout');
+    const attendanceBtn = document.getElementById('attendance-btn');
+    const leaveBtn = document.getElementById('leave-btn');
+    const vacationBtn = document.getElementById('vacation-btn');
+    const chartBtn = document.getElementById('chart-btn');
+    const reportBtn = document.getElementById('report-btn');
 
-    let currentUser = null;
-    let username = sessionStorage.getItem("username") || "Guest";
-    let userEmail = sessionStorage.getItem("userEmail") || "guest@example.com";
-    let userId = null;
-
-    // Navigation handler
-    function handleNavigation(event, url) {
-      event.preventDefault();
-      if (auth.currentUser) {
-        window.location.href = url;
-      } else {
-        console.error("User not authenticated, preventing navigation");
-      }
-    }
-
-    // Authentication state observer
-    auth.onAuthStateChanged(async (user) => {
+    // Authentication
+    auth.onAuthStateChanged(user => {
       if (user) {
-        currentUser = user;
-        userId = user.uid;
-        userEmail = user.email;
-        try {
-          const userDoc = await db.collection("users").doc(userId).get();
-          if (userDoc.exists) {
-            const userData = userDoc.data();
-            username = userData.username || user.email.split('@')[0];
-          } else {
-            username = user.email.split('@')[0];
-          }
-
-          sessionStorage.setItem("userId", userId);
-          sessionStorage.setItem("userEmail", userEmail);
-          sessionStorage.setItem("username", username);
-
-          document.getElementById("profileInitial").textContent = username[0]?.toUpperCase() || "?";
-
-          loadTodayAttendance();
-          loadAttendanceHistory();
-          loadStats();
-          loadLeaveHistory();
-          initChart();
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-          alert("Failed to load user data. Please try again.");
-        }
+        loginSection.classList.add('hidden');
+        logoutBtn.classList.remove('hidden');
+        attendanceSection.classList.remove('hidden');
+        loadAttendanceRecords(user.uid);
+        loadLeaveRecords(user.uid);
+        loadVacationRecords(user.uid);
+        loadChartData(user.uid);
       } else {
-        setTimeout(() => {
-          if (!auth.currentUser) {
-            sessionStorage.clear();
-            window.location.href = "index.html";
-          }
-        }, 1000);
+        loginSection.classList.remove('hidden');
+        logoutBtn.classList.add('hidden');
+        attendanceSection.classList.add('hidden');
+        leaveSection.classList.add('hidden');
+        vacationSection.classList.add('hidden');
+        chartSection.classList.add('hidden');
+        reportSection.classList.add('hidden');
       }
     });
 
-    // Profile dropdown functionality
-    const profileDiv = document.getElementById("profileDiv");
-    const dropdown = document.getElementById("profileDropdown");
-    profileDiv.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const isOpen = dropdown.style.display === "block";
-      dropdown.style.display = isOpen ? "none" : "block";
-      profileDiv.setAttribute('aria-expanded', !isOpen);
+    loginBtn.addEventListener('click', () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      auth.signInWithEmailAndPassword(email, password).catch(error => alert(error.message));
     });
-    document.addEventListener("click", () => {
-      dropdown.style.display = "none";
-      profileDiv.setAttribute('aria-expanded', 'false');
+
+    logoutBtn.addEventListener('click', () => {
+      auth.signOut();
     });
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-      auth.signOut().then(() => {
-        sessionStorage.clear();
-        window.location.href = "index.html";
-      }).catch((error) => {
-        console.error("Logout error:", error);
-        alert("Failed to log out. Please try again.");
+
+    // Navigation
+    function showSection(section) {
+      [attendanceSection, leaveSection, vacationSection, chartSection, reportSection].forEach(s => s.classList.add('hidden'));
+      section.classList.remove('hidden');
+    }
+
+    attendanceBtn.addEventListener('click', () => showSection(attendanceSection));
+    leaveBtn.addEventListener('click', () => showSection(leaveSection));
+    vacationBtn.addEventListener('click', () => showSection(vacationSection));
+    chartBtn.addEventListener('click', () => showSection(chartSection));
+    reportBtn.addEventListener('click', () => showSection(reportSection));
+
+    // Attendance Functions
+    document.getElementById('login-btn').addEventListener('click', () => {
+      const user = auth.currentUser;
+      if (user) {
+        db.collection('attendance').add({
+          userId: user.uid,
+          type: 'login',
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => loadAttendanceRecords(user.uid));
+      }
+    });
+
+    document.getElementById('break-in-btn').addEventListener('click', () => {
+      const user = auth.currentUser;
+      if (user) {
+        db.collection('attendance').add({
+          userId: user.uid,
+          type: 'break_in',
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => loadAttendanceRecords(user.uid));
+      }
+    });
+
+    document.getElementById('break-out-btn').addEventListener('click', () => {
+      const user = auth.currentUser;
+      if (user) {
+        db.collection('attendance').add({
+          userId: user.uid,
+          type: 'break_out',
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => loadAttendanceRecords(user.uid));
+      }
+    });
+
+    document.getElementById('logoff-btn').addEventListener('click', () => {
+      const user = auth.currentUser;
+      if (user) {
+        db.collection('attendance').add({
+          userId: user.uid,
+          type: 'logoff',
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => loadAttendanceRecords(user.uid));
+      }
+    });
+
+    function loadAttendanceRecords(userId) {
+      const recordsList = document.getElementById('attendance-records');
+      recordsList.innerHTML = '';
+      db.collection('attendance').where('userId', '==', userId).orderBy('timestamp', 'desc').get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const li = document.createElement('li');
+          li.textContent = `${data.type.toUpperCase()}: ${data.timestamp.toDate().toLocaleString()}`;
+          recordsList.appendChild(li);
+        });
       });
-    });
+    }
 
-    // Update clock
-    function updateClock() {
-      document.getElementById("dateTime").textContent = new Date().toLocaleString();
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
-
-    // Sidebar functionality
-    const sidebarToggle = document.getElementById("sidebarToggle");
-    const sidebar = document.getElementById("sidebar");
-    const mainContent = document.getElementById("mainContent");
-
-    sidebarToggle.addEventListener("click", (e) => {
-      e.stopPropagation();
-      console.log("Sidebar toggle clicked");
-      const isVisible = sidebar.classList.contains("visible");
-      sidebar.classList.toggle("visible");
-      mainContent.classList.toggle("shifted");
-    });
-
-    document.addEventListener("click", (e) => {
-      if (
-        sidebar.classList.contains("visible") &&
-        !sidebar.contains(e.target) &&
-        e.target !== sidebarToggle
-      ) {
-        sidebar.classList.remove("visible");
-        mainContent.classList.remove("shifted");
-      }
-    });
-
-    // Prevent unintended form submissions
-    document.addEventListener("submit", (e) => {
-      if (!e.target.classList.contains("leave-form")) {
-        e.preventDefault();
-      }
-    });
-
-    // Attendance functionality
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtnAttendance = document.getElementById("logoutBtnAttendance");
-    const breakBtn = document.getElementById("breakBtn");
-    const resumeBtn = document.getElementById("resumeBtn");
-    const attendanceStatus = document.getElementById("attendanceStatus");
-    const workHoursEl = document.getElementById("workHours");
-    const breakTimeEl = document.getElementById("breakTime");
-    
-    let todayAttendance = {
-      loginTime: null,
-      logoutTime: null,
-      breaks: [],
-      currentBreak: null
-    };
-    
-    async function loadTodayAttendance() {
-      const today = new Date().toISOString().split('T')[0];
-      try {
-        const doc = await db.collection("attendance")
-          .doc(userId)
-          .collection("records")
-          .doc(today)
-          .get();
-        if (doc.exists) {
-          todayAttendance = doc.data();
-          updateAttendanceUI();
-        } else {
-          console.log("No attendance record for today");
-        }
-      } catch (error) {
-        console.error("Error loading today's attendance:", error);
-        alert("Failed to load today's attendance. Please try again.");
-      }
-    }
-    
-    function updateAttendanceUI() {
-      const now = new Date();
-      
-      if (todayAttendance.logoutTime) {
-        attendanceStatus.textContent = "Logged Out";
-        attendanceStatus.className = "status-absent";
-        loginBtn.disabled = false;
-        logoutBtnAttendance.disabled = true;
-        breakBtn.disabled = true;
-        resumeBtn.disabled = true;
-      } else if (todayAttendance.currentBreak) {
-        attendanceStatus.textContent = "On Break";
-        attendanceStatus.className = "status-break";
-        loginBtn.disabled = true;
-        logoutBtnAttendance.disabled = true;
-        breakBtn.disabled = true;
-        resumeBtn.disabled = false;
-      } else if (todayAttendance.loginTime) {
-        attendanceStatus.textContent = "Logged In";
-        attendanceStatus.className = "status-present";
-        loginBtn.disabled = true;
-        logoutBtnAttendance.disabled = false;
-        breakBtn.disabled = false;
-        resumeBtn.disabled = true;
-      } else {
-        attendanceStatus.textContent = "Not Logged In";
-        attendanceStatus.className = "status-absent";
-        loginBtn.disabled = false;
-        logoutBtnAttendance.disabled = true;
-        breakBtn.disabled = true;
-        resumeBtn.disabled = true;
-      }
-      
-      if (todayAttendance.loginTime) {
-        const loginTime = new Date(todayAttendance.loginTime);
-        const endTime = todayAttendance.logoutTime ? new Date(todayAttendance.logoutTime) : now;
-        
-        let totalBreakMs = 0;
-        todayAttendance.breaks.forEach(breakPeriod => {
-          if (breakPeriod.start && breakPeriod.end) {
-            totalBreakMs += new Date(breakPeriod.end) - new Date(breakPeriod.start);
-          } else if (breakPeriod.start && todayAttendance.currentBreak) {
-            totalBreakMs += now - new Date(breakPeriod.start);
-          }
-        });
-        
-        const workMs = (endTime - loginTime) - totalBreakMs;
-        const workHours = Math.floor(workMs / 3600000);
-        const workMinutes = Math.floor((workMs % 3600000) / 60000);
-        
-        workHoursEl.textContent = `${workHours}h ${workMinutes}m`;
-        
-        const breakHours = Math.floor(totalBreakMs / 3600000);
-        const breakMinutes = Math.floor((totalBreakMs % 3600000) / 60000);
-        breakTimeEl.textContent = `${breakHours}h ${breakMinutes}m`;
-      } else {
-        workHoursEl.textContent = "0h 0m";
-        breakTimeEl.textContent = "0h 0m";
-      }
-    }
-    
-    loginBtn.addEventListener("click", async () => {
-      const now = new Date();
-      todayAttendance.loginTime = now.toISOString();
-      
-      try {
-        const today = now.toISOString().split('T')[0];
-        await db.collection("attendance")
-          .doc(userId)
-          .collection("records")
-          .doc(today)
-          .set(todayAttendance);
-        console.log("Login saved for:", today);
-        updateAttendanceUI();
-        loadAttendanceHistory();
-      } catch (error) {
-        console.error("Error saving login:", error);
-        alert("Failed to log in. Please try again.");
-      }
-    });
-    
-    logoutBtnAttendance.addEventListener("click", async () => {
-      const now = new Date();
-      todayAttendance.logoutTime = now.toISOString();
-      
-      try {
-        const today = now.toISOString().split('T')[0];
-        await db.collection("attendance")
-          .doc(userId)
-          .collection("records")
-          .doc(today)
-          .set(todayAttendance);
-        console.log("Logout saved for:", today);
-        updateAttendanceUI();
-        loadAttendanceHistory();
-        loadStats();
-      } Sora, sorry, I got distracted. Let's get back to it!
-
-      console.error("Error saving logout:", error);
-        alert("Failed to log out. Please try again.");
-      }
-    });
-    
-    breakBtn.addEventListener("click", async () => {
-      const now = new Date();
-      todayAttendance.currentBreak = {
-        start: now.toISOString()
-      };
-      todayAttendance.breaks.push(todayAttendance.currentBreak);
-      
-      try {
-        const today = now.toISOString().split('T')[0];
-        await db.collection("attendance")
-          .doc(userId)
-          .collection("records")
-          .doc(today)
-          .set(todayAttendance);
-        console.log("Break start saved for:", today);
-        updateAttendanceUI();
-      } catch (error) {
-        console.error("Error saving break:", error);
-        alert("Failed to start break. Please try again.");
-      }
-    });
-    
-    resumeBtn.addEventListener("click", async () => {
-      const now = new Date();
-      todayAttendance.currentBreak.end = now.toISOString();
-      todayAttendance.currentBreak = null;
-      
-      try {
-        const today = now.toISOString().split('T')[0];
-        await db.collection("attendance")
-          .doc(userId)
-          .collection("records")
-          .doc(today)
-          .set(todayAttendance);
-        console.log("Break end saved for:", today);
-        updateAttendanceUI();
-      } catch (error) {
-        console.error("Error saving resume:", error);
-        alert("Failed to end break. Please try again.");
-      }
-    });
-    
-    const yearFilter = document.getElementById("yearFilter");
-    const currentYear = new Date().getFullYear();
-    for (let year = currentYear - 5; year <= currentYear + 1; year++) {
-      const option = document.createElement("option");
-      option.value = year;
-      option.textContent = year;
-      if (year === currentYear) option.selected = true;
-      yearFilter.appendChild(option);
-    }
-    
-    async function loadAttendanceHistory() {
-      const month = parseInt(document.getElementById("monthFilter").value);
-      const year = parseInt(document.getElementById("yearFilter").value);
-      
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0);
-      
-      const tableBody = document.querySelector("#attendanceTable tbody");
-      tableBody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
-      
-      try {
-        const recordsRef = db.collection("attendance")
-          .doc(userId)
-          .collection("records");
-        
-        const snapshot = await recordsRef
-          .where("date", ">=", startDate.toISOString().split('T')[0])
-          .where("date", "<=", endDate.toISOString().split('T')[0])
-          .get();
-        
-        const records = [];
-        snapshot.forEach(doc => {
-          records.push({
-            date: doc.id,
-            ...doc.data()
-          });
-        });
-        
-        records.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        tableBody.innerHTML = "";
-        
-        if (records.length === 0) {
-          tableBody.innerHTML = "<tr><td colspan='6'>No records found for selected period</td></tr>";
-          return;
-        }
-        
-        records.forEach(record => {
-          const row = document.createElement("tr");
-          
-          const date = new Date(record.date);
-          const loginTime = record.loginTime ? new Date(record.loginTime).toLocaleTimeString() : "-";
-          const logoutTime = record.logoutTime ? new Date(record.logoutTime).toLocaleTimeString() : "-";
-          
-          let workHours = "0h 0m";
-          let breakTime = "0h 0m";
-          let status = "Absent";
-          
-          if (record.loginTime) {
-            status = record.logoutTime ? "Present" : "Active";
-            
-            const login = new Date(record.loginTime);
-            const logout = record.logoutTime ? new Date(record.logoutTime) : new Date();
-            
-            let totalBreakMs = 0;
-            if (record.breaks && record.breaks.length > 0) {
-              record.breaks.forEach(breakPeriod => {
-                if (breakPeriod.start && breakPeriod.end) {
-                  totalBreakMs += new Date(breakPeriod.end) - new Date(breakPeriod.start);
-                }
-              });
-            }
-            
-            const workMs = (logout - login) - totalBreakMs;
-            const workHrs = Math.floor(workMs / 3600000);
-            const workMins = Math.floor((workMs % 3600000) / 60000);
-            workHours = `${workHrs}h ${workMins}m`;
-            
-            const breakHrs = Math.floor(totalBreakMs / 3600000);
-            const breakMins = Math.floor((totalBreakMs % 3600000) / 60000);
-            breakTime = `${breakHrs}h ${breakMins}m`;
-          }
-          
-          row.innerHTML = `
-            <td>${date.toLocaleDateString()}</td>
-            <td>${loginTime}</td>
-            <td>${logoutTime}</td>
-            <td>${workHours}</td>
-            <td>${breakTime}</td>
-            <td class="status-${status.toLowerCase()}">${status}</td>
-          `;
-          
-          tableBody.appendChild(row);
-        });
-      } catch (error) {
-        console.error("Error loading attendance history:", error);
-        tableBody.innerHTML = "<tr><td colspan='6'>Error loading data. Check console for details.</td></tr>";
-      }
-    }
-    
-    let attendanceChart = null;
-    async function initChart() {
-      const ctx = document.getElementById('attendanceChart').getContext('2d');
-      
-      attendanceChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: [],
-          datasets: [{
-            label: 'Work Hours',
-            data: [],
-            backgroundColor: 'rgba(54, 162, 235, 0.5)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              beginAtZero: true,
-              title: {
-                display: true,
-                text: 'Hours'
-              }
-            }
-          }
-        }
-      });
-      
-      await updateChartWithRealData();
-    }
-    
-    async function loadStats() {
-      const month = parseInt(document.getElementById("monthFilter").value);
-      const year = parseInt(document.getElementById("yearFilter").value);
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0);
-      
-      try {
-        const recordsRef = db.collection("attendance")
-          .doc(userId)
-          .collection("records");
-        
-        const snapshot = await recordsRef
-          .where("date", ">=", startDate.toISOString().split('T')[0])
-          .where("date", "<=", endDate.toISOString().split('T')[0])
-          .get();
-        
-        let presentDays = 0;
-        let absentDays = 0;
-        let totalWorkMs = 0;
-        let daysWithHours = 0;
-        let leaveDays = 0;
-        
-        const daysInMonth = endDate.getDate();
-        const leaveSnapshot = await db.collection("leaves")
-          .doc(userId)
-          .collection("records")
-          .where("startDate", ">=", startDate.toISOString().split('T')[0])
-          .where("endDate", "<=", endDate.toISOString().split('T')[0])
-          .get();
-        
-        leaveSnapshot.forEach(doc => {
-          const leave = doc.data();
-          const start = new Date(leave.startDate);
-          const end = new Date(leave.endDate);
-          leaveDays += Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-        });
-        
-        snapshot.forEach(doc => {
-          const record = doc.data();
-          if (record.loginTime && record.logoutTime) {
-            presentDays++;
-            const login = new Date(record.loginTime);
-            const logout = new Date(record.logoutTime);
-            let totalBreakMs = 0;
-            if (record.breaks && record.breaks.length > 0) {
-              record.breaks.forEach(breakPeriod => {
-                if (breakPeriod.start && breakPeriod.end) {
-                  totalBreakMs += new Date(breakPeriod.end) - new Date(breakPeriod.start);
-                }
-              });
-            }
-            const workMs = (logout - login) - totalBreakMs;
-            totalWorkMs += workMs;
-            daysWithHours++;
-          }
-        });
-        
-        absentDays = daysInMonth - presentDays - leaveDays;
-        
-        const avgWorkHours = daysWithHours > 0 ? totalWorkMs / daysWithHours / 3600000 : 0;
-        const avgHours = Math.floor(avgWorkHours);
-        const avgMinutes = Math.floor((avgWorkHours % 1) * 60);
-        
-        document.getElementById("monthPresent").textContent = presentDays;
-        document.getElementById("monthAbsent").textContent = absentDays;
-        document.getElementById("avgHours").textContent = `${avgHours}h ${avgMinutes}m`;
-        document.getElementById("leaveBalance").textContent = Math.max(12 - leaveDays, 0);
-      } catch (error) {
-        console.error("Error loading stats:", error);
-        document.getElementById("monthPresent").textContent = "0";
-        document.getElementById("monthAbsent").textContent = "0";
-        document.getElementById("avgHours").textContent = "0h 0m";
-        document.getElementById("leaveBalance").textContent = "0";
-      }
-    }
-    
-    async function loadLeaveHistory() {
-      try {
-        const leaveRef = db.collection("leaves")
-          .doc(userId)
-          .collection("records");
-        
-        const snapshot = await leaveRef.get();
-        const tableBody = document.querySelector("#leaveTable tbody");
-        tableBody.innerHTML = "";
-        
-        if (snapshot.empty) {
-          tableBody.innerHTML = "<tr><td colspan='6'>No leave records found</td></tr>";
-          return;
-        }
-        
-        snapshot.forEach(doc => {
-          const leave = doc.data();
-          addLeaveToTable(leave, tableBody);
-        });
-      } catch (error) {
-        console.error("Error loading leave history:", error);
-        const tableBody = document.querySelector("#leaveTable tbody");
-        tableBody.innerHTML = "<tr><td colspan='6'>Error loading leave records. Check console for details.</td></tr>";
-      }
-    }
-    
-    function addLeaveToTable(leave, tableBody) {
-      const row = document.createElement("tr");
-      const startDate = new Date(leave.startDate);
-      const endDate = new Date(leave.endDate);
-      const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-      
-      row.innerHTML = `
-        <td>${leave.type.charAt(0).toUpperCase() + leave.type.slice(1)}</td>
-        <td>${startDate.toLocaleDateString()}</td>
-        <td>${endDate.toLocaleDateString()}</td>
-        <td>${daysDiff}</td>
-        <td>${leave.reason || '-'}</td>
-        <td class="status-${leave.status || 'pending'}">${leave.status ? leave.status.charAt(0).toUpperCase() + leave.status.slice(1) : 'Pending'}</td>
-      `;
-      
-      tableBody.appendChild(row);
-    }
-    
-    document.getElementById("applyLeaveBtn").addEventListener("click", async () => {
-      const type = document.getElementById("leaveType").value;
-      const startDate = document.getElementById("leaveStart").value;
-      const endDate = document.getElementById("leaveEnd").value;
-      const reason = document.getElementById("leaveReason").value;
-      
-      if (!type || !startDate || !endDate) {
-        alert("Please fill in all required fields");
-        return;
-      }
-      
-      if (new Date(startDate) > new Date(endDate)) {
-        alert("End date cannot be before start date");
-        return;
-      }
-      
-      try {
-        const leaveData = {
-          type,
-          startDate,
-          endDate,
+    // Leave Functions
+    document.getElementById('submit-leave').addEventListener('click', () => {
+      const user = auth.currentUser;
+      if (user) {
+        const date = document.getElementById('leave-date').value;
+        const reason = document.getElementById('leave-reason').value;
+        db.collection('leaves').add({
+          userId: user.uid,
+          date,
           reason,
-          status: "pending",
-          appliedDate: new Date().toISOString(),
-          userId
-        };
-        
-        await db.collection("leaves")
-          .doc(userId)
-          .collection("records")
-          .doc()
-          .set(leaveData);
-        
-        console.log("Leave application saved:", leaveData);
-        alert("Leave application submitted successfully!");
-        document.getElementById("leaveType").value = "";
-        document.getElementById("leaveStart").value = "";
-        document.getElementById("leaveEnd").value = "";
-        document.getElementById("leaveReason").value = "";
-        
-        loadLeaveHistory();
-        loadStats();
-      } catch (error) {
-        console.error("Error applying for leave:", error);
-        alert("Failed to apply for leave. Please try again.");
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => loadLeaveRecords(user.uid));
       }
     });
-    
-    const importBtn = document.getElementById("importBtn");
-    const exportBtn = document.getElementById("exportBtn");
-    const downloadTemplateBtn = document.getElementById("downloadTemplateBtn");
-    const importModal = document.getElementById("importModal");
-    const closeModal = document.querySelector(".close");
-    const fileInput = document.getElementById("fileInput");
-    const importPreview = document.getElementById("importPreview");
-    const confirmImportBtn = document.getElementById("confirmImportBtn");
-    
-    importBtn.addEventListener("click", () => {
-      importModal.style.display = "block";
-    });
-    
-    closeModal.addEventListener("click", () => {
-      importModal.style.display = "none";
-      fileInput.value = "";
-      importPreview.innerHTML = "";
-    });
-    
-    window.addEventListener("click", (event) => {
-      if (event.target === importModal) {
-        importModal.style.display = "none";
-        fileInput.value = "";
-        importPreview.innerHTML = "";
-      }
-    });
-    
-    fileInput.addEventListener("change", (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet);
-          
-          importPreview.innerHTML = `
-            <h3>Preview (first 5 rows)</h3>
-            <table style="width: 100%; border-collapse: collapse;">
-              <thead>
-                <tr>
-                  ${Object.keys(jsonData[0] || {}).map(key => `<th style="border: 1px solid #ddd; padding: 8px;">${key}</th>`).join('')}
-                </tr>
-              </thead>
-              <tbody>
-                ${jsonData.slice(0, 5).map(row => `
-                  <tr>
-                    ${Object.values(row).map(value => `<td style="border: 1px solid #ddd; padding: 8px;">${value}</td>`).join('')}
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-            <p>Total rows: ${jsonData.length}</p>
-          `;
-          
-          confirmImportBtn.dataset.importData = JSON.stringify(jsonData);
-        } catch (error) {
-          console.error("Error reading file:", error);
-          alert("Failed to read file. Please ensure it is a valid Excel or CSV file.");
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    });
-    
-    confirmImportBtn.addEventListener("click", async () => {
-      const importData = JSON.parse(confirmImportBtn.dataset.importData || "[]");
-      if (importData.length === 0) {
-        alert("No data to import");
-        return;
-      }
-      try {
-        for (const record of importData) {
-          const date = record.date || record.Date;
-          if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-            throw new Error(`Invalid date format for record: ${JSON.stringify(record)}`);
-          }
-          const attendanceRecord = {
-            date,
-            loginTime: record.loginTime || record['Login Time'] || null,
-            logoutTime: record.logoutTime || record['Logout Time'] || null,
-            breaks: Array.isArray(record.breaks) ? record.breaks : [],
-            status: record.status || 'present'
-          };
-          await db.collection("attendance")
-            .doc(userId)
-            .collection("records")
-            .doc(attendanceRecord.date)
-            .set(attendanceRecord);
-          console.log("Imported record for date:", date);
-        }
-        alert(`Successfully imported ${importData.length} records!`);
-        importModal.style.display = "none";
-        fileInput.value = "";
-        importPreview.innerHTML = "";
-        loadAttendanceHistory();
-        loadStats();
-      } catch (error) {
-        console.error("Error importing data:", error);
-        alert(`Failed to import data: ${error.message}`);
-      }
-    });
-    
-    exportBtn.addEventListener("click", async () => {
-      try {
-        const recordsRef = db.collection("attendance")
-          .doc(userId)
-          .collection("records");
-        
-        const snapshot = await recordsRef.get();
-        let records = [];
-        
+
+    function loadLeaveRecords(userId) {
+      const recordsList = document.getElementById('leave-records');
+      recordsList.innerHTML = '';
+      db.collection('leaves').where('userId', '==', userId).orderBy('timestamp', 'desc').get().then(snapshot => {
         snapshot.forEach(doc => {
-          records.push({
-            date: doc.id,
-            ...doc.data()
-          });
+          const data = doc.data();
+          const li = document.createElement('li');
+          li.textContent = `Date: ${data.date}, Reason: ${data.reason}`;
+          recordsList.appendChild(li);
         });
-        
-        if (records.length === 0) {
-          alert("No attendance records to export");
-          return;
-        }
-        
-        const worksheet = XLSX.utils.json_to_sheet(records);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
-        
-        XLSX.writeFile(workbook, `attendance_export_${new Date().toISOString().split('T')[0]}.xlsx`);
-        
-        alert(`Exported ${records.length} records successfully!`);
-      } catch (error) {
-        console.error("Error exporting data:", error);
-        alert("Failed to export data. Please check the console for details.");
-      }
-    });
-    
-    downloadTemplateBtn.addEventListener("click", () => {
-      const templateData = [
-        {
-          date: "2023-01-01",
-          loginTime: "09:00:00",
-          logoutTime: "17:00:00",
-          breaks: JSON.stringify([{ start: "12:00:00", end: "13:00:00" }]),
-          status: "present"
-        }
-      ];
-      
-      const worksheet = XLSX.utils.json_to_sheet(templateData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance Template");
-      
-      XLSX.writeFile(workbook, "attendance_template.xlsx");
-    });
-    
-    async function updateChartWithRealData() {
-      const month = parseInt(document.getElementById("monthFilter").value);
-      const year = parseInt(document.getElementById("yearFilter").value);
-      
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0);
-      const daysInMonth = endDate.getDate();
-      const weeksInMonth = Math.ceil(daysInMonth / 7);
-      
-      try {
-        const recordsRef = db.collection("attendance")
-          .doc(userId)
-          .collection("records");
-        
-        const snapshot = await recordsRef
-          .where("date", ">=", startDate.toISOString().split('T')[0])
-          .where("date", "<=", endDate.toISOString().split('T')[0])
-          .get();
-        
-        let records = [];
-        snapshot.forEach(doc => {
-          records.push({
-            date: doc.id,
-            ...doc.data()
-          });
-        });
-        
-        const weeklyData = new Array(weeksInMonth).fill(0);
-        const weekCounts = new Array(weeksInMonth).fill(0);
-        
-        records.forEach(record => {
-          if (record.loginTime && record.logoutTime) {
-            const recordDate = new Date(record.date);
-            const weekOfMonth = Math.min(Math.floor((recordDate.getDate() - 1) / 7), weeksInMonth - 1);
-            
-            const login = new Date(record.loginTime);
-            const logout = new Date(record.logoutTime);
-            
-            let totalBreakMs = 0;
-            if (record.breaks && record.breaks.length > 0) {
-              record.breaks.forEach(breakPeriod => {
-                if (breakPeriod.start && breakPeriod.end) {
-                  totalBreakMs += new Date(breakPeriod.end) - new Date(breakPeriod.start);
-                }
-              });
-            }
-            
-            const workMs = (logout - login) - totalBreakMs;
-            const workHours = workMs / 3600000;
-            
-            weeklyData[weekOfMonth] += workHours;
-            weekCounts[weekOfMonth]++;
-          }
-        });
-        
-        const weeklyAverages = weeklyData.map((total, index) => 
-          weekCounts[index] > 0 ? total / weekCounts[index] : 0
-        );
-        
-        if (attendanceChart) {
-          attendanceChart.data.labels = weeklyAverages.map((_, i) => `Week ${i + 1}`);
-          attendanceChart.data.datasets[0].data = weeklyAverages;
-          attendanceChart.update();
-        }
-      } catch (error) {
-        console.error("Error updating chart:", error);
-      }
+      });
     }
-    
-    document.getElementById("monthFilter").addEventListener("change", () => {
-      loadAttendanceHistory();
-      loadStats();
-      updateChartWithRealData();
+
+    // Vacation Functions
+    document.getElementById('submit-vacation').addEventListener('click', () => {
+      const user = auth.currentUser;
+      if (user) {
+        const start = document.getElementById('vacation-start').value;
+        const end = document.getElementById('vacation-end').value;
+        const reason = document.getElementById('vacation-reason').value;
+        db.collection('vacations').add({
+          userId: user.uid,
+          start,
+          end,
+          reason,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => loadVacationRecords(user.uid));
+      }
     });
-    
-    document.getElementById("yearFilter").addEventListener("change", () => {
-      loadAttendanceHistory();
-      loadStats();
-      updateChartWithRealData();
-    });
-    
-    window.addEventListener("load", () => {
-      const today = new Date().toISOString().split('T')[0];
-      db.collection("attendance")
-        .doc(userId)
-        .collection("records")
-        .doc(today)
-        .onSnapshot(doc => {
-          if (doc.exists) {
-            todayAttendance = doc.data();
-            updateAttendanceUI();
-          }
+
+    function loadVacationRecords(userId) {
+      const recordsList = document.getElementById('vacation-records');
+      recordsList.innerHTML = '';
+      db.collection('vacations').where('userId', '==', userId).orderBy('timestamp', 'desc').get().then(snapshot => {
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const li = document.createElement('li');
+          li.textContent = `Start: ${data.start}, End: ${data.end}, Reason: ${data.reason}`;
+          recordsList.appendChild(li);
         });
+      });
+    }
+
+    // Chart View
+    let chartInstance = null;
+    function loadChartData(userId) {
+      db.collection('attendance').where('userId', '==', userId).orderBy('timestamp').get().then(snapshot => {
+        const data = { login: 0, break_in: 0, break_out: 0, logoff: 0 };
+        snapshot.forEach(doc => {
+          const type = doc.data().type;
+          data[type]++;
+        });
+
+        if (chartInstance) chartInstance.destroy();
+        const ctx = document.getElementById('attendance-chart').getContext('2d');
+        chartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Login', 'Break In', 'Break Out', 'Logoff'],
+            datasets: [{
+              label: 'Attendance Events',
+              data: [data.login, data.break_in, data.break_out, data.logoff],
+              backgroundColor: ['#4CAF50', '#2196F3', '#2196F3', '#F44336']
+            }]
+          },
+          options: { scales: { y: { beginAtZero: true } } }
+        });
+      });
+    }
+
+    // Report Generation
+    document.getElementById('generate-report').addEventListener('click', () => {
+      const user = auth.currentUser;
+      if (user) {
+        const start = document.getElementById('report-start').value;
+        const end = document.getElementById('report-end').value;
+        db.collection('reports').add({
+          userId: user.uid,
+          start,
+          end,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+          const reportOutput = document.getElementById('report-output');
+          reportOutput.innerHTML = `Report generated for ${start} to ${end}`;
+        });
+      }
     });
   </script>
 </body>
