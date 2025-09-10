@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Login – Task Manager</title>
   <style>
-    /* Base & styling (reuse your neumorphic inputs etc.) */
     body {
       margin: 0; height: 100vh; display: flex;
       justify-content: center; align-items: center;
@@ -47,8 +46,8 @@
 
     <div id="login-section">
       <div class="input-group">
-        <label for="loginUsername">Username</label>
-        <input type="text" id="loginUsername" placeholder="Enter username" />
+        <label for="loginEmail">Email</label>
+        <input type="email" id="loginEmail" placeholder="Enter email" />
       </div>
       <div class="input-group">
         <label for="loginPassword">Password</label>
@@ -64,9 +63,10 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <script>
-    // Firebase config (same as before)
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
       authDomain: "task-manager-602da.firebaseapp.com",
@@ -77,71 +77,109 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    // Set authentication persistence
+    auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
+      .then(() => console.log("Auth persistence set to SESSION"))
+      .catch((error) => console.error("Error setting auth persistence:", error));
 
     // Allow Enter key to submit login
-    document.getElementById("loginUsername").addEventListener("keypress", function(e) {
+    document.getElementById("loginEmail").addEventListener("keypress", function(e) {
       if (e.key === "Enter") tryLogin();
     });
     document.getElementById("loginPassword").addEventListener("keypress", function(e) {
       if (e.key === "Enter") tryLogin();
     });
 
-    // Try login and save username to sessionStorage
-    function tryLogin() {
-      const u = document.getElementById("loginUsername").value.trim();
-      const p = document.getElementById("loginPassword").value.trim();
-      if (!u || !p) {
-        alert("Please fill both username and password.");
+    // Login function using Firebase Authentication
+    async function tryLogin() {
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value.trim();
+      
+      if (!email || !password) {
+        alert("Please fill both email and password.");
         return;
       }
 
-      // Query Firestore for user with matching username and password
-      db.collection("users")
-        .where("username", "==", u)
-        .where("password", "==", p)
-        .get()
-        .then(querySnapshot => {
-          if (querySnapshot.empty) {
-            alert("Invalid username or password.");
-            return;
-          }
+      try {
+        // Sign in with Firebase Authentication
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        const userId = user.uid;
 
-          // Get the first matching user document
-          const userDoc = querySnapshot.docs[0];
-          const userData = userDoc.data();
+        // Fetch user data from Firestore
+        const userDoc = await db.collection("users").doc(userId).get();
+        if (!userDoc.exists) {
+          throw new Error("User data not found in Firestore.");
+        }
 
-          // Save username to sessionStorage for later use
-          sessionStorage.setItem("username", userData.username);
-          if (userData.fullName) {
-            sessionStorage.setItem("fullName", userData.fullName);
-          }
+        const userData = userDoc.data();
+        const username = userData.username || email.split('@')[0];
+        const fullName = userData.fullName || "";
+        const role = userData.role ? userData.role.trim().toLowerCase() : "";
 
-          // Get the user's role, normalized to lowercase
-          const role = userData.role ? userData.role.trim().toLowerCase() : "";
+        // Save user data to sessionStorage
+        sessionStorage.setItem("userId", userId);
+        sessionStorage.setItem("userEmail", email);
+        sessionStorage.setItem("username", username);
+        if (fullName) {
+          sessionStorage.setItem("fullName", fullName);
+        }
 
-          // Redirect based on role
-          if (role === "admin") {
-            window.location.href = "Home.html"; // Admin dashboard
-          } else if (role === "sub admin") {
-            window.location.href = "Sub Admin Dashboard.html"; // Sub Admin dashboard
-          } else if (role === "user") {
-            window.location.href = "UserDashboard.html"; // Regular User dashboard
+        console.log("✅ Logged in as:", username, "with role:", role);
+
+        // Redirect based on role
+        if (role === "admin") {
+          window.location.href = "Home.html";
+        } else if (role === "sub admin") {
+          window.location.href = "Sub Admin Dashboard.html";
+        } else if (role === "user") {
+          window.location.href = "UserDashboard.html";
+        } else {
+          throw new Error("User role not recognized: " + userData.role);
+        }
+      } catch (error) {
+        console.error("Login error:", error);
+        alert("Login failed: " + error.message);
+      }
+    }
+
+    // Check if user is already logged in
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        try {
+          const userDoc = await db.collection("users").doc(user.uid).get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            const role = userData.role ? userData.role.trim().toLowerCase() : "";
+            console.log("✅ Already logged in as:", userData.username || user.email);
+            
+            // Redirect based on role
+            if (role === "admin") {
+              window.location.href = "Home.html";
+            } else if (role === "sub admin") {
+              window.location.href = "Sub Admin Dashboard.html";
+            } else if (role === "user") {
+              window.location.href = "UserDashboard.html";
+            } else {
+              console.error("User role not recognized:", userData.role);
+              alert("User role not recognized. Please contact support.");
+            }
           } else {
-            alert("User role not recognized: " + userData.role);
+            console.error("User data not found in Firestore.");
+            auth.signOut();
+            sessionStorage.clear();
           }
-        })
-        .catch(error => {
-          console.error("Login error:", error);
-          alert("An error occurred during login. Please try again.");
-        });
-    }
-
-    const sessionUser = sessionStorage.getItem("username");
-    if (sessionUser) {
-      console.log("✅ Logged in as:", sessionUser);
-    } else {
-      console.log("❌ No user is logged in.");
-    }
+        } catch (error) {
+          console.error("Error checking user data:", error);
+          auth.signOut();
+          sessionStorage.clear();
+        }
+      } else {
+        console.log("❌ No user is logged in.");
+      }
+    });
   </script>
 </body>
 </html>
