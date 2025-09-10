@@ -1,46 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Attendance System</title>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    button { margin: 5px; }
+    section { margin-bottom: 40px; }
+  </style>
 </head>
 <body>
-  <h1>Attendance System</h1>
+  <h1>Attendance Dashboard</h1>
 
-  <!-- Attendance Actions -->
-  <button onclick="markAttendance('clock_in')">Clock In</button>
-  <button onclick="markAttendance('break_in')">Break In</button>
-  <button onclick="markAttendance('break_out')">Break Out</button>
-  <button onclick="markAttendance('clock_out')">Clock Out</button>
+  <!-- Attendance Buttons -->
+  <section>
+    <h2>Mark Attendance</h2>
+    <button onclick="markAttendance('clock_in')">Clock In</button>
+    <button onclick="markAttendance('break_in')">Break In</button>
+    <button onclick="markAttendance('break_out')">Break Out</button>
+    <button onclick="markAttendance('clock_out')">Clock Out</button>
+  </section>
 
-  <hr>
-
-  <!-- Leave Request Form -->
-  <h2>Submit Leave Request</h2>
-  <form onsubmit="submitLeave(event)">
-    <input type="date" id="leaveDate" required>
-    <input type="text" id="leaveReason" placeholder="Reason" required>
-    <button type="submit">Submit Leave</button>
-  </form>
-
-  <hr>
+  <!-- Leave Request -->
+  <section>
+    <h2>Leave Request</h2>
+    <form onsubmit="submitLeave(event)">
+      <input type="date" id="leaveDate" required>
+      <input type="text" id="leaveReason" placeholder="Reason" required>
+      <button type="submit">Submit Leave</button>
+    </form>
+  </section>
 
   <!-- Attendance Logs -->
-  <h2>Attendance Logs</h2>
-  <ul id="attendanceLogs"></ul>
+  <section>
+    <h2>My Attendance Logs</h2>
+    <ul id="attendanceLogs"></ul>
+  </section>
 
-  <!-- Leave Records -->
-  <h2>Leave Records</h2>
-  <ul id="leaveRecords"></ul>
+  <!-- Leave Logs -->
+  <section>
+    <h2>My Leave Records</h2>
+    <ul id="leaveLogs"></ul>
+  </section>
 
   <script type="module">
-    // Firebase Config
+    // Firebase Setup
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
     import {
-      getFirestore, collection, addDoc, query, where, getDocs, orderBy, serverTimestamp
+      getFirestore,
+      doc,
+      addDoc,
+      collection,
+      serverTimestamp,
+      query,
+      where,
+      getDocs,
+      orderBy
     } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -63,33 +82,30 @@
       if (user) {
         currentUser = user;
         loadAttendanceLogs();
-        loadLeaveRecords();
+        loadLeaveLogs();
       } else {
-        alert("Please login first.");
-        // Optionally redirect to login page
+        alert("Please log in first.");
       }
     });
 
-    async function markAttendance(state) {
+    async function markAttendance(type) {
       if (!currentUser) return;
 
       try {
-        await addDoc(collection(db, "attendanceLogs"), {
-          userId: currentUser.uid,
-          state,
+        const attendanceRef = collection(db, `users/${currentUser.uid}/attendance`);
+        await addDoc(attendanceRef, {
+          type,
           timestamp: serverTimestamp()
         });
-        alert(`Marked: ${state}`);
+        alert(`${type.replace('_', ' ')} marked.`);
         loadAttendanceLogs();
       } catch (err) {
-        console.error("Error logging attendance:", err);
+        console.error("Error marking attendance:", err);
       }
     }
 
     async function submitLeave(e) {
       e.preventDefault();
-      if (!currentUser) return;
-
       const date = document.getElementById("leaveDate").value;
       const reason = document.getElementById("leaveReason").value;
 
@@ -98,12 +114,12 @@
           userId: currentUser.uid,
           date,
           reason,
-          timestamp: serverTimestamp()
+          submittedAt: serverTimestamp()
         });
         alert("Leave submitted.");
         document.getElementById("leaveDate").value = '';
         document.getElementById("leaveReason").value = '';
-        loadLeaveRecords();
+        loadLeaveLogs();
       } catch (err) {
         console.error("Error submitting leave:", err);
       }
@@ -113,38 +129,35 @@
       if (!currentUser) return;
 
       const q = query(
-        collection(db, "attendanceLogs"),
-        where("userId", "==", currentUser.uid),
+        collection(db, `users/${currentUser.uid}/attendance`),
         orderBy("timestamp", "desc")
       );
-
-      const snapshot = await getDocs(q);
+      const snap = await getDocs(q);
       const list = document.getElementById("attendanceLogs");
       list.innerHTML = '';
-      snapshot.forEach(doc => {
+      snap.forEach(doc => {
         const data = doc.data();
         const li = document.createElement("li");
-        li.textContent = `${data.state} at ${data.timestamp?.toDate().toLocaleString() || 'Pending'}`;
+        li.textContent = `${data.type} at ${data.timestamp?.toDate().toLocaleString() || '...'}`
         list.appendChild(li);
       });
     }
 
-    async function loadLeaveRecords() {
+    async function loadLeaveLogs() {
       if (!currentUser) return;
 
       const q = query(
         collection(db, "leaves"),
         where("userId", "==", currentUser.uid),
-        orderBy("timestamp", "desc")
+        orderBy("submittedAt", "desc")
       );
-
-      const snapshot = await getDocs(q);
-      const list = document.getElementById("leaveRecords");
+      const snap = await getDocs(q);
+      const list = document.getElementById("leaveLogs");
       list.innerHTML = '';
-      snapshot.forEach(doc => {
+      snap.forEach(doc => {
         const data = doc.data();
         const li = document.createElement("li");
-        li.textContent = `Leave on ${data.date} - ${data.reason}`;
+        li.textContent = `Leave on ${data.date}: ${data.reason}`;
         list.appendChild(li);
       });
     }
