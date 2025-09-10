@@ -80,108 +80,6 @@
     }
     .main-content.shifted { margin-left: 220px; }
 
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-    
-    .dashboard-card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    
-    .attendance-status {
-      text-align: center;
-      padding: 15px;
-    }
-    
-    .attendance-status h3 {
-      margin-top: 0;
-      color: #2c3e50;
-    }
-    
-    .status-indicator {
-      font-size: 24px;
-      font-weight: bold;
-      margin: 15px 0;
-    }
-    
-    .status-present {
-      color: #27ae60;
-    }
-    
-    .status-absent {
-      color: #e74c3c;
-    }
-    
-    .status-break {
-      color: #f39c12;
-    }
-    
-    .attendance-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    
-    .attendance-btn {
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    
-    .btn-login {
-      background: #27ae60;
-      color: white;
-    }
-    
-    .btn-logout {
-      background: #e74c3c;
-      color: white;
-    }
-    
-    .btn-break {
-      background: #f39c12;
-      color: white;
-    }
-    
-    .btn-resume {
-      background: #3498db;
-      color: white;
-    }
-    
-    .attendance-btn:disabled {
-      background: #bdc3c7;
-      cursor: not-allowed;
-    }
-    
-    .today-summary {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin-top: 15px;
-    }
-    
-    .summary-item {
-      text-align: center;
-      padding: 10px;
-      background: #f8f9fa;
-      border-radius: 8px;
-    }
-    
-    .summary-value {
-      font-size: 18px;
-      font-weight: bold;
-      margin-top: 5px;
-    }
-
     .todo-panel {
       background: white; border-radius: 15px;
       box-shadow: 0 8px 16px rgba(0,0,0,0.1);
@@ -231,7 +129,6 @@
       <div id="profileInitial" aria-label="User initial" role="img"></div>
       <div id="profileDropdown" role="menu" aria-label="Profile options">
         <a href="Change Password.html" role="menuitem">Settings</a>
-        <a href="Attendance.html" role="menuitem">Attendance</a>
         <button id="logoutBtn" role="menuitem">Logout</button>
       </div>
     </div>
@@ -242,7 +139,6 @@
       <li class="menu-item"><a href="Home.html">Dashboard</a></li>
       <li class="menu-item"><a href="Users.html">Users</a></li>
       <li class="menu-item"><a href="tasks.html">All Tasks</a></li>
-      <li class="menu-item"><a href="Attendance.html">Attendance</a></li>
       <li class="menu-item"><a href="Chart.html">Charts</a></li>
       <li class="menu-item"><a href="AssignTask.html">Assign Task</a></li>
       <li class="menu-item"><a href="Genrate Report.html">Report</a></li>
@@ -251,45 +147,19 @@
 
   <main class="main-content" id="mainContent">
     <h1>Welcome, <span id="userGreeting"></span>!</h1>
-    
-    <div class="dashboard-grid">
-      <div class="dashboard-card attendance-status">
-        <h3>Today's Attendance</h3>
-        <div id="attendanceStatus" class="status-indicator status-absent">Not Logged In</div>
-        
-        <div class="attendance-actions">
-          <button id="loginBtn" class="attendance-btn btn-login">Login</button>
-          <button id="logoutBtnAttendance" class="attendance-btn btn-logout" disabled>Logout</button>
-          <button id="breakBtn" class="attendance-btn btn-break" disabled>Break Start</button>
-          <button id="resumeBtn" class="attendance-btn btn-resume" disabled>Break End</button>
-        </div>
-        
-        <div class="today-summary">
-          <div class="summary-item">
-            <div>Work Hours</div>
-            <div id="workHours" class="summary-value">0h 0m</div>
-          </div>
-          <div class="summary-item">
-            <div>Break Time</div>
-            <div id="breakTime" class="summary-value">0h 0m</div>
-          </div>
-        </div>
+    <div class="todo-panel">
+      <div class="todo-header">
+        <button id="prevDayBtn">&lt; Prev</button>
+        <div id="todoDateLabel">--</div>
+        <button id="nextDayBtn">Next &gt;</button>
       </div>
-      
-      <div class="todo-panel">
-        <div class="todo-header">
-          <button id="prevDayBtn">&lt; Prev</button>
-          <div id="todoDateLabel">--</div>
-          <button id="nextDayBtn">Next &gt;</button>
-        </div>
 
-        <div class="add-task">
-          <input type="text" id="newTaskInput" placeholder="Add new task..." />
-          <button id="addTaskBtn">Add</button>
-        </div>
-
-        <ul class="todo-list" id="todoList"></ul>
+      <div class="add-task">
+        <input type="text" id="newTaskInput" placeholder="Add new task..." />
+        <button id="addTaskBtn">Add</button>
       </div>
+
+      <ul class="todo-list" id="todoList"></ul>
     </div>
   </main>
 
@@ -332,188 +202,6 @@
     updateClock();
     setInterval(updateClock, 1000);
 
-    // Attendance functionality
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtnAttendance = document.getElementById("logoutBtnAttendance");
-    const breakBtn = document.getElementById("breakBtn");
-    const resumeBtn = document.getElementById("resumeBtn");
-    const attendanceStatus = document.getElementById("attendanceStatus");
-    const workHoursEl = document.getElementById("workHours");
-    const breakTimeEl = document.getElementById("breakTime");
-    
-    let todayAttendance = {
-      loginTime: null,
-      logoutTime: null,
-      breaks: [],
-      currentBreak: null
-    };
-    
-    // Load today's attendance
-    async function loadTodayAttendance() {
-      const today = new Date().toISOString().split('T')[0];
-      try {
-        const doc = await db.collection("attendance")
-          .doc(username)
-          .collection("records")
-          .doc(today)
-          .get();
-          
-        if (doc.exists) {
-          todayAttendance = doc.data();
-          updateAttendanceUI();
-        }
-      } catch (error) {
-        console.error("Error loading attendance:", error);
-      }
-    }
-    
-    function updateAttendanceUI() {
-      const now = new Date();
-      
-      // Update status
-      if (todayAttendance.logoutTime) {
-        attendanceStatus.textContent = "Logged Out";
-        attendanceStatus.className = "status-indicator status-absent";
-        loginBtn.disabled = false;
-        logoutBtnAttendance.disabled = true;
-        breakBtn.disabled = true;
-        resumeBtn.disabled = true;
-      } else if (todayAttendance.currentBreak) {
-        attendanceStatus.textContent = "On Break";
-        attendanceStatus.className = "status-indicator status-break";
-        loginBtn.disabled = true;
-        logoutBtnAttendance.disabled = true;
-        breakBtn.disabled = true;
-        resumeBtn.disabled = false;
-      } else if (todayAttendance.loginTime) {
-        attendanceStatus.textContent = "Logged In";
-        attendanceStatus.className = "status-indicator status-present";
-        loginBtn.disabled = true;
-        logoutBtnAttendance.disabled = false;
-        breakBtn.disabled = false;
-        resumeBtn.disabled = true;
-      } else {
-        attendanceStatus.textContent = "Not Logged In";
-        attendanceStatus.className = "status-indicator status-absent";
-        loginBtn.disabled = false;
-        logoutBtnAttendance.disabled = true;
-        breakBtn.disabled = true;
-        resumeBtn.disabled = true;
-      }
-      
-      // Calculate and display work hours
-      if (todayAttendance.loginTime) {
-        const loginTime = new Date(todayAttendance.loginTime);
-        const endTime = todayAttendance.logoutTime ? new Date(todayAttendance.logoutTime) : now;
-        
-        // Subtract break times
-        let totalBreakMs = 0;
-        todayAttendance.breaks.forEach(breakPeriod => {
-          if (breakPeriod.start && breakPeriod.end) {
-            totalBreakMs += new Date(breakPeriod.end) - new Date(breakPeriod.start);
-          } else if (breakPeriod.start && todayAttendance.currentBreak) {
-            totalBreakMs += now - new Date(breakPeriod.start);
-          }
-        });
-        
-        const workMs = (endTime - loginTime) - totalBreakMs;
-        const workHours = Math.floor(workMs / 3600000);
-        const workMinutes = Math.floor((workMs % 3600000) / 60000);
-        
-        workHoursEl.textContent = `${workHours}h ${workMinutes}m`;
-        
-        // Calculate and display break time
-        const breakHours = Math.floor(totalBreakMs / 3600000);
-        const breakMinutes = Math.floor((totalBreakMs % 3600000) / 60000);
-        breakTimeEl.textContent = `${breakHours}h ${breakMinutes}m`;
-      }
-    }
-    
-    // Login button handler
-    loginBtn.addEventListener("click", async () => {
-      const now = new Date();
-      todayAttendance.loginTime = now.toISOString();
-      
-      try {
-        const today = now.toISOString().split('T')[0];
-        await db.collection("attendance")
-          .doc(username)
-          .collection("records")
-          .doc(today)
-          .set(todayAttendance);
-          
-        updateAttendanceUI();
-      } catch (error) {
-        console.error("Error saving login:", error);
-        alert("Failed to log in. Please try again.");
-      }
-    });
-    
-    // Logout button handler
-    logoutBtnAttendance.addEventListener("click", async () => {
-      const now = new Date();
-      todayAttendance.logoutTime = now.toISOString();
-      
-      try {
-        const today = now.toISOString().split('T')[0];
-        await db.collection("attendance")
-          .doc(username)
-          .collection("records")
-          .doc(today)
-          .set(todayAttendance);
-          
-        updateAttendanceUI();
-      } catch (error) {
-        console.error("Error saving logout:", error);
-        alert("Failed to log out. Please try again.");
-      }
-    });
-    
-    // Break button handler
-    breakBtn.addEventListener("click", async () => {
-      const now = new Date();
-      todayAttendance.currentBreak = {
-        start: now.toISOString()
-      };
-      todayAttendance.breaks.push(todayAttendance.currentBreak);
-      
-      try {
-        const today = now.toISOString().split('T')[0];
-        await db.collection("attendance")
-          .doc(username)
-          .collection("records")
-          .doc(today)
-          .set(todayAttendance);
-          
-        updateAttendanceUI();
-      } catch (error) {
-        console.error("Error saving break:", error);
-        alert("Failed to start break. Please try again.");
-      }
-    });
-    
-    // Resume button handler
-    resumeBtn.addEventListener("click", async () => {
-      const now = new Date();
-      todayAttendance.currentBreak.end = now.toISOString();
-      todayAttendance.currentBreak = null;
-      
-      try {
-        const today = now.toISOString().split('T')[0];
-        await db.collection("attendance")
-          .doc(username)
-          .collection("records")
-          .doc(today)
-          .set(todayAttendance);
-          
-        updateAttendanceUI();
-      } catch (error) {
-        console.error("Error saving resume:", error);
-        alert("Failed to end break. Please try again.");
-      }
-    });
-    
-    // To-do list functionality
     const todoListEl = document.getElementById("todoList");
     const todoDateLabel = document.getElementById("todoDateLabel");
     const prevBtn = document.getElementById("prevDayBtn");
@@ -604,7 +292,8 @@
     };
     input.addEventListener("keypress", e => { if (e.key === "Enter") addBtn.click(); });
 
-    // Sidebar functionality
+    loadTasks();
+
     const sidebarToggle = document.getElementById("sidebarToggle");
     const sidebar = document.getElementById("sidebar");
     const mainContent = document.getElementById("mainContent");
@@ -626,10 +315,6 @@
         mainContent.classList.remove("shifted");
       }
     });
-
-    // Initialize
-    loadTodayAttendance();
-    loadTasks();
   </script>
 </body>
 </html>
