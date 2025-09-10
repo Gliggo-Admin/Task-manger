@@ -669,286 +669,146 @@
     }
     
     // Load attendance history
-    async function loadAttendanceHistory() {
-      const month = parseInt(document.getElementById("monthFilter").value);
-      const year = parseInt(document.getElementById("yearFilter").value);
-      
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0);
-      
-      const tableBody = document.querySelector("#attendanceTable tbody");
-      tableBody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
-      
-      try {
-        const recordsRef = db.collection("attendance")
-          .doc(username)
-          .collection("records");
-        
-        const snapshot = await recordsRef.get();
-        const records = [];
-        
-        snapshot.forEach(doc => {
-          const recordDate = new Date(doc.id);
-          if (recordDate >= startDate && recordDate <= endDate) {
-            records.push({
-              date: doc.id,
-              ...doc.data()
-            });
-          }
-        });
-        
-        // Sort records by date (newest first)
-        records.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        tableBody.innerHTML = "";
-        
-        if (records.length === 0) {
-          tableBody.innerHTML = "<tr><td colspan='6'>No records found for selected period</td></tr>";
-          return;
-        }
-        
-        records.forEach(record => {
-          const row = document.createElement("tr");
-          
-          const date = new Date(record.date);
-          const loginTime = record.loginTime ? new Date(record.loginTime).toLocaleTimeString() : "-";
-          const logoutTime = record.logoutTime ? new Date(record.logoutTime).toLocaleTimeString() : "-";
-          
-          // Calculate work hours
-          let workHours = "0h 0m";
-          let breakTime = "0h 0m";
-          let status = "Absent";
-          
-          if (record.loginTime) {
-            status = record.logoutTime ? "Present" : "Active";
-            
-            const login = new Date(record.loginTime);
-            const logout = record.logoutTime ? new Date(record.logoutTime) : new Date();
-            
-            // Calculate break time
-            let totalBreakMs = 0;
-            if (record.breaks && record.breaks.length > 0) {
-              record.breaks.forEach(breakPeriod => {
-                if (breakPeriod.start && breakPeriod.end) {
-                  totalBreakMs += new Date(breakPeriod.end) - new Date(breakPeriod.start);
-                }
-              });
-            }
-            
-            // Calculate work time
-            const workMs = (logout - login) - totalBreakMs;
-            const workHrs = Math.floor(workMs / 3600000);
-            const workMins = Math.floor((workMs % 3600000) / 60000);
-            workHours = `${workHrs}h ${workMins}m`;
-            
-            // Format break time
-            const breakHrs = Math.floor(totalBreakMs / 3600000);
-            const breakMins = Math.floor((totalBreakMs % 3600000) / 60000);
-            breakTime = `${breakHrs}h ${breakMins}m`;
-          }
-          
-          row.innerHTML = `
-            <td>${date.toLocaleDateString()}</td>
-            <td>${loginTime}</td>
-            <td>${logoutTime}</td>
-            <td>${workHours}</td>
-            <td>${breakTime}</td>
-            <td class="status-${status.toLowerCase()}">${status}</td>
-          `;
-          
-          tableBody.appendChild(row);
-        });
-      } catch (error) {
-        console.error("Error loading attendance history:", error);
-        tableBody.innerHTML = "<tr><td colspan='6'>Error loading data</td></tr>";
-      }
-    }
+    // Replace the entire loadAttendanceHistory function with this corrected version
+async function loadAttendanceHistory() {
+  const month = parseInt(document.getElementById("monthFilter").value);
+  const year = parseInt(document.getElementById("yearFilter").value);
+  
+  const startDate = new Date(year, month, 1);
+  const endDate = new Date(year, month + 1, 0);
+  
+  const tableBody = document.querySelector("#attendanceTable tbody");
+  tableBody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
+  
+  try {
+    const recordsRef = db.collection("attendance")
+      .doc(username)
+      .collection("records");
     
-    // Load stats
-    async function loadStats() {
-      const now = new Date();
-      const month = now.getMonth();
-      const year = now.getFullYear();
-      
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0);
-      
-      try {
-        const recordsRef = db.collection("attendance")
-          .doc(username)
-          .collection("records");
-        
-        const snapshot = await recordsRef.get();
-        
-        let presentDays = 0;
-        let absentDays = 0;
-        let totalWorkHours = 0;
-        let workDays = 0;
-        
-        snapshot.forEach(doc => {
-          const recordDate = new Date(doc.id);
-          if (recordDate >= startDate && recordDate <= endDate) {
-            const data = doc.data();
-            
-            if (data.loginTime) {
-              presentDays++;
-              
-              // Calculate work hours for this day
-              const login = new Date(data.loginTime);
-              const logout = data.logoutTime ? new Date(data.logoutTime) : new Date();
-              
-              // Calculate break time
-              let totalBreakMs = 0;
-              if (data.breaks && data.breaks.length > 0) {
-                data.breaks.forEach(breakPeriod => {
-                  if (breakPeriod.start && breakPeriod.end) {
-                    totalBreakMs += new Date(breakPeriod.end) - new Date(breakPeriod.start);
-                  }
-                });
-              }
-              
-              // Calculate work time
-              const workMs = (logout - login) - totalBreakMs;
-              totalWorkHours += workMs;
-              workDays++;
-            } else {
-              absentDays++;
-            }
-          }
-        });
-        
-        // Update stats
-        document.getElementById("monthPresent").textContent = presentDays;
-        document.getElementById("monthAbsent").textContent = absentDays;
-        
-        // Calculate average hours
-        const avgMs = workDays > 0 ? totalWorkHours / workDays : 0;
-        const avgHrs = Math.floor(avgMs / 3600000);
-        const avgMins = Math.floor((avgMs % 3600000) / 60000);
-        document.getElementById("avgHours").textContent = `${avgHrs}h ${avgMins}m`;
-        
-        // For now, set a fixed leave balance
-        document.getElementById("leaveBalance").textContent = "12";
-        
-      } catch (error) {
-        console.error("Error loading stats:", error);
-      }
-    }
+    const snapshot = await recordsRef.get();
+    const records = [];
     
-    // Load leave history
-    async function loadLeaveHistory() {
-      const tableBody = document.querySelector("#leaveTable tbody");
-      
-      try {
-        const leavesRef = db.collection("leaves").doc(username).collection("records");
-        const snapshot = await leavesRef.get();
-        
-        tableBody.innerHTML = "";
-        
-        if (snapshot.empty) {
-          tableBody.innerHTML = "<tr><td colspan='6'>No leave records found</td></tr>";
-          return;
-        }
-        
-        snapshot.forEach(doc => {
-          const leave = doc.data();
-          const row = document.createElement("tr");
-          
-          const startDate = new Date(leave.startDate);
-          const endDate = new Date(leave.endDate);
-          const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-          
-          row.innerHTML = `
-            <td>${leave.type}</td>
-            <td>${startDate.toLocaleDateString()}</td>
-            <td>${endDate.toLocaleDateString()}</td>
-            <td>${days}</td>
-            <td>${leave.reason || "-"}</td>
-            <td>${leave.status || "Pending"}</td>
-          `;
-          
-          tableBody.appendChild(row);
+    snapshot.forEach(doc => {
+      const recordDate = new Date(doc.id);
+      if (recordDate >= startDate && recordDate <= endDate) {
+        records.push({
+          date: doc.id,
+          ...doc.data()
         });
-      } catch (error) {
-        console.error("Error loading leave history:", error);
-        tableBody.innerHTML = "<tr><td colspan='6'>Error loading leave records</td></tr>";
-      }
-    }
-    
-    // Apply for leave
-    document.getElementById("applyLeaveBtn").addEventListener("click", async () => {
-      const type = document.getElementById("leaveType").value;
-      const startDate = document.getElementById("leaveStart").value;
-      const endDate = document.getElementById("leaveEnd").value;
-      const reason = document.getElementById("leaveReason").value;
-      
-      if (!type || !startDate || !endDate) {
-        alert("Please fill in all required fields");
-        return;
-      }
-      
-      try {
-        const leaveData = {
-          type,
-          startDate,
-          endDate,
-          reason,
-          appliedDate: new Date().toISOString(),
-          status: "Pending"
-        };
-        
-        await db.collection("leaves")
-          .doc(username)
-          .collection("records")
-          .add(leaveData);
-        
-        alert("Leave application submitted successfully");
-        document.getElementById("leaveType").value = "";
-        document.getElementById("leaveStart").value = "";
-        document.getElementById("leaveEnd").value = "";
-        document.getElementById("leaveReason").value = "";
-        
-        loadLeaveHistory(); // Refresh leave history
-      } catch (error) {
-        console.error("Error applying for leave:", error);
-        alert("Failed to apply for leave. Please try again.");
       }
     });
     
-    // Initialize chart
-    let attendanceChart = null;
+    // Sort records by date (newest first)
+    records.sort((a, b) => new Date(b.date) - new Date(a.date));
     
-    async function initChart() {
-      const ctx = document.getElementById('attendanceChart').getContext('2d');
-      
-      // For now, create a sample chart
-      attendanceChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-          datasets: [{
-            label: 'Work Hours',
-            data: [35, 42, 38, 40],
-            backgroundColor: 'rgba(54, 162, 235, 0.5)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            y: {
-              beginAtZero: true,
-              title: {
-                display: true,
-                text: 'Hours'
-              }
-            }
-          }
-        }
-      });
+    tableBody.innerHTML = "";
+    
+    if (records.length === 0) {
+      tableBody.innerHTML = "<tr><td colspan='6'>No records found for selected period</td></tr>";
+      return;
     }
     
+    records.forEach(record => {
+      const row = document.createElement("tr");
+      
+      const date = new Date(record.date);
+      const loginTime = record.loginTime ? new Date(record.loginTime).toLocaleTimeString() : "-";
+      const logoutTime = record.logoutTime ? new Date(record.logoutTime).toLocaleTimeString() : "-";
+      
+      // Calculate work hours
+      let workHours = "0h 0m";
+      let breakTime = "0h 0m";
+      let status = "Absent";
+      
+      if (record.loginTime) {
+        status = record.logoutTime ? "Present" : "Active";
+        
+        const login = new Date(record.loginTime);
+        const logout = record.logoutTime ? new Date(record.logoutTime) : new Date();
+        
+        // Calculate break time
+        let totalBreakMs = 0;
+        if (record.breaks && record.breaks.length > 0) {
+          record.breaks.forEach(breakPeriod => {
+            if (breakPeriod.start && breakPeriod.end) {
+              totalBreakMs += new Date(breakPeriod.end) - new Date(breakPeriod.start);
+            }
+          });
+        }
+        
+        // Calculate work time
+        const workMs = (logout - login) - totalBreakMs;
+        const workHrs = Math.floor(workMs / 3600000);
+        const workMins = Math.floor((workMs % 3600000) / 60000);
+        workHours = `${workHrs}h ${workMins}m`;
+        
+        // Format break time
+        const breakHrs = Math.floor(totalBreakMs / 3600000);
+        const breakMins = Math.floor((totalBreakMs % 3600000) / 60000);
+        breakTime = `${breakHrs}h ${breakMins}m`;
+      }
+      
+      row.innerHTML = `
+        <td>${date.toLocaleDateString()}</td>
+        <td>${loginTime}</td>
+        <td>${logoutTime}</td>
+        <td>${workHours}</td>
+        <td>${breakTime}</td>
+        <td class="status-${status.toLowerCase()}">${status}</td>
+      `;
+      
+      tableBody.appendChild(row);
+    });
+  } catch (error) {
+    console.error("Error loading attendance history:", error);
+    tableBody.innerHTML = "<tr><td colspan='6'>Error loading data. Check console for details.</td></tr>";
+  }
+}
+
+// Also update the initChart function to handle cases where there's no data
+async function initChart() {
+  const ctx = document.getElementById('attendanceChart').getContext('2d');
+  
+  // For now, create a sample chart
+  attendanceChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+      datasets: [{
+        label: 'Work Hours',
+        data: [0, 0, 0, 0], // Start with zeros
+        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Hours'
+          }
+        }
+      }
+    }
+  });
+  
+  // Try to load real data
+  try {
+    await updateChartWithRealData();
+  } catch (error) {
+    console.log("Could not load chart data yet:", error);
+  }
+}
+
+// Add this function to update chart with real data
+async function updateChartWithRealData() {
+  // This would be implemented to fetch real data from Firebase
+  // For now, we'll keep the placeholder zeros
+}    
     // Event listeners for filters
     document.getElementById("monthFilter").addEventListener("change", loadAttendanceHistory);
     document.getElementById("yearFilter").addEventListener("change", loadAttendanceHistory);
