@@ -329,8 +329,8 @@
     <div class="profile" id="profileDiv" tabindex="0" aria-haspopup="true" aria-expanded="false" title="User menu">
       <div id="profileInitial" aria-label="User initial" role="img"></div>
       <div id="profileDropdown" role="menu" aria-label="Profile options">
-        <a href="Change Password.html" role="menuitem">Settings</a>
-        <a href="Home.html" role="menuitem">Dashboard</a>
+        <a href="Change Password.html" onclick="handleNavigation(event, 'Change Password.html')" role="menuitem">Settings</a>
+        <a href="Home.html" onclick="handleNavigation(event, 'Home.html')" role="menuitem">Dashboard</a>
         <button id="logoutBtn" role="menuitem">Logout</button>
       </div>
     </div>
@@ -338,13 +338,13 @@
 
   <nav class="sidebar" id="sidebar" aria-label="Main navigation">
     <ul>
-      <li class="menu-item"><a href="Home.html">Dashboard</a></li>
-      <li class="menu-item"><a href="Users.html">Users</a></li>
-      <li class="menu-item"><a href="tasks.html">All Tasks</a></li>
-      <li class="menu-item"><a href="Attendance.html">Attendance</a></li>
-      <li class="menu-item"><a href="Chart.html">Charts</a></li>
-      <li class="menu-item"><a href="AssignTask.html">Assign Task</a></li>
-      <li class="menu-item"><a href="Genrate Report.html">Report</a></li>
+      <li class="menu-item"><a href="Home.html" onclick="handleNavigation(event, 'Home.html')">Dashboard</a></li>
+      <li class="menu-item"><a href="Users.html" onclick="handleNavigation(event, 'Users.html')">Users</a></li>
+      <li class="menu-item"><a href="tasks.html" onclick="handleNavigation(event, 'tasks.html')">All Tasks</a></li>
+      <li class="menu-item"><a href="Attendance.html" onclick="handleNavigation(event, 'Attendance.html')">Attendance</a></li>
+      <li class="menu-item"><a href="Chart.html" onclick="handleNavigation(event, 'Chart.html')">Charts</a></li>
+      <li class="menu-item"><a href="AssignTask.html" onclick="handleNavigation(event, 'AssignTask.html')">Assign Task</a></li>
+      <li class="menu-item"><a href="Genrate Report.html" onclick="handleNavigation(event, 'Genrate Report.html')">Report</a></li>
     </ul>
   </nav>
 
@@ -511,10 +511,25 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
+    // Set authentication persistence
+    firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
+      .then(() => console.log("Auth persistence set to SESSION"))
+      .catch((error) => console.error("Error setting auth persistence:", error));
+
     let currentUser = null;
     let username = sessionStorage.getItem("username") || "Guest";
     let userEmail = sessionStorage.getItem("userEmail") || "guest@example.com";
     let userId = null;
+
+    // Navigation handler
+    function handleNavigation(event, url) {
+      event.preventDefault();
+      if (auth.currentUser) {
+        window.location.href = url;
+      } else {
+        console.error("User not authenticated, preventing navigation");
+      }
+    }
 
     // Authentication state observer
     auth.onAuthStateChanged(async (user) => {
@@ -530,23 +545,24 @@
           username = user.email.split('@')[0];
         }
 
-        // Update sessionStorage
         sessionStorage.setItem("userId", userId);
         sessionStorage.setItem("userEmail", userEmail);
         sessionStorage.setItem("username", username);
 
-        // Set profile initial
         document.getElementById("profileInitial").textContent = username[0]?.toUpperCase() || "?";
 
-        // Load data
         loadTodayAttendance();
         loadAttendanceHistory();
         loadStats();
         loadLeaveHistory();
         initChart();
       } else {
-        // Redirect to login if not authenticated
-        window.location.href = "index.html";
+        setTimeout(() => {
+          if (!auth.currentUser) {
+            sessionStorage.clear();
+            window.location.href = "index.html";
+          }
+        }, 1000);
       }
     });
 
@@ -569,6 +585,7 @@
         window.location.href = "index.html";
       }).catch((error) => {
         console.error("Logout error:", error);
+        alert("Failed to log out. Please try again.");
       });
     });
 
@@ -586,6 +603,7 @@
 
     sidebarToggle.addEventListener("click", (e) => {
       e.stopPropagation();
+      console.log("Sidebar toggle clicked");
       const isVisible = sidebar.classList.contains("visible");
       sidebar.classList.toggle("visible");
       mainContent.classList.toggle("shifted");
@@ -599,6 +617,13 @@
       ) {
         sidebar.classList.remove("visible");
         mainContent.classList.remove("shifted");
+      }
+    });
+
+    // Prevent unintended form submissions
+    document.addEventListener("submit", (e) => {
+      if (!e.target.classList.contains("leave-form")) {
+        e.preventDefault();
       }
     });
 
@@ -618,7 +643,6 @@
       currentBreak: null
     };
     
-    // Load today's attendance
     async function loadTodayAttendance() {
       const today = new Date().toISOString().split('T')[0];
       try {
@@ -627,20 +651,21 @@
           .collection("records")
           .doc(today)
           .get();
-          
         if (doc.exists) {
           todayAttendance = doc.data();
           updateAttendanceUI();
+        } else {
+          console.log("No attendance record for today");
         }
       } catch (error) {
         console.error("Error loading attendance:", error);
+        alert("Failed to load today's attendance. Please try again.");
       }
     }
     
     function updateAttendanceUI() {
       const now = new Date();
       
-      // Update status
       if (todayAttendance.logoutTime) {
         attendanceStatus.textContent = "Logged Out";
         attendanceStatus.className = "status-absent";
@@ -671,12 +696,10 @@
         resumeBtn.disabled = true;
       }
       
-      // Calculate and display work hours
       if (todayAttendance.loginTime) {
         const loginTime = new Date(todayAttendance.loginTime);
         const endTime = todayAttendance.logoutTime ? new Date(todayAttendance.logoutTime) : now;
         
-        // Subtract break times
         let totalBreakMs = 0;
         todayAttendance.breaks.forEach(breakPeriod => {
           if (breakPeriod.start && breakPeriod.end) {
@@ -692,14 +715,12 @@
         
         workHoursEl.textContent = `${workHours}h ${workMinutes}m`;
         
-        // Calculate and display break time
         const breakHours = Math.floor(totalBreakMs / 3600000);
         const breakMinutes = Math.floor((totalBreakMs % 3600000) / 60000);
         breakTimeEl.textContent = `${breakHours}h ${breakMinutes}m`;
       }
     }
     
-    // Login button handler
     loginBtn.addEventListener("click", async () => {
       const now = new Date();
       todayAttendance.loginTime = now.toISOString();
@@ -711,16 +732,14 @@
           .collection("records")
           .doc(today)
           .set(todayAttendance);
-          
         updateAttendanceUI();
-        loadAttendanceHistory(); // Refresh history
+        loadAttendanceHistory();
       } catch (error) {
         console.error("Error saving login:", error);
         alert("Failed to log in. Please try again.");
       }
     });
     
-    // Logout button handler
     logoutBtnAttendance.addEventListener("click", async () => {
       const now = new Date();
       todayAttendance.logoutTime = now.toISOString();
@@ -732,17 +751,15 @@
           .collection("records")
           .doc(today)
           .set(todayAttendance);
-          
         updateAttendanceUI();
-        loadAttendanceHistory(); // Refresh history
-        loadStats(); // Refresh stats
+        loadAttendanceHistory();
+        loadStats();
       } catch (error) {
         console.error("Error saving logout:", error);
         alert("Failed to log out. Please try again.");
       }
     });
     
-    // Break button handler
     breakBtn.addEventListener("click", async () => {
       const now = new Date();
       todayAttendance.currentBreak = {
@@ -757,7 +774,6 @@
           .collection("records")
           .doc(today)
           .set(todayAttendance);
-          
         updateAttendanceUI();
       } catch (error) {
         console.error("Error saving break:", error);
@@ -765,7 +781,6 @@
       }
     });
     
-    // Resume button handler
     resumeBtn.addEventListener("click", async () => {
       const now = new Date();
       todayAttendance.currentBreak.end = now.toISOString();
@@ -778,7 +793,6 @@
           .collection("records")
           .doc(today)
           .set(todayAttendance);
-          
         updateAttendanceUI();
       } catch (error) {
         console.error("Error saving resume:", error);
@@ -786,7 +800,6 @@
       }
     });
     
-    // Populate year filter
     const yearFilter = document.getElementById("yearFilter");
     const currentYear = new Date().getFullYear();
     for (let year = currentYear - 5; year <= currentYear + 1; year++) {
@@ -797,7 +810,6 @@
       yearFilter.appendChild(option);
     }
     
-    // Load attendance history
     async function loadAttendanceHistory() {
       const month = parseInt(document.getElementById("monthFilter").value);
       const year = parseInt(document.getElementById("yearFilter").value);
@@ -826,7 +838,6 @@
           }
         });
         
-        // Sort records by date (newest first)
         records.sort((a, b) => new Date(b.date) - new Date(a.date));
         
         tableBody.innerHTML = "";
@@ -843,7 +854,6 @@
           const loginTime = record.loginTime ? new Date(record.loginTime).toLocaleTimeString() : "-";
           const logoutTime = record.logoutTime ? new Date(record.logoutTime).toLocaleTimeString() : "-";
           
-          // Calculate work hours
           let workHours = "0h 0m";
           let breakTime = "0h 0m";
           let status = "Absent";
@@ -854,7 +864,6 @@
             const login = new Date(record.loginTime);
             const logout = record.logoutTime ? new Date(record.logoutTime) : new Date();
             
-            // Calculate break time
             let totalBreakMs = 0;
             if (record.breaks && record.breaks.length > 0) {
               record.breaks.forEach(breakPeriod => {
@@ -864,13 +873,11 @@
               });
             }
             
-            // Calculate work time
             const workMs = (logout - login) - totalBreakMs;
             const workHrs = Math.floor(workMs / 3600000);
             const workMins = Math.floor((workMs % 3600000) / 60000);
             workHours = `${workHrs}h ${workMins}m`;
             
-            // Format break time
             const breakHrs = Math.floor(totalBreakMs / 3600000);
             const breakMins = Math.floor((totalBreakMs % 3600000) / 60000);
             breakTime = `${breakHrs}h ${breakMins}m`;
@@ -893,7 +900,6 @@
       }
     }
     
-    // Initialize chart
     let attendanceChart = null;
     async function initChart() {
       const ctx = document.getElementById('attendanceChart').getContext('2d');
@@ -904,7 +910,7 @@
           labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
           datasets: [{
             label: 'Work Hours',
-            data: [0, 0, 0, 0], // Start with zeros
+            data: [0, 0, 0, 0],
             backgroundColor: 'rgba(54, 162, 235, 0.5)',
             borderColor: 'rgba(54, 162, 235, 1)',
             borderWidth: 1
@@ -927,17 +933,13 @@
       await updateChartWithRealData();
     }
 
-    // Load stats
     async function loadStats() {
-      // Implement actual stats calculation based on records
-      // For now, using placeholder values
       document.getElementById("monthPresent").textContent = "18";
       document.getElementById("monthAbsent").textContent = "2";
       document.getElementById("avgHours").textContent = "7h 45m";
       document.getElementById("leaveBalance").textContent = "12";
     }
     
-    // Load leave history
     async function loadLeaveHistory() {
       try {
         const leaveRef = db.collection("leaves")
@@ -982,7 +984,6 @@
       tableBody.appendChild(row);
     }
     
-    // Apply for leave
     document.getElementById("applyLeaveBtn").addEventListener("click", async () => {
       const type = document.getElementById("leaveType").value;
       const startDate = document.getElementById("leaveStart").value;
@@ -1022,14 +1023,13 @@
         document.getElementById("leaveEnd").value = "";
         document.getElementById("leaveReason").value = "";
         
-        loadLeaveHistory(); // Refresh the table
+        loadLeaveHistory();
       } catch (error) {
         console.error("Error applying for leave:", error);
         alert("Failed to apply for leave. Please try again.");
       }
     });
     
-    // Import/Export functionality
     const importBtn = document.getElementById("importBtn");
     const exportBtn = document.getElementById("exportBtn");
     const downloadTemplateBtn = document.getElementById("downloadTemplateBtn");
@@ -1062,11 +1062,9 @@
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
         
-        // Get first worksheet
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
         
-        // Display preview
         importPreview.innerHTML = `
           <h3>Preview (first 5 rows)</h3>
           <table style="width: 100%; border-collapse: collapse;">
@@ -1086,7 +1084,6 @@
           <p>Total rows: ${jsonData.length}</p>
         `;
         
-        // Store data for import
         confirmImportBtn.dataset.importData = JSON.stringify(jsonData);
       };
       reader.readAsArrayBuffer(file);
@@ -1094,37 +1091,36 @@
     
     confirmImportBtn.addEventListener("click", async () => {
       const importData = JSON.parse(confirmImportBtn.dataset.importData || "[]");
-      
       if (importData.length === 0) {
         alert("No data to import");
         return;
       }
-      
       try {
-        // Process and import each record
         for (const record of importData) {
+          const date = record.date || record.Date;
+          if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            throw new Error(`Invalid date format for record: ${JSON.stringify(record)}`);
+          }
           const attendanceRecord = {
-            date: record.date || record.Date,
-            loginTime: record.loginTime || record['Login Time'],
-            logoutTime: record.logoutTime || record['Logout Time'],
-            breaks: record.breaks || [],
+            date,
+            loginTime: record.loginTime || record['Login Time'] || null,
+            logoutTime: record.logoutTime || record['Logout Time'] || null,
+            breaks: Array.isArray(record.breaks) ? record.breaks : [],
             status: record.status || 'present'
           };
-          
           await db.collection("attendance")
             .doc(userId)
             .collection("records")
             .doc(attendanceRecord.date)
             .set(attendanceRecord);
         }
-        
         alert(`Successfully imported ${importData.length} records!`);
         importModal.style.display = "none";
-        loadAttendanceHistory(); // Refresh the table
-        loadStats(); // Refresh stats
+        loadAttendanceHistory();
+        loadStats();
       } catch (error) {
         console.error("Error importing data:", error);
-        alert("Failed to import data. Please check the console for details.");
+        alert(`Failed to import data: ${error.message}`);
       }
     });
     
@@ -1149,12 +1145,10 @@
           return;
         }
         
-        // Convert to worksheet
         const worksheet = XLSX.utils.json_to_sheet(records);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
         
-        // Export to file
         XLSX.writeFile(workbook, `attendance_export_${new Date().toISOString().split('T')[0]}.xlsx`);
         
         alert(`Exported ${records.length} records successfully!`);
@@ -1165,7 +1159,6 @@
     });
     
     downloadTemplateBtn.addEventListener("click", () => {
-      // Create template data
       const templateData = [
         {
           date: "2023-01-01",
@@ -1176,16 +1169,13 @@
         }
       ];
       
-      // Convert to worksheet
       const worksheet = XLSX.utils.json_to_sheet(templateData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance Template");
       
-      // Export to file
       XLSX.writeFile(workbook, "attendance_template.xlsx");
     });
     
-    // Update chart with real data
     async function updateChartWithRealData() {
       const month = parseInt(document.getElementById("monthFilter").value);
       const year = parseInt(document.getElementById("yearFilter").value);
@@ -1211,9 +1201,8 @@
           }
         });
         
-        // Group by week and calculate average hours
-        const weeklyData = [0, 0, 0, 0, 0, 0]; // Up to 6 weeks
-        const weekCounts = [0, 0, 0, 0, 0, 0]; // Count of days in each week
+        const weeklyData = [0, 0, 0, 0, 0, 0];
+        const weekCounts = [0, 0, 0, 0, 0, 0];
         
         records.forEach(record => {
           if (record.loginTime && record.logoutTime) {
@@ -1223,7 +1212,6 @@
             const login = new Date(record.loginTime);
             const logout = new Date(record.logoutTime);
             
-            // Calculate break time
             let totalBreakMs = 0;
             if (record.breaks && record.breaks.length > 0) {
               record.breaks.forEach(breakPeriod => {
@@ -1233,7 +1221,6 @@
               });
             }
             
-            // Calculate work time in hours
             const workMs = (logout - login) - totalBreakMs;
             const workHours = workMs / 3600000;
             
@@ -1242,12 +1229,10 @@
           }
         });
         
-        // Calculate averages
         const weeklyAverages = weeklyData.map((total, index) => 
           weekCounts[index] > 0 ? total / weekCounts[index] : 0
         );
         
-        // Update chart
         if (attendanceChart) {
           attendanceChart.data.labels = weeklyAverages.map((_, i) => `Week ${i + 1}`);
           attendanceChart.data.datasets[0].data = weeklyAverages;
@@ -1258,7 +1243,6 @@
       }
     }
     
-    // Event listeners for filters
     document.getElementById("monthFilter").addEventListener("change", () => {
       loadAttendanceHistory();
       updateChartWithRealData();
@@ -1269,7 +1253,6 @@
       updateChartWithRealData();
     });
     
-    // Set up real-time listener for today's attendance
     window.addEventListener("load", () => {
       const today = new Date().toISOString().split('T')[0];
       db.collection("attendance")
