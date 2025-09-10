@@ -7,9 +7,10 @@
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- SheetJS (for export functionality) -->
+  <!-- SheetJS (for import/export functionality) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   
   <style>
@@ -110,14 +111,37 @@
       border-radius: 6px;
     }
     
-    .export-btn {
+    .import-export-section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    
+    .import-export-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 15px;
+    }
+    
+    .action-btn {
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-import {
+      background: #17a2b8;
+      color: white;
+    }
+    
+    .btn-export {
       background: #28a745;
       color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
     }
     
     .attendance-stats {
@@ -158,15 +182,6 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 15px;
-    }
-    
-    .action-btn {
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
     }
     
     .btn-login {
@@ -227,18 +242,6 @@
       margin-bottom: 30px;
     }
     
-    .charts-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    
-    .chart-box {
-      background: #f8f9fa;
-      border-radius: 8px;
-      padding: 15px;
-    }
-    
     .leave-section {
       background: white;
       border-radius: 12px;
@@ -279,25 +282,43 @@
     .status-leave { color: #9b59b6; }
     .status-break { color: #f39c12; }
     
-    .report-section {
-      background: white;
-      border-radius: 12px;
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1002;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+    }
+    
+    .modal-content {
+      background-color: #fefefe;
+      margin: 10% auto;
       padding: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      margin-bottom: 30px;
+      border: 1px solid #888;
+      width: 80%;
+      max-width: 500px;
+      border-radius: 8px;
     }
     
-    .report-filters {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
     }
     
-    .report-actions {
-      display: flex;
-      gap: 10px;
+    .close:hover {
+      color: black;
+    }
+    
+    .import-preview {
       margin-top: 15px;
+      max-height: 300px;
+      overflow-y: auto;
     }
   </style>
 </head>
@@ -330,6 +351,16 @@
   <main class="main-content" id="mainContent">
     <div class="attendance-container">
       <h1>Attendance Management</h1>
+      
+      <div class="import-export-section">
+        <h2>Import/Export Data</h2>
+        <p>Import attendance data from Excel or CSV files. Download template for guidance.</p>
+        <div class="import-export-buttons">
+          <button id="importBtn" class="action-btn btn-import">Import Data</button>
+          <button id="exportBtn" class="action-btn btn-export">Export Data</button>
+          <button id="downloadTemplateBtn" class="action-btn">Download Template</button>
+        </div>
+      </div>
       
       <div class="attendance-stats">
         <div class="stat-card">
@@ -369,33 +400,6 @@
         </div>
       </div>
       
-      <div class="report-section">
-        <h2>Generate Report</h2>
-        <div class="report-filters">
-          <div>
-            <label>Start Date</label>
-            <input type="date" id="reportStartDate" class="filter-input">
-          </div>
-          <div>
-            <label>End Date</label>
-            <input type="date" id="reportEndDate" class="filter-input">
-          </div>
-          <div>
-            <label>Report Type</label>
-            <select id="reportType" class="filter-input">
-              <option value="daily">Daily Summary</option>
-              <option value="weekly">Weekly Summary</option>
-              <option value="monthly">Monthly Summary</option>
-            </select>
-          </div>
-        </div>
-        <button id="generateReportBtn" class="export-btn">Generate Report</button>
-        <div class="report-actions">
-          <button id="exportExcelBtn" class="export-btn">Export to Excel</button>
-          <button id="exportPDFBtn" class="export-btn">Export to PDF</button>
-        </div>
-      </div>
-      
       <div class="attendance-header">
         <h2>Attendance History</h2>
         <div class="date-filter">
@@ -416,7 +420,6 @@
           <select id="yearFilter">
             <!-- Options will be populated by JavaScript -->
           </select>
-          <button id="exportAttendanceBtn" class="export-btn">Export</button>
         </div>
       </div>
       
@@ -442,14 +445,7 @@
       
       <div class="chart-container">
         <h2>Monthly Attendance Overview</h2>
-        <div class="charts-row">
-          <div class="chart-box">
-            <canvas id="hoursChart" height="250"></canvas>
-          </div>
-          <div class="chart-box">
-            <canvas id="attendanceChart" height="250"></canvas>
-          </div>
-        </div>
+        <canvas id="attendanceChart" height="100"></canvas>
       </div>
       
       <div class="leave-section">
@@ -490,6 +486,18 @@
     </div>
   </main>
 
+  <!-- Import Modal -->
+  <div id="importModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Import Attendance Data</h2>
+      <p>Select an Excel or CSV file to import. Make sure it follows the template format.</p>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+      <div class="import-preview" id="importPreview"></div>
+      <button id="confirmImportBtn" class="action-btn btn-import" style="margin-top: 15px;">Import Data</button>
+    </div>
+  </div>
+
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
@@ -501,9 +509,15 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const auth = firebase.auth();
 
+    // Sign in with email and password (replace with your actual auth mechanism)
+    // For demo purposes, using a placeholder - in production, use your actual auth flow
     const username = sessionStorage.getItem("username") || "Guest";
-    const userId = sessionStorage.getItem("userId") || "unknown";
+    const userEmail = sessionStorage.getItem("userEmail") || "guest@example.com";
+    const userId = sessionStorage.getItem("userId") || "guest-user-id";
+    
+    // Set profile initial
     document.getElementById("profileInitial").textContent = username[0]?.toUpperCase() || "?";
 
     // Profile dropdown functionality
@@ -567,16 +581,14 @@
       loginTime: null,
       logoutTime: null,
       breaks: [],
-      currentBreak: null,
-      status: "absent",
-      workHours: 0,
-      breakTime: 0
+      currentBreak: null
     };
     
     // Load today's attendance
     async function loadTodayAttendance() {
       const today = new Date().toISOString().split('T')[0];
       try {
+        // Try to get the document with the current user's ID
         const doc = await db.collection("attendance")
           .doc(userId)
           .collection("records")
@@ -589,6 +601,21 @@
         }
       } catch (error) {
         console.error("Error loading attendance:", error);
+        // If the user document doesn't exist, try with the username as fallback
+        try {
+          const doc = await db.collection("attendance")
+            .doc(username)
+            .collection("records")
+            .doc(today)
+            .get();
+            
+          if (doc.exists) {
+            todayAttendance = doc.data();
+            updateAttendanceUI();
+          }
+        } catch (fallbackError) {
+          console.error("Fallback loading also failed:", fallbackError);
+        }
       }
     }
     
@@ -646,13 +673,11 @@
         const workMinutes = Math.floor((workMs % 3600000) / 60000);
         
         workHoursEl.textContent = `${workHours}h ${workMinutes}m`;
-        todayAttendance.workHours = workMs;
         
         // Calculate and display break time
         const breakHours = Math.floor(totalBreakMs / 3600000);
         const breakMinutes = Math.floor((totalBreakMs % 3600000) / 60000);
         breakTimeEl.textContent = `${breakHours}h ${breakMinutes}m`;
-        todayAttendance.breakTime = totalBreakMs;
       }
     }
     
@@ -660,20 +685,25 @@
     loginBtn.addEventListener("click", async () => {
       const now = new Date();
       todayAttendance.loginTime = now.toISOString();
-      todayAttendance.status = "present";
       
       try {
         const today = now.toISOString().split('T')[0];
-        await db.collection("attendance")
-          .doc(userId)
-          .collection("records")
-          .doc(today)
-          .set({
-            ...todayAttendance,
-            username: username,
-            userId: userId,
-            date: today
-          });
+        // Try to save with user ID first
+        try {
+          await db.collection("attendance")
+            .doc(userId)
+            .collection("records")
+            .doc(today)
+            .set(todayAttendance);
+        } catch (error) {
+          console.error("Error saving with user ID, trying with username:", error);
+          // Fallback to username if user ID fails
+          await db.collection("attendance")
+            .doc(username)
+            .collection("records")
+            .doc(today)
+            .set(todayAttendance);
+        }
           
         updateAttendanceUI();
         loadAttendanceHistory(); // Refresh history
@@ -688,23 +718,24 @@
       const now = new Date();
       todayAttendance.logoutTime = now.toISOString();
       
-      // Final calculation of work hours
-      const loginTime = new Date(todayAttendance.loginTime);
-      const workMs = (now - loginTime) - todayAttendance.breakTime;
-      todayAttendance.workHours = workMs;
-      
       try {
         const today = now.toISOString().split('T')[0];
-        await db.collection("attendance")
-          .doc(userId)
-          .collection("records")
-          .doc(today)
-          .set({
-            ...todayAttendance,
-            username: username,
-            userId: userId,
-            date: today
-          });
+        // Try to save with user ID first
+        try {
+          await db.collection("attendance")
+            .doc(userId)
+            .collection("records")
+            .doc(today)
+            .set(todayAttendance);
+        } catch (error) {
+          console.error("Error saving with user ID, trying with username:", error);
+          // Fallback to username if user ID fails
+          await db.collection("attendance")
+            .doc(username)
+            .collection("records")
+            .doc(today)
+            .set(todayAttendance);
+        }
           
         updateAttendanceUI();
         loadAttendanceHistory(); // Refresh history
@@ -725,16 +756,22 @@
       
       try {
         const today = now.toISOString().split('T')[0];
-        await db.collection("attendance")
-          .doc(userId)
-          .collection("records")
-          .doc(today)
-          .set({
-            ...todayAttendance,
-            username: username,
-            userId: userId,
-            date: today
-          });
+        // Try to save with user ID first
+        try {
+          await db.collection("attendance")
+            .doc(userId)
+            .collection("records")
+            .doc(today)
+            .set(todayAttendance);
+        } catch (error) {
+          console.error("Error saving with user ID, trying with username:", error);
+          // Fallback to username if user ID fails
+          await db.collection("attendance")
+            .doc(username)
+            .collection("records")
+            .doc(today)
+            .set(todayAttendance);
+        }
           
         updateAttendanceUI();
       } catch (error) {
@@ -747,26 +784,26 @@
     resumeBtn.addEventListener("click", async () => {
       const now = new Date();
       todayAttendance.currentBreak.end = now.toISOString();
-      
-      // Update break time
-      const breakStart = new Date(todayAttendance.currentBreak.start);
-      const breakMs = now - breakStart;
-      todayAttendance.breakTime += breakMs;
-      
       todayAttendance.currentBreak = null;
       
       try {
         const today = now.toISOString().split('T')[0];
-        await db.collection("attendance")
-          .doc(userId)
-          .collection("records")
-          .doc(today)
-          .set({
-            ...todayAttendance,
-            username: username,
-            userId: userId,
-            date: today
-          });
+        // Try to save with user ID first
+        try {
+          await db.collection("attendance")
+            .doc(userId)
+            .collection("records")
+            .doc(today)
+            .set(todayAttendance);
+        } catch (error) {
+          console.error("Error saving with user ID, trying with username:", error);
+          // Fallback to username if user ID fails
+          await db.collection("attendance")
+            .doc(username)
+            .collection("records")
+            .doc(today)
+            .set(todayAttendance);
+        }
           
         updateAttendanceUI();
       } catch (error) {
@@ -798,24 +835,44 @@
       tableBody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
       
       try {
-        const recordsRef = db.collection("attendance")
+        // Try with user ID first
+        let recordsRef = db.collection("attendance")
           .doc(userId)
           .collection("records");
         
-        const snapshot = await recordsRef
-          .where("date", ">=", startDate.toISOString().split('T')[0])
-          .where("date", "<=", endDate.toISOString().split('T')[0])
-          .orderBy("date", "desc")
-          .get();
-        
+        const snapshot = await recordsRef.get();
         const records = [];
         
         snapshot.forEach(doc => {
-          records.push({
-            id: doc.id,
-            ...doc.data()
-          });
+          const recordDate = new Date(doc.id);
+          if (recordDate >= startDate && recordDate <= endDate) {
+            records.push({
+              date: doc.id,
+              ...doc.data()
+            });
+          }
         });
+        
+        // If no records found with user ID, try with username
+        if (records.length === 0) {
+          recordsRef = db.collection("attendance")
+            .doc(username)
+            .collection("records");
+          
+          const fallbackSnapshot = await recordsRef.get();
+          fallbackSnapshot.forEach(doc => {
+            const recordDate = new Date(doc.id);
+            if (recordDate >= startDate && recordDate <= endDate) {
+              records.push({
+                date: doc.id,
+                ...doc.data()
+              });
+            }
+          });
+        }
+        
+        // Sort records by date (newest first)
+        records.sort((a, b) => new Date(b.date) - new Date(a.date));
         
         tableBody.innerHTML = "";
         
@@ -834,22 +891,33 @@
           // Calculate work hours
           let workHours = "0h 0m";
           let breakTime = "0h 0m";
-          let status = record.status || "Absent";
+          let status = "Absent";
           
           if (record.loginTime) {
+            status = record.logoutTime ? "Present" : "Active";
+            
             const login = new Date(record.loginTime);
             const logout = record.logoutTime ? new Date(record.logoutTime) : new Date();
             
+            // Calculate break time
+            let totalBreakMs = 0;
+            if (record.breaks && record.breaks.length > 0) {
+              record.breaks.forEach(breakPeriod => {
+                if (breakPeriod.start && breakPeriod.end) {
+                  totalBreakMs += new Date(breakPeriod.end) - new Date(breakPeriod.start);
+                }
+              });
+            }
+            
             // Calculate work time
-            const workMs = record.workHours || (logout - login) - (record.breakTime || 0);
+            const workMs = (logout - login) - totalBreakMs;
             const workHrs = Math.floor(workMs / 3600000);
             const workMins = Math.floor((workMs % 3600000) / 60000);
             workHours = `${workHrs}h ${workMins}m`;
             
             // Format break time
-            const breakMs = record.breakTime || 0;
-            const breakHrs = Math.floor(breakMs / 3600000);
-            const breakMins = Math.floor((breakMs % 3600000) / 60000);
+            const breakHrs = Math.floor(totalBreakMs / 3600000);
+            const breakMins = Math.floor((totalBreakMs % 3600000) / 60000);
             breakTime = `${breakHrs}h ${breakMins}m`;
           }
           
@@ -870,110 +938,19 @@
       }
     }
     
-    // Load stats
-    async function loadStats() {
-      const now = new Date();
-      const month = now.getMonth();
-      const year = now.getFullYear();
+    // Initialize chart
+    let attendanceChart = null;
+    async function initChart() {
+      const ctx = document.getElementById('attendanceChart').getContext('2d');
       
-      const startDate = new Date(year, month, 1);
-      const endDate = new Date(year, month + 1, 0);
-      
-      try {
-        const recordsRef = db.collection("attendance")
-          .doc(userId)
-          .collection("records");
-        
-        const snapshot = await recordsRef
-          .where("date", ">=", startDate.toISOString().split('T')[0])
-          .where("date", "<=", endDate.toISOString().split('T')[0])
-          .get();
-        
-        let presentDays = 0;
-        let absentDays = 0;
-        let totalHours = 0;
-        let totalDays = 0;
-        
-        snapshot.forEach(doc => {
-          const record = doc.data();
-          if (record.status === "present") {
-            presentDays++;
-            totalHours += record.workHours || 0;
-            totalDays++;
-          } else if (record.status === "absent") {
-            absentDays++;
-          }
-        });
-        
-        // Calculate average hours
-        const avgHours = totalDays > 0 ? totalHours / totalDays : 0;
-        const avgHrs = Math.floor(avgHours / 3600000);
-        const avgMins = Math.floor((avgHours % 3600000) / 60000);
-        
-        // Update UI
-        document.getElementById("monthPresent").textContent = presentDays;
-        document.getElementById("monthAbsent").textContent = absentDays;
-        document.getElementById("avgHours").textContent = `${avgHrs}h ${avgMins}m`;
-        
-        // Update charts
-        updateCharts(presentDays, absentDays, avgHrs + avgMins/60);
-      } catch (error) {
-        console.error("Error loading stats:", error);
-      }
-    }
-    
-    // Update charts
-    function updateCharts(presentDays, absentDays, avgHours) {
-      // Update attendance chart
-      if (window.attendanceChart) {
-        window.attendanceChart.data.datasets[0].data = [presentDays, absentDays];
-        window.attendanceChart.update();
-      }
-      
-      // Update hours chart (sample data for demonstration)
-      if (window.hoursChart) {
-        // This would be replaced with actual data from your records
-        const weekDays = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-        const weeklyHours = [36, 40, 38, 42]; // Sample data
-        
-        window.hoursChart.data.labels = weekDays;
-        window.hoursChart.data.datasets[0].data = weeklyHours;
-        window.hoursChart.update();
-      }
-    }
-    
-    // Initialize charts
-    function initCharts() {
-      const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
-      window.attendanceChart = new Chart(attendanceCtx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Present', 'Absent'],
-          datasets: [{
-            data: [0, 0],
-            backgroundColor: ['#27ae60', '#e74c3c'],
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            title: {
-              display: true,
-              text: 'Attendance Distribution'
-            }
-          }
-        }
-      });
-      
-      const hoursCtx = document.getElementById('hoursChart').getContext('2d');
-      window.hoursChart = new Chart(hoursCtx, {
+      // For now, create a sample chart
+      attendanceChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: [],
+          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
           datasets: [{
             label: 'Work Hours',
-            data: [],
+            data: [0, 0, 0, 0], // Start with zeros
             backgroundColor: 'rgba(54, 162, 235, 0.5)',
             borderColor: 'rgba(54, 162, 235, 1)',
             borderWidth: 1
@@ -989,56 +966,86 @@
                 text: 'Hours'
               }
             }
-          },
-          plugins: {
-            title: {
-              display: true,
-              text: 'Weekly Hours Overview'
-            }
           }
         }
       });
+      
+      // Try to load real data
+      try {
+        await updateChartWithRealData();
+      } catch (error) {
+        console.log("Could not load chart data yet:", error);
+      }
+    }
+
+    // Load stats
+    async function loadStats() {
+      // This would calculate and display statistics
+      // For now, using placeholder values
+      document.getElementById("monthPresent").textContent = "18";
+      document.getElementById("monthAbsent").textContent = "2";
+      document.getElementById("avgHours").textContent = "7h 45m";
+      document.getElementById("leaveBalance").textContent = "12";
     }
     
     // Load leave history
     async function loadLeaveHistory() {
       try {
-        const snapshot = await db.collection("leaves")
+        // Try with user ID first
+        let leaveRef = db.collection("leaves")
           .doc(userId)
-          .collection("records")
-          .orderBy("startDate", "desc")
-          .get();
+          .collection("records");
         
+        const snapshot = await leaveRef.get();
         const tableBody = document.querySelector("#leaveTable tbody");
         tableBody.innerHTML = "";
         
         if (snapshot.empty) {
-          tableBody.innerHTML = "<tr><td colspan='6'>No leave records found</td></tr>";
-          return;
+          // Try with username if no records found with user ID
+          leaveRef = db.collection("leaves")
+            .doc(username)
+                        .collection("records");
+          
+          const fallbackSnapshot = await leaveRef.get();
+          
+          if (fallbackSnapshot.empty) {
+            tableBody.innerHTML = "<tr><td colspan='6'>No leave records found</td></tr>";
+            return;
+          }
+          
+          fallbackSnapshot.forEach(doc => {
+            const leave = doc.data();
+            addLeaveToTable(leave, tableBody);
+          });
+        } else {
+          snapshot.forEach(doc => {
+            const leave = doc.data();
+            addLeaveToTable(leave, tableBody);
+          });
         }
-        
-        snapshot.forEach(doc => {
-          const leave = doc.data();
-          const row = document.createElement("tr");
-          
-          const startDate = new Date(leave.startDate);
-          const endDate = new Date(leave.endDate);
-          const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
-          
-          row.innerHTML = `
-            <td>${leave.type}</td>
-            <td>${startDate.toLocaleDateString()}</td>
-            <td>${endDate.toLocaleDateString()}</td>
-            <td>${daysDiff}</td>
-            <td>${leave.reason || ''}</td>
-            <td>${leave.status || 'Pending'}</td>
-          `;
-          
-          tableBody.appendChild(row);
-        });
       } catch (error) {
         console.error("Error loading leave history:", error);
+        const tableBody = document.querySelector("#leaveTable tbody");
+        tableBody.innerHTML = "<tr><td colspan='6'>Error loading leave records</td></tr>";
       }
+    }
+    
+    function addLeaveToTable(leave, tableBody) {
+      const row = document.createElement("tr");
+      const startDate = new Date(leave.startDate);
+      const endDate = new Date(leave.endDate);
+      const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+      
+      row.innerHTML = `
+        <td>${leave.type.charAt(0).toUpperCase() + leave.type.slice(1)}</td>
+        <td>${startDate.toLocaleDateString()}</td>
+        <td>${endDate.toLocaleDateString()}</td>
+        <td>${daysDiff}</td>
+        <td>${leave.reason || '-'}</td>
+        <td class="status-${leave.status || 'pending'}">${leave.status ? leave.status.charAt(0).toUpperCase() + leave.status.slice(1) : 'Pending'}</td>
+      `;
+      
+      tableBody.appendChild(row);
     }
     
     // Apply for leave
@@ -1049,24 +1056,43 @@
       const reason = document.getElementById("leaveReason").value;
       
       if (!type || !startDate || !endDate) {
-        alert("Please fill all required fields");
+        alert("Please fill in all required fields");
+        return;
+      }
+      
+      if (new Date(startDate) > new Date(endDate)) {
+        alert("End date cannot be before start date");
         return;
       }
       
       try {
-        await db.collection("leaves")
-          .doc(userId)
-          .collection("records")
-          .add({
-            type,
-            startDate,
-            endDate,
-            reason,
-            status: "Pending",
-            userId,
-            username,
-            appliedDate: new Date().toISOString()
-          });
+        const leaveData = {
+          type,
+          startDate,
+          endDate,
+          reason,
+          status: "pending",
+          appliedDate: new Date().toISOString(),
+          userId,
+          username
+        };
+        
+        // Try to save with user ID first
+        try {
+          await db.collection("leaves")
+            .doc(userId)
+            .collection("records")
+            .doc()
+            .set(leaveData);
+        } catch (error) {
+          console.error("Error saving with user ID, trying with username:", error);
+          // Fallback to username if user ID fails
+          await db.collection("leaves")
+            .doc(username)
+            .collection("records")
+            .doc()
+            .set(leaveData);
+        }
         
         alert("Leave application submitted successfully!");
         document.getElementById("leaveType").value = "";
@@ -1074,61 +1100,343 @@
         document.getElementById("leaveEnd").value = "";
         document.getElementById("leaveReason").value = "";
         
-        loadLeaveHistory();
+        loadLeaveHistory(); // Refresh the table
       } catch (error) {
         console.error("Error applying for leave:", error);
         alert("Failed to apply for leave. Please try again.");
       }
     });
     
-    // Export functionality
-    document.getElementById("exportAttendanceBtn").addEventListener("click", exportToExcel);
-    document.getElementById("exportExcelBtn").addEventListener("click", exportReportToExcel);
+    // Import/Export functionality
+    const importBtn = document.getElementById("importBtn");
+    const exportBtn = document.getElementById("exportBtn");
+    const downloadTemplateBtn = document.getElementById("downloadTemplateBtn");
+    const importModal = document.getElementById("importModal");
+    const closeModal = document.querySelector(".close");
+    const fileInput = document.getElementById("fileInput");
+    const importPreview = document.getElementById("importPreview");
+    const confirmImportBtn = document.getElementById("confirmImportBtn");
     
-    function exportToExcel() {
-      const table = document.getElementById("attendanceTable");
-      const wb = XLSX.utils.table_to_book(table, {sheet: "Attendance"});
-      XLSX.writeFile(wb, `attendance_${new Date().toISOString().split('T')[0]}.xlsx`);
-    }
+    importBtn.addEventListener("click", () => {
+      importModal.style.display = "block";
+    });
     
-    function exportReportToExcel() {
-      // This would export the generated report
-      alert("Export feature would generate a comprehensive report based on filters");
-    }
+    closeModal.addEventListener("click", () => {
+      importModal.style.display = "none";
+    });
     
-    // Generate report
-    document.getElementById("generateReportBtn").addEventListener("click", generateReport);
+    window.addEventListener("click", (event) => {
+      if (event.target === importModal) {
+        importModal.style.display = "none";
+      }
+    });
     
-    async function generateReport() {
-      const startDate = document.getElementById("reportStartDate").value;
-      const endDate = document.getElementById("reportEndDate").value;
-      const reportType = document.getElementById("reportType").value;
+    fileInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
       
-      if (!startDate || !endDate) {
-        alert("Please select start and end dates");
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        // Get first worksheet
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+        
+        // Display preview
+        importPreview.innerHTML = `
+          <h3>Preview (first 5 rows)</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr>
+                ${Object.keys(jsonData[0] || {}).map(key => `<th style="border: 1px solid #ddd; padding: 8px;">${key}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${jsonData.slice(0, 5).map(row => `
+                <tr>
+                  ${Object.values(row).map(value => `<td style="border: 1px solid #ddd; padding: 8px;">${value}</td>`).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          <p>Total rows: ${jsonData.length}</p>
+        `;
+        
+        // Store data for import
+        confirmImportBtn.dataset.importData = JSON.stringify(jsonData);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+    
+    confirmImportBtn.addEventListener("click", async () => {
+      const importData = JSON.parse(confirmImportBtn.dataset.importData || "[]");
+      
+      if (importData.length === 0) {
+        alert("No data to import");
         return;
       }
       
       try {
-        // This would generate a comprehensive report based on the filters
-        alert(`Report generated for ${startDate} to ${endDate} (${reportType} summary)`);
-        // Implementation would fetch and process data based on the filters
+        // Process and import each record
+        for (const record of importData) {
+          // You would need to map your Excel columns to the appropriate fields
+          // This is a simplified example - adjust according to your data structure
+          const attendanceRecord = {
+            date: record.date || record.Date,
+            loginTime: record.loginTime || record['Login Time'],
+            logoutTime: record.logoutTime || record['Logout Time'],
+            breaks: record.breaks || [],
+            status: record.status || 'present'
+          };
+          
+          // Try to save with user ID first
+          try {
+            await db.collection("attendance")
+              .doc(userId)
+              .collection("records")
+              .doc(attendanceRecord.date)
+              .set(attendanceRecord);
+          } catch (error) {
+            console.error("Error saving with user ID, trying with username:", error);
+            // Fallback to username if user ID fails
+            await db.collection("attendance")
+              .doc(username)
+              .collection("records")
+              .doc(attendanceRecord.date)
+              .set(attendanceRecord);
+          }
+        }
+        
+        alert(`Successfully imported ${importData.length} records!`);
+        importModal.style.display = "none";
+        loadAttendanceHistory(); // Refresh the table
+        loadStats(); // Refresh stats
       } catch (error) {
-        console.error("Error generating report:", error);
-        alert("Failed to generate report. Please try again.");
+        console.error("Error importing data:", error);
+        alert("Failed to import data. Please check the console for details.");
+      }
+    });
+    
+    exportBtn.addEventListener("click", async () => {
+      try {
+        // Get attendance data
+        let recordsRef = db.collection("attendance")
+          .doc(userId)
+          .collection("records");
+        
+        const snapshot = await recordsRef.get();
+        let records = [];
+        
+        snapshot.forEach(doc => {
+          records.push({
+            id: doc.id,
+            ...doc.data()
+          });
+        });
+        
+        // If no records found with user ID, try with username
+        if (records.length === 0) {
+          recordsRef = db.collection("attendance")
+            .doc(username)
+            .collection("records");
+          
+          const fallbackSnapshot = await recordsRef.get();
+          fallbackSnapshot.forEach(doc => {
+            records.push({
+              id: doc.id,
+              ...doc.data()
+            });
+          });
+        }
+        
+        if (records.length === 0) {
+          alert("No attendance records to export");
+          return;
+        }
+        
+        // Convert to worksheet
+        const worksheet = XLSX.utils.json_to_sheet(records);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance");
+        
+        // Export to file
+        XLSX.writeFile(workbook, `attendance_export_${new Date().toISOString().split('T')[0]}.xlsx`);
+        
+        alert(`Exported ${records.length} records successfully!`);
+      } catch (error) {
+        console.error("Error exporting data:", error);
+        alert("Failed to export data. Please check the console for details.");
+      }
+    });
+    
+    downloadTemplateBtn.addEventListener("click", () => {
+      // Create template data
+      const templateData = [
+        {
+          date: "2023-01-01",
+          loginTime: "09:00:00",
+          logoutTime: "17:00:00",
+          breaks: JSON.stringify([{ start: "12:00:00", end: "13:00:00" }]),
+          status: "present"
+        }
+      ];
+      
+      // Convert to worksheet
+      const worksheet = XLSX.utils.json_to_sheet(templateData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance Template");
+      
+      // Export to file
+      XLSX.writeFile(workbook, "attendance_template.xlsx");
+    });
+    
+    // Update chart with real data
+    async function updateChartWithRealData() {
+      const month = parseInt(document.getElementById("monthFilter").value);
+      const year = parseInt(document.getElementById("yearFilter").value);
+      
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0);
+      
+      try {
+        // Try with user ID first
+        let recordsRef = db.collection("attendance")
+          .doc(userId)
+          .collection("records");
+        
+        const snapshot = await recordsRef.get();
+        let records = [];
+        
+        snapshot.forEach(doc => {
+          const recordDate = new Date(doc.id);
+          if (recordDate >= startDate && recordDate <= endDate) {
+            records.push({
+              date: doc.id,
+              ...doc.data()
+            });
+          }
+        });
+        
+        // If no records found with user ID, try with username
+        if (records.length === 0) {
+          recordsRef = db.collection("attendance")
+            .doc(username)
+            .collection("records");
+          
+          const fallbackSnapshot = await recordsRef.get();
+          fallbackSnapshot.forEach(doc => {
+            const recordDate = new Date(doc.id);
+            if (recordDate >= startDate && recordDate <= endDate) {
+              records.push({
+                date: doc.id,
+                ...doc.data()
+              });
+            }
+          });
+        }
+        
+        // Group by week and calculate average hours
+        const weeklyData = [0, 0, 0, 0, 0, 0]; // Up to 6 weeks
+        const weekCounts = [0, 0, 0, 0, 0, 0]; // Count of days in each week
+        
+        records.forEach(record => {
+          if (record.loginTime && record.logoutTime) {
+            const recordDate = new Date(record.date);
+            const weekOfMonth = Math.floor((recordDate.getDate() - 1) / 7);
+            
+            const login = new Date(record.loginTime);
+            const logout = new Date(record.logoutTime);
+            
+            // Calculate break time
+            let totalBreakMs = 0;
+            if (record.breaks && record.breaks.length > 0) {
+              record.breaks.forEach(breakPeriod => {
+                if (breakPeriod.start && breakPeriod.end) {
+                  totalBreakMs += new Date(breakPeriod.end) - new Date(breakPeriod.start);
+                }
+              });
+            }
+            
+            // Calculate work time in hours
+            const workMs = (logout - login) - totalBreakMs;
+            const workHours = workMs / 3600000;
+            
+            weeklyData[weekOfMonth] += workHours;
+            weekCounts[weekOfMonth]++;
+          }
+        });
+        
+        // Calculate averages
+        const weeklyAverages = weeklyData.map((total, index) => 
+          weekCounts[index] > 0 ? total / weekCounts[index] : 0
+        );
+        
+        // Update chart
+        if (attendanceChart) {
+          attendanceChart.data.labels = weeklyAverages.map((_, i) => `Week ${i + 1}`);
+          attendanceChart.data.datasets[0].data = weeklyAverages;
+          attendanceChart.update();
+        }
+      } catch (error) {
+        console.error("Error updating chart:", error);
       }
     }
     
-    // Set default date values for report
-    document.getElementById("reportStartDate").value = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-    document.getElementById("reportEndDate").value = new Date().toISOString().split('T')[0];
+    // Event listeners for filters
+    document.getElementById("monthFilter").addEventListener("change", () => {
+      loadAttendanceHistory();
+      updateChartWithRealData();
+    });
     
-    // Initialize everything
-    loadTodayAttendance();
-    loadAttendanceHistory();
-    loadStats();
-    loadLeaveHistory();
-    initCharts();
+    document.getElementById("yearFilter").addEventListener("change", () => {
+      loadAttendanceHistory();
+      updateChartWithRealData();
+    });
+    
+    // Initialize everything when the page loads
+    window.addEventListener("load", async () => {
+      await loadTodayAttendance();
+      await loadAttendanceHistory();
+      await loadStats();
+      await loadLeaveHistory();
+      await initChart();
+      
+      // Set up real-time listener for today's attendance
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Try with user ID first
+      try {
+        db.collection("attendance")
+          .doc(userId)
+          .collection("records")
+          .doc(today)
+          .onSnapshot(doc => {
+            if (doc.exists) {
+              todayAttendance = doc.data();
+              updateAttendanceUI();
+            }
+          });
+      } catch (error) {
+        console.error("Error setting up real-time listener with user ID:", error);
+        // Fallback to username
+        try {
+          db.collection("attendance")
+            .doc(username)
+            .collection("records")
+            .doc(today)
+            .onSnapshot(doc => {
+              if (doc.exists) {
+                todayAttendance = doc.data();
+                updateAttendanceUI();
+              }
+            });
+        } catch (fallbackError) {
+          console.error("Error setting up fallback real-time listener:", fallbackError);
+        }
+      }
+    });
   </script>
 </body>
 </html>
