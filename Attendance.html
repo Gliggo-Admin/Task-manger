@@ -511,14 +511,44 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
 
-    // Sign in with email and password (replace with your actual auth mechanism)
-    // For demo purposes, using a placeholder - in production, use your actual auth flow
-    const username = sessionStorage.getItem("username") || "Guest";
-    const userEmail = sessionStorage.getItem("userEmail") || "guest@example.com";
-    const userId = sessionStorage.getItem("userId") || "guest-user-id";
-    
-    // Set profile initial
-    document.getElementById("profileInitial").textContent = username[0]?.toUpperCase() || "?";
+    let currentUser = null;
+    let username = sessionStorage.getItem("username") || "Guest";
+    let userEmail = sessionStorage.getItem("userEmail") || "guest@example.com";
+    let userId = null;
+
+    // Authentication state observer
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        currentUser = user;
+        userId = user.uid;
+        userEmail = user.email;
+        const userDoc = await db.collection("users").doc(userId).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          username = userData.username || user.email.split('@')[0];
+        } else {
+          username = user.email.split('@')[0];
+        }
+
+        // Update sessionStorage
+        sessionStorage.setItem("userId", userId);
+        sessionStorage.setItem("userEmail", userEmail);
+        sessionStorage.setItem("username", username);
+
+        // Set profile initial
+        document.getElementById("profileInitial").textContent = username[0]?.toUpperCase() || "?";
+
+        // Load data
+        loadTodayAttendance();
+        loadAttendanceHistory();
+        loadStats();
+        loadLeaveHistory();
+        initChart();
+      } else {
+        // Redirect to login if not authenticated
+        window.location.href = "index.html";
+      }
+    });
 
     // Profile dropdown functionality
     const profileDiv = document.getElementById("profileDiv");
@@ -534,8 +564,12 @@
       profileDiv.setAttribute('aria-expanded', 'false');
     });
     document.getElementById("logoutBtn").addEventListener("click", () => {
-      sessionStorage.clear();
-      window.location.href = "index.html";
+      auth.signOut().then(() => {
+        sessionStorage.clear();
+        window.location.href = "index.html";
+      }).catch((error) => {
+        console.error("Logout error:", error);
+      });
     });
 
     // Update clock
@@ -588,7 +622,6 @@
     async function loadTodayAttendance() {
       const today = new Date().toISOString().split('T')[0];
       try {
-        // Try to get the document with the current user's ID
         const doc = await db.collection("attendance")
           .doc(userId)
           .collection("records")
@@ -601,21 +634,6 @@
         }
       } catch (error) {
         console.error("Error loading attendance:", error);
-        // If the user document doesn't exist, try with the username as fallback
-        try {
-          const doc = await db.collection("attendance")
-            .doc(username)
-            .collection("records")
-            .doc(today)
-            .get();
-            
-          if (doc.exists) {
-            todayAttendance = doc.data();
-            updateAttendanceUI();
-          }
-        } catch (fallbackError) {
-          console.error("Fallback loading also failed:", fallbackError);
-        }
       }
     }
     
@@ -688,22 +706,11 @@
       
       try {
         const today = now.toISOString().split('T')[0];
-        // Try to save with user ID first
-        try {
-          await db.collection("attendance")
-            .doc(userId)
-            .collection("records")
-            .doc(today)
-            .set(todayAttendance);
-        } catch (error) {
-          console.error("Error saving with user ID, trying with username:", error);
-          // Fallback to username if user ID fails
-          await db.collection("attendance")
-            .doc(username)
-            .collection("records")
-            .doc(today)
-            .set(todayAttendance);
-        }
+        await db.collection("attendance")
+          .doc(userId)
+          .collection("records")
+          .doc(today)
+          .set(todayAttendance);
           
         updateAttendanceUI();
         loadAttendanceHistory(); // Refresh history
@@ -720,22 +727,11 @@
       
       try {
         const today = now.toISOString().split('T')[0];
-        // Try to save with user ID first
-        try {
-          await db.collection("attendance")
-            .doc(userId)
-            .collection("records")
-            .doc(today)
-            .set(todayAttendance);
-        } catch (error) {
-          console.error("Error saving with user ID, trying with username:", error);
-          // Fallback to username if user ID fails
-          await db.collection("attendance")
-            .doc(username)
-            .collection("records")
-            .doc(today)
-            .set(todayAttendance);
-        }
+        await db.collection("attendance")
+          .doc(userId)
+          .collection("records")
+          .doc(today)
+          .set(todayAttendance);
           
         updateAttendanceUI();
         loadAttendanceHistory(); // Refresh history
@@ -756,22 +752,11 @@
       
       try {
         const today = now.toISOString().split('T')[0];
-        // Try to save with user ID first
-        try {
-          await db.collection("attendance")
-            .doc(userId)
-            .collection("records")
-            .doc(today)
-            .set(todayAttendance);
-        } catch (error) {
-          console.error("Error saving with user ID, trying with username:", error);
-          // Fallback to username if user ID fails
-          await db.collection("attendance")
-            .doc(username)
-            .collection("records")
-            .doc(today)
-            .set(todayAttendance);
-        }
+        await db.collection("attendance")
+          .doc(userId)
+          .collection("records")
+          .doc(today)
+          .set(todayAttendance);
           
         updateAttendanceUI();
       } catch (error) {
@@ -788,22 +773,11 @@
       
       try {
         const today = now.toISOString().split('T')[0];
-        // Try to save with user ID first
-        try {
-          await db.collection("attendance")
-            .doc(userId)
-            .collection("records")
-            .doc(today)
-            .set(todayAttendance);
-        } catch (error) {
-          console.error("Error saving with user ID, trying with username:", error);
-          // Fallback to username if user ID fails
-          await db.collection("attendance")
-            .doc(username)
-            .collection("records")
-            .doc(today)
-            .set(todayAttendance);
-        }
+        await db.collection("attendance")
+          .doc(userId)
+          .collection("records")
+          .doc(today)
+          .set(todayAttendance);
           
         updateAttendanceUI();
       } catch (error) {
@@ -835,8 +809,7 @@
       tableBody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
       
       try {
-        // Try with user ID first
-        let recordsRef = db.collection("attendance")
+        const recordsRef = db.collection("attendance")
           .doc(userId)
           .collection("records");
         
@@ -852,24 +825,6 @@
             });
           }
         });
-        
-        // If no records found with user ID, try with username
-        if (records.length === 0) {
-          recordsRef = db.collection("attendance")
-            .doc(username)
-            .collection("records");
-          
-          const fallbackSnapshot = await recordsRef.get();
-          fallbackSnapshot.forEach(doc => {
-            const recordDate = new Date(doc.id);
-            if (recordDate >= startDate && recordDate <= endDate) {
-              records.push({
-                date: doc.id,
-                ...doc.data()
-              });
-            }
-          });
-        }
         
         // Sort records by date (newest first)
         records.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -943,7 +898,6 @@
     async function initChart() {
       const ctx = document.getElementById('attendanceChart').getContext('2d');
       
-      // For now, create a sample chart
       attendanceChart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -970,17 +924,12 @@
         }
       });
       
-      // Try to load real data
-      try {
-        await updateChartWithRealData();
-      } catch (error) {
-        console.log("Could not load chart data yet:", error);
-      }
+      await updateChartWithRealData();
     }
 
     // Load stats
     async function loadStats() {
-      // This would calculate and display statistics
+      // Implement actual stats calculation based on records
       // For now, using placeholder values
       document.getElementById("monthPresent").textContent = "18";
       document.getElementById("monthAbsent").textContent = "2";
@@ -991,8 +940,7 @@
     // Load leave history
     async function loadLeaveHistory() {
       try {
-        // Try with user ID first
-        let leaveRef = db.collection("leaves")
+        const leaveRef = db.collection("leaves")
           .doc(userId)
           .collection("records");
         
@@ -1001,28 +949,14 @@
         tableBody.innerHTML = "";
         
         if (snapshot.empty) {
-          // Try with username if no records found with user ID
-          leaveRef = db.collection("leaves")
-            .doc(username)
-                        .collection("records");
-          
-          const fallbackSnapshot = await leaveRef.get();
-          
-          if (fallbackSnapshot.empty) {
-            tableBody.innerHTML = "<tr><td colspan='6'>No leave records found</td></tr>";
-            return;
-          }
-          
-          fallbackSnapshot.forEach(doc => {
-            const leave = doc.data();
-            addLeaveToTable(leave, tableBody);
-          });
-        } else {
-          snapshot.forEach(doc => {
-            const leave = doc.data();
-            addLeaveToTable(leave, tableBody);
-          });
+          tableBody.innerHTML = "<tr><td colspan='6'>No leave records found</td></tr>";
+          return;
         }
+        
+        snapshot.forEach(doc => {
+          const leave = doc.data();
+          addLeaveToTable(leave, tableBody);
+        });
       } catch (error) {
         console.error("Error loading leave history:", error);
         const tableBody = document.querySelector("#leaveTable tbody");
@@ -1073,26 +1007,14 @@
           reason,
           status: "pending",
           appliedDate: new Date().toISOString(),
-          userId,
-          username
+          userId
         };
         
-        // Try to save with user ID first
-        try {
-          await db.collection("leaves")
-            .doc(userId)
-            .collection("records")
-            .doc()
-            .set(leaveData);
-        } catch (error) {
-          console.error("Error saving with user ID, trying with username:", error);
-          // Fallback to username if user ID fails
-          await db.collection("leaves")
-            .doc(username)
-            .collection("records")
-            .doc()
-            .set(leaveData);
-        }
+        await db.collection("leaves")
+          .doc(userId)
+          .collection("records")
+          .doc()
+          .set(leaveData);
         
         alert("Leave application submitted successfully!");
         document.getElementById("leaveType").value = "";
@@ -1181,8 +1103,6 @@
       try {
         // Process and import each record
         for (const record of importData) {
-          // You would need to map your Excel columns to the appropriate fields
-          // This is a simplified example - adjust according to your data structure
           const attendanceRecord = {
             date: record.date || record.Date,
             loginTime: record.loginTime || record['Login Time'],
@@ -1191,22 +1111,11 @@
             status: record.status || 'present'
           };
           
-          // Try to save with user ID first
-          try {
-            await db.collection("attendance")
-              .doc(userId)
-              .collection("records")
-              .doc(attendanceRecord.date)
-              .set(attendanceRecord);
-          } catch (error) {
-            console.error("Error saving with user ID, trying with username:", error);
-            // Fallback to username if user ID fails
-            await db.collection("attendance")
-              .doc(username)
-              .collection("records")
-              .doc(attendanceRecord.date)
-              .set(attendanceRecord);
-          }
+          await db.collection("attendance")
+            .doc(userId)
+            .collection("records")
+            .doc(attendanceRecord.date)
+            .set(attendanceRecord);
         }
         
         alert(`Successfully imported ${importData.length} records!`);
@@ -1221,8 +1130,7 @@
     
     exportBtn.addEventListener("click", async () => {
       try {
-        // Get attendance data
-        let recordsRef = db.collection("attendance")
+        const recordsRef = db.collection("attendance")
           .doc(userId)
           .collection("records");
         
@@ -1235,21 +1143,6 @@
             ...doc.data()
           });
         });
-        
-        // If no records found with user ID, try with username
-        if (records.length === 0) {
-          recordsRef = db.collection("attendance")
-            .doc(username)
-            .collection("records");
-          
-          const fallbackSnapshot = await recordsRef.get();
-          fallbackSnapshot.forEach(doc => {
-            records.push({
-              id: doc.id,
-              ...doc.data()
-            });
-          });
-        }
         
         if (records.length === 0) {
           alert("No attendance records to export");
@@ -1301,8 +1194,7 @@
       const endDate = new Date(year, month + 1, 0);
       
       try {
-        // Try with user ID first
-        let recordsRef = db.collection("attendance")
+        const recordsRef = db.collection("attendance")
           .doc(userId)
           .collection("records");
         
@@ -1318,24 +1210,6 @@
             });
           }
         });
-        
-        // If no records found with user ID, try with username
-        if (records.length === 0) {
-          recordsRef = db.collection("attendance")
-            .doc(username)
-            .collection("records");
-          
-          const fallbackSnapshot = await recordsRef.get();
-          fallbackSnapshot.forEach(doc => {
-            const recordDate = new Date(doc.id);
-            if (recordDate >= startDate && recordDate <= endDate) {
-              records.push({
-                date: doc.id,
-                ...doc.data()
-              });
-            }
-          });
-        }
         
         // Group by week and calculate average hours
         const weeklyData = [0, 0, 0, 0, 0, 0]; // Up to 6 weeks
@@ -1395,47 +1269,19 @@
       updateChartWithRealData();
     });
     
-    // Initialize everything when the page loads
-    window.addEventListener("load", async () => {
-      await loadTodayAttendance();
-      await loadAttendanceHistory();
-      await loadStats();
-      await loadLeaveHistory();
-      await initChart();
-      
-      // Set up real-time listener for today's attendance
+    // Set up real-time listener for today's attendance
+    window.addEventListener("load", () => {
       const today = new Date().toISOString().split('T')[0];
-      
-      // Try with user ID first
-      try {
-        db.collection("attendance")
-          .doc(userId)
-          .collection("records")
-          .doc(today)
-          .onSnapshot(doc => {
-            if (doc.exists) {
-              todayAttendance = doc.data();
-              updateAttendanceUI();
-            }
-          });
-      } catch (error) {
-        console.error("Error setting up real-time listener with user ID:", error);
-        // Fallback to username
-        try {
-          db.collection("attendance")
-            .doc(username)
-            .collection("records")
-            .doc(today)
-            .onSnapshot(doc => {
-              if (doc.exists) {
-                todayAttendance = doc.data();
-                updateAttendanceUI();
-              }
-            });
-        } catch (fallbackError) {
-          console.error("Error setting up fallback real-time listener:", fallbackError);
-        }
-      }
+      db.collection("attendance")
+        .doc(userId)
+        .collection("records")
+        .doc(today)
+        .onSnapshot(doc => {
+          if (doc.exists) {
+            todayAttendance = doc.data();
+            updateAttendanceUI();
+          }
+        });
     });
   </script>
 </body>
