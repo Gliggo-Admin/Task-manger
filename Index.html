@@ -92,7 +92,7 @@
       if (e.key === "Enter") tryLogin();
     });
 
-    // Login function using Firebase Authentication
+    // Login function
     async function tryLogin() {
       const email = document.getElementById("loginEmail").value.trim();
       const password = document.getElementById("loginPassword").value.trim();
@@ -111,7 +111,7 @@
         // Fetch user data from Firestore
         const userDoc = await db.collection("users").doc(userId).get();
         if (!userDoc.exists) {
-          throw new Error("User data not found in Firestore.");
+          throw new Error("User data not found in Firestore for UID: " + userId);
         }
 
         const userData = userDoc.data();
@@ -127,7 +127,7 @@
           sessionStorage.setItem("fullName", fullName);
         }
 
-        console.log("✅ Logged in as:", username, "with role:", role);
+        console.log("✅ Logged in as:", username, "with role:", role, "UID:", userId);
 
         // Redirect based on role
         if (role === "admin") {
@@ -140,8 +140,14 @@
           throw new Error("User role not recognized: " + userData.role);
         }
       } catch (error) {
-        console.error("Login error:", error);
-        alert("Login failed: " + error.message);
+        console.error("Login error:", error.code, error.message);
+        if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
+          alert("Invalid email or password.");
+        } else if (error.code === "auth/too-many-requests") {
+          alert("Too many failed login attempts. Please try again later.");
+        } else {
+          alert("Login failed: " + error.message);
+        }
       }
     }
 
@@ -153,8 +159,16 @@
           if (userDoc.exists) {
             const userData = userDoc.data();
             const role = userData.role ? userData.role.trim().toLowerCase() : "";
-            console.log("✅ Already logged in as:", userData.username || user.email);
+            console.log("✅ Already logged in as:", userData.username || user.email, "UID:", user.uid);
             
+            // Save session data
+            sessionStorage.setItem("userId", user.uid);
+            sessionStorage.setItem("userEmail", user.email);
+            sessionStorage.setItem("username", userData.username || user.email.split('@')[0]);
+            if (userData.fullName) {
+              sessionStorage.setItem("fullName", userData.fullName);
+            }
+
             // Redirect based on role
             if (role === "admin") {
               window.location.href = "Home.html";
@@ -165,14 +179,18 @@
             } else {
               console.error("User role not recognized:", userData.role);
               alert("User role not recognized. Please contact support.");
+              auth.signOut();
+              sessionStorage.clear();
             }
           } else {
-            console.error("User data not found in Firestore.");
+            console.error("User data not found in Firestore for UID:", user.uid);
+            alert("User data not found. Please contact support.");
             auth.signOut();
             sessionStorage.clear();
           }
         } catch (error) {
           console.error("Error checking user data:", error);
+          alert("Error verifying user data: " + error.message);
           auth.signOut();
           sessionStorage.clear();
         }
