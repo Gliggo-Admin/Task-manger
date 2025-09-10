@@ -537,25 +537,30 @@
         currentUser = user;
         userId = user.uid;
         userEmail = user.email;
-        const userDoc = await db.collection("users").doc(userId).get();
-        if (userDoc.exists) {
-          const userData = userDoc.data();
-          username = userData.username || user.email.split('@')[0];
-        } else {
-          username = user.email.split('@')[0];
+        try {
+          const userDoc = await db.collection("users").doc(userId).get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            username = userData.username || user.email.split('@')[0];
+          } else {
+            username = user.email.split('@')[0];
+          }
+
+          sessionStorage.setItem("userId", userId);
+          sessionStorage.setItem("userEmail", userEmail);
+          sessionStorage.setItem("username", username);
+
+          document.getElementById("profileInitial").textContent = username[0]?.toUpperCase() || "?";
+
+          loadTodayAttendance();
+          loadAttendanceHistory();
+          loadStats();
+          loadLeaveHistory();
+          initChart();
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+          alert("Failed to load user data. Please try again.");
         }
-
-        sessionStorage.setItem("userId", userId);
-        sessionStorage.setItem("userEmail", userEmail);
-        sessionStorage.setItem("username", username);
-
-        document.getElementById("profileInitial").textContent = username[0]?.toUpperCase() || "?";
-
-        loadTodayAttendance();
-        loadAttendanceHistory();
-        loadStats();
-        loadLeaveHistory();
-        initChart();
       } else {
         setTimeout(() => {
           if (!auth.currentUser) {
@@ -658,7 +663,7 @@
           console.log("No attendance record for today");
         }
       } catch (error) {
-        console.error("Error loading attendance:", error);
+        console.error("Error loading today's attendance:", error);
         alert("Failed to load today's attendance. Please try again.");
       }
     }
@@ -718,6 +723,9 @@
         const breakHours = Math.floor(totalBreakMs / 3600000);
         const breakMinutes = Math.floor((totalBreakMs % 3600000) / 60000);
         breakTimeEl.textContent = `${breakHours}h ${breakMinutes}m`;
+      } else {
+        workHoursEl.textContent = "0h 0m";
+        breakTimeEl.textContent = "0h 0m";
       }
     }
     
@@ -732,6 +740,7 @@
           .collection("records")
           .doc(today)
           .set(todayAttendance);
+        console.log("Login saved for:", today);
         updateAttendanceUI();
         loadAttendanceHistory();
       } catch (error) {
@@ -751,11 +760,13 @@
           .collection("records")
           .doc(today)
           .set(todayAttendance);
+        console.log("Logout saved for:", today);
         updateAttendanceUI();
         loadAttendanceHistory();
         loadStats();
-      } catch (error) {
-        console.error("Error saving logout:", error);
+      } Sora, sorry, I got distracted. Let's get back to it!
+
+      console.error("Error saving logout:", error);
         alert("Failed to log out. Please try again.");
       }
     });
@@ -774,6 +785,7 @@
           .collection("records")
           .doc(today)
           .set(todayAttendance);
+        console.log("Break start saved for:", today);
         updateAttendanceUI();
       } catch (error) {
         console.error("Error saving break:", error);
@@ -793,6 +805,7 @@
           .collection("records")
           .doc(today)
           .set(todayAttendance);
+        console.log("Break end saved for:", today);
         updateAttendanceUI();
       } catch (error) {
         console.error("Error saving resume:", error);
@@ -825,17 +838,17 @@
           .doc(userId)
           .collection("records");
         
-        const snapshot = await recordsRef.get();
-        const records = [];
+        const snapshot = await recordsRef
+          .where("date", ">=", startDate.toISOString().split('T')[0])
+          .where("date", "<=", endDate.toISOString().split('T')[0])
+          .get();
         
+        const records = [];
         snapshot.forEach(doc => {
-          const recordDate = new Date(doc.id);
-          if (recordDate >= startDate && recordDate <= endDate) {
-            records.push({
-              date: doc.id,
-              ...doc.data()
-            });
-          }
+          records.push({
+            date: doc.id,
+            ...doc.data()
+          });
         });
         
         records.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -907,10 +920,10 @@
       attendanceChart = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+          labels: [],
           datasets: [{
             label: 'Work Hours',
-            data: [0, 0, 0, 0],
+            data: [],
             backgroundColor: 'rgba(54, 162, 235, 0.5)',
             borderColor: 'rgba(54, 162, 235, 1)',
             borderWidth: 1
@@ -932,12 +945,81 @@
       
       await updateChartWithRealData();
     }
-
+    
     async function loadStats() {
-      document.getElementById("monthPresent").textContent = "18";
-      document.getElementById("monthAbsent").textContent = "2";
-      document.getElementById("avgHours").textContent = "7h 45m";
-      document.getElementById("leaveBalance").textContent = "12";
+      const month = parseInt(document.getElementById("monthFilter").value);
+      const year = parseInt(document.getElementById("yearFilter").value);
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0);
+      
+      try {
+        const recordsRef = db.collection("attendance")
+          .doc(userId)
+          .collection("records");
+        
+        const snapshot = await recordsRef
+          .where("date", ">=", startDate.toISOString().split('T')[0])
+          .where("date", "<=", endDate.toISOString().split('T')[0])
+          .get();
+        
+        let presentDays = 0;
+        let absentDays = 0;
+        let totalWorkMs = 0;
+        let daysWithHours = 0;
+        let leaveDays = 0;
+        
+        const daysInMonth = endDate.getDate();
+        const leaveSnapshot = await db.collection("leaves")
+          .doc(userId)
+          .collection("records")
+          .where("startDate", ">=", startDate.toISOString().split('T')[0])
+          .where("endDate", "<=", endDate.toISOString().split('T')[0])
+          .get();
+        
+        leaveSnapshot.forEach(doc => {
+          const leave = doc.data();
+          const start = new Date(leave.startDate);
+          const end = new Date(leave.endDate);
+          leaveDays += Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        });
+        
+        snapshot.forEach(doc => {
+          const record = doc.data();
+          if (record.loginTime && record.logoutTime) {
+            presentDays++;
+            const login = new Date(record.loginTime);
+            const logout = new Date(record.logoutTime);
+            let totalBreakMs = 0;
+            if (record.breaks && record.breaks.length > 0) {
+              record.breaks.forEach(breakPeriod => {
+                if (breakPeriod.start && breakPeriod.end) {
+                  totalBreakMs += new Date(breakPeriod.end) - new Date(breakPeriod.start);
+                }
+              });
+            }
+            const workMs = (logout - login) - totalBreakMs;
+            totalWorkMs += workMs;
+            daysWithHours++;
+          }
+        });
+        
+        absentDays = daysInMonth - presentDays - leaveDays;
+        
+        const avgWorkHours = daysWithHours > 0 ? totalWorkMs / daysWithHours / 3600000 : 0;
+        const avgHours = Math.floor(avgWorkHours);
+        const avgMinutes = Math.floor((avgWorkHours % 1) * 60);
+        
+        document.getElementById("monthPresent").textContent = presentDays;
+        document.getElementById("monthAbsent").textContent = absentDays;
+        document.getElementById("avgHours").textContent = `${avgHours}h ${avgMinutes}m`;
+        document.getElementById("leaveBalance").textContent = Math.max(12 - leaveDays, 0);
+      } catch (error) {
+        console.error("Error loading stats:", error);
+        document.getElementById("monthPresent").textContent = "0";
+        document.getElementById("monthAbsent").textContent = "0";
+        document.getElementById("avgHours").textContent = "0h 0m";
+        document.getElementById("leaveBalance").textContent = "0";
+      }
     }
     
     async function loadLeaveHistory() {
@@ -962,7 +1044,7 @@
       } catch (error) {
         console.error("Error loading leave history:", error);
         const tableBody = document.querySelector("#leaveTable tbody");
-        tableBody.innerHTML = "<tr><td colspan='6'>Error loading leave records</td></tr>";
+        tableBody.innerHTML = "<tr><td colspan='6'>Error loading leave records. Check console for details.</td></tr>";
       }
     }
     
@@ -1017,6 +1099,7 @@
           .doc()
           .set(leaveData);
         
+        console.log("Leave application saved:", leaveData);
         alert("Leave application submitted successfully!");
         document.getElementById("leaveType").value = "";
         document.getElementById("leaveStart").value = "";
@@ -1024,6 +1107,7 @@
         document.getElementById("leaveReason").value = "";
         
         loadLeaveHistory();
+        loadStats();
       } catch (error) {
         console.error("Error applying for leave:", error);
         alert("Failed to apply for leave. Please try again.");
@@ -1045,11 +1129,15 @@
     
     closeModal.addEventListener("click", () => {
       importModal.style.display = "none";
+      fileInput.value = "";
+      importPreview.innerHTML = "";
     });
     
     window.addEventListener("click", (event) => {
       if (event.target === importModal) {
         importModal.style.display = "none";
+        fileInput.value = "";
+        importPreview.innerHTML = "";
       }
     });
     
@@ -1059,32 +1147,36 @@
       
       const reader = new FileReader();
       reader.onload = function(e) {
-        const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array' });
-        
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet);
-        
-        importPreview.innerHTML = `
-          <h3>Preview (first 5 rows)</h3>
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr>
-                ${Object.keys(jsonData[0] || {}).map(key => `<th style="border: 1px solid #ddd; padding: 8px;">${key}</th>`).join('')}
-              </tr>
-            </thead>
-            <tbody>
-              ${jsonData.slice(0, 5).map(row => `
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          
+          importPreview.innerHTML = `
+            <h3>Preview (first 5 rows)</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
                 <tr>
-                  ${Object.values(row).map(value => `<td style="border: 1px solid #ddd; padding: 8px;">${value}</td>`).join('')}
+                  ${Object.keys(jsonData[0] || {}).map(key => `<th style="border: 1px solid #ddd; padding: 8px;">${key}</th>`).join('')}
                 </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          <p>Total rows: ${jsonData.length}</p>
-        `;
-        
-        confirmImportBtn.dataset.importData = JSON.stringify(jsonData);
+              </thead>
+              <tbody>
+                ${jsonData.slice(0, 5).map(row => `
+                  <tr>
+                    ${Object.values(row).map(value => `<td style="border: 1px solid #ddd; padding: 8px;">${value}</td>`).join('')}
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            <p>Total rows: ${jsonData.length}</p>
+          `;
+          
+          confirmImportBtn.dataset.importData = JSON.stringify(jsonData);
+        } catch (error) {
+          console.error("Error reading file:", error);
+          alert("Failed to read file. Please ensure it is a valid Excel or CSV file.");
+        }
       };
       reader.readAsArrayBuffer(file);
     });
@@ -1113,9 +1205,12 @@
             .collection("records")
             .doc(attendanceRecord.date)
             .set(attendanceRecord);
+          console.log("Imported record for date:", date);
         }
         alert(`Successfully imported ${importData.length} records!`);
         importModal.style.display = "none";
+        fileInput.value = "";
+        importPreview.innerHTML = "";
         loadAttendanceHistory();
         loadStats();
       } catch (error) {
@@ -1135,7 +1230,7 @@
         
         snapshot.forEach(doc => {
           records.push({
-            id: doc.id,
+            date: doc.id,
             ...doc.data()
           });
         });
@@ -1182,32 +1277,34 @@
       
       const startDate = new Date(year, month, 1);
       const endDate = new Date(year, month + 1, 0);
+      const daysInMonth = endDate.getDate();
+      const weeksInMonth = Math.ceil(daysInMonth / 7);
       
       try {
         const recordsRef = db.collection("attendance")
           .doc(userId)
           .collection("records");
         
-        const snapshot = await recordsRef.get();
-        let records = [];
+        const snapshot = await recordsRef
+          .where("date", ">=", startDate.toISOString().split('T')[0])
+          .where("date", "<=", endDate.toISOString().split('T')[0])
+          .get();
         
+        let records = [];
         snapshot.forEach(doc => {
-          const recordDate = new Date(doc.id);
-          if (recordDate >= startDate && recordDate <= endDate) {
-            records.push({
-              date: doc.id,
-              ...doc.data()
-            });
-          }
+          records.push({
+            date: doc.id,
+            ...doc.data()
+          });
         });
         
-        const weeklyData = [0, 0, 0, 0, 0, 0];
-        const weekCounts = [0, 0, 0, 0, 0, 0];
+        const weeklyData = new Array(weeksInMonth).fill(0);
+        const weekCounts = new Array(weeksInMonth).fill(0);
         
         records.forEach(record => {
           if (record.loginTime && record.logoutTime) {
             const recordDate = new Date(record.date);
-            const weekOfMonth = Math.floor((recordDate.getDate() - 1) / 7);
+            const weekOfMonth = Math.min(Math.floor((recordDate.getDate() - 1) / 7), weeksInMonth - 1);
             
             const login = new Date(record.loginTime);
             const logout = new Date(record.logoutTime);
@@ -1245,11 +1342,13 @@
     
     document.getElementById("monthFilter").addEventListener("change", () => {
       loadAttendanceHistory();
+      loadStats();
       updateChartWithRealData();
     });
     
     document.getElementById("yearFilter").addEventListener("change", () => {
       loadAttendanceHistory();
+      loadStats();
       updateChartWithRealData();
     });
     
