@@ -16,11 +16,8 @@
     <h2 class="text-xl font-bold mb-6">Attendance Dashboard</h2>
     <nav>
       <ul>
-        <li><button id="attendance-btn" class="w-full text-left py-2 px-4 hover:bg-gray-700">Attendance Registry</button></li>
-        <li><button id="leave-btn" class="w-full text-left py-2 px-4 hover:bg-gray-700">Leave</button></li>
-        <li><button id="vacation-btn" class="w-full text-left py-2 px-4 hover:bg-gray-700">Vacation</button></li>
+        <li><button id="attendance-btn" class="w-full text-left py-2 px-4 hover:bg-gray-700">Attendance</button></li>
         <li><button id="chart-btn" class="w-full text-left py-2 px-4 hover:bg-gray-700">Chart View</button></li>
-        <li><button id="report-btn" class="w-full text-left py-2 px-4 hover:bg-gray-700">Report</button></li>
       </ul>
     </nav>
   </div>
@@ -38,50 +35,19 @@
 
     <!-- Attendance Section -->
     <div id="attendance-section" class="hidden">
-      <h2 class="text-2xl font-bold mb-4">Attendance Registry</h2>
+      <h2 class="text-2xl font-bold mb-4">Attendance</h2>
       <button id="login-btn" class="bg-green-500 text-white px-4 py-2 rounded mr-2">Log In</button>
       <button id="break-in-btn" class="bg-blue-500 text-white px-4 py-2 rounded mr-2">Break In</button>
       <button id="break-out-btn" class="bg-blue-500 text-white px-4 py-2 rounded mr-2">Break Out</button>
       <button id="logoff-btn" class="bg-red-500 text-white px-4 py-2 rounded">Log Off</button>
-      <h3 class="text-xl mt-4">Attendance Records</h3>
+      <h3 class="text-xl mt-4">Recent Attendance Records</h3>
       <ul id="attendance-records" class="mt-2"></ul>
-    </div>
-
-    <!-- Leave Section -->
-    <div id="leave-section" class="hidden">
-      <h2 class="text-2xl font-bold mb-4">Request Leave</h2>
-      <input id="leave-date" type="date" class="border p-2 mb-2 w-full">
-      <textarea id="leave-reason" placeholder="Reason for leave" class="border p-2 mb-2 w-full"></textarea>
-      <button id="submit-leave" class="bg-blue-500 text-white px-4 py-2 rounded">Submit Leave</button>
-      <h3 class="text-xl mt-4">Leave Records</h3>
-      <ul id="leave-records" class="mt-2"></ul>
-    </div>
-
-    <!-- Vacation Section -->
-    <div id="vacation-section" class="hidden">
-      <h2 class="text-2xl font-bold mb-4">Request Vacation</h2>
-      <input id="vacation-start" type="date" class="border p-2 mb-2 w-full">
-      <input id="vacation-end" type="date" class="border p-2 mb-2 w-full">
-      <textarea id="vacation-reason" placeholder="Reason for vacation" class="border p-2 mb-2 w-full"></textarea>
-      <button id="submit-vacation" class="bg-blue-500 text-white px-4 py-2 rounded">Submit Vacation</button>
-      <h3 class="text-xl mt-4">Vacation Records</h3>
-      <ul id="vacation-records" class="mt-2"></ul>
     </div>
 
     <!-- Chart View Section -->
     <div id="chart-section" class="hidden">
       <h2 class="text-2xl font-bold mb-4">Attendance Chart</h2>
       <canvas id="attendance-chart" class="w-full h-64"></canvas>
-    </div>
-
-    <!-- Report Section -->
-    <div id="report-section" class="hidden">
-      <h2 class="text-2xl font-bold mb-4">Generate Report</h2>
-      <input id="report-start" type="date" class="border p-2 mb-2 w-full">
-      <input id="report-end" type="date" class="border p-2 mb-2 w-full">
-      <button id="generate-report" class="bg-blue-500 text-white px-4 py-2 rounded">Generate Report</button>
-      <h3 class="text-xl mt-4">Report</h3>
-      <div id="report-output" class="mt-2"></div>
     </div>
   </div>
 
@@ -104,17 +70,11 @@
     // DOM Elements
     const loginSection = document.getElementById('login-section');
     const attendanceSection = document.getElementById('attendance-section');
-    const leaveSection = document.getElementById('leave-section');
-    const vacationSection = document.getElementById('vacation-section');
     const chartSection = document.getElementById('chart-section');
-    const reportSection = document.getElementById('report-section');
     const loginBtn = document.getElementById('login');
     const logoutBtn = document.getElementById('logout');
     const attendanceBtn = document.getElementById('attendance-btn');
-    const leaveBtn = document.getElementById('leave-btn');
-    const vacationBtn = document.getElementById('vacation-btn');
     const chartBtn = document.getElementById('chart-btn');
-    const reportBtn = document.getElementById('report-btn');
 
     // Authentication
     auth.onAuthStateChanged(user => {
@@ -123,17 +83,12 @@
         logoutBtn.classList.remove('hidden');
         attendanceSection.classList.remove('hidden');
         loadAttendanceRecords(user.uid);
-        loadLeaveRecords(user.uid);
-        loadVacationRecords(user.uid);
         loadChartData(user.uid);
       } else {
         loginSection.classList.remove('hidden');
         logoutBtn.classList.add('hidden');
         attendanceSection.classList.add('hidden');
-        leaveSection.classList.add('hidden');
-        vacationSection.classList.add('hidden');
         chartSection.classList.add('hidden');
-        reportSection.classList.add('hidden');
       }
     });
 
@@ -149,22 +104,18 @@
 
     // Navigation
     function showSection(section) {
-      [attendanceSection, leaveSection, vacationSection, chartSection, reportSection].forEach(s => s.classList.add('hidden'));
+      [attendanceSection, chartSection].forEach(s => s.classList.add('hidden'));
       section.classList.remove('hidden');
     }
 
     attendanceBtn.addEventListener('click', () => showSection(attendanceSection));
-    leaveBtn.addEventListener('click', () => showSection(leaveSection));
-    vacationBtn.addEventListener('click', () => showSection(vacationSection));
     chartBtn.addEventListener('click', () => showSection(chartSection));
-    reportBtn.addEventListener('click', () => showSection(reportSection));
 
     // Attendance Functions
     document.getElementById('login-btn').addEventListener('click', () => {
       const user = auth.currentUser;
       if (user) {
-        db.collection('attendance').add({
-          userId: user.uid,
+        db.collection('users').doc(user.uid).collection('attendance').add({
           type: 'login',
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => loadAttendanceRecords(user.uid));
@@ -174,8 +125,7 @@
     document.getElementById('break-in-btn').addEventListener('click', () => {
       const user = auth.currentUser;
       if (user) {
-        db.collection('attendance').add({
-          userId: user.uid,
+        db.collection('users').doc(user.uid).collection('attendance').add({
           type: 'break_in',
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => loadAttendanceRecords(user.uid));
@@ -185,8 +135,7 @@
     document.getElementById('break-out-btn').addEventListener('click', () => {
       const user = auth.currentUser;
       if (user) {
-        db.collection('attendance').add({
-          userId: user.uid,
+        db.collection('users').doc(user.uid).collection('attendance').add({
           type: 'break_out',
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => loadAttendanceRecords(user.uid));
@@ -196,8 +145,7 @@
     document.getElementById('logoff-btn').addEventListener('click', () => {
       const user = auth.currentUser;
       if (user) {
-        db.collection('attendance').add({
-          userId: user.uid,
+        db.collection('users').doc(user.uid).collection('attendance').add({
           type: 'logoff',
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         }).then(() => loadAttendanceRecords(user.uid));
@@ -207,118 +155,49 @@
     function loadAttendanceRecords(userId) {
       const recordsList = document.getElementById('attendance-records');
       recordsList.innerHTML = '';
-      db.collection('attendance').where('userId', '==', userId).orderBy('timestamp', 'desc').get().then(snapshot => {
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const li = document.createElement('li');
-          li.textContent = `${data.type.toUpperCase()}: ${data.timestamp.toDate().toLocaleString()}`;
-          recordsList.appendChild(li);
+      db.collection('users').doc(userId).collection('attendance')
+        .orderBy('timestamp', 'desc')
+        .limit(10) // Show only the 10 most recent records
+        .get()
+        .then(snapshot => {
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const li = document.createElement('li');
+            li.textContent = `${data.type.toUpperCase()}: ${data.timestamp ? data.timestamp.toDate().toLocaleString() : 'Pending'}`;
+            recordsList.appendChild(li);
+          });
         });
-      });
-    }
-
-    // Leave Functions
-    document.getElementById('submit-leave').addEventListener('click', () => {
-      const user = auth.currentUser;
-      if (user) {
-        const date = document.getElementById('leave-date').value;
-        const reason = document.getElementById('leave-reason').value;
-        db.collection('leaves').add({
-          userId: user.uid,
-          date,
-          reason,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => loadLeaveRecords(user.uid));
-      }
-    });
-
-    function loadLeaveRecords(userId) {
-      const recordsList = document.getElementById('leave-records');
-      recordsList.innerHTML = '';
-      db.collection('leaves').where('userId', '==', userId).orderBy('timestamp', 'desc').get().then(snapshot => {
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const li = document.createElement('li');
-          li.textContent = `Date: ${data.date}, Reason: ${data.reason}`;
-          recordsList.appendChild(li);
-        });
-      });
-    }
-
-    // Vacation Functions
-    document.getElementById('submit-vacation').addEventListener('click', () => {
-      const user = auth.currentUser;
-      if (user) {
-        const start = document.getElementById('vacation-start').value;
-        const end = document.getElementById('vacation-end').value;
-        const reason = document.getElementById('vacation-reason').value;
-        db.collection('vacations').add({
-          userId: user.uid,
-          start,
-          end,
-          reason,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => loadVacationRecords(user.uid));
-      }
-    });
-
-    function loadVacationRecords(userId) {
-      const recordsList = document.getElementById('vacation-records');
-      recordsList.innerHTML = '';
-      db.collection('vacations').where('userId', '==', userId).orderBy('timestamp', 'desc').get().then(snapshot => {
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const li = document.createElement('li');
-          li.textContent = `Start: ${data.start}, End: ${data.end}, Reason: ${data.reason}`;
-          recordsList.appendChild(li);
-        });
-      });
     }
 
     // Chart View
     let chartInstance = null;
     function loadChartData(userId) {
-      db.collection('attendance').where('userId', '==', userId).orderBy('timestamp').get().then(snapshot => {
-        const data = { login: 0, break_in: 0, break_out: 0, logoff: 0 };
-        snapshot.forEach(doc => {
-          const type = doc.data().type;
-          data[type]++;
-        });
+      db.collection('users').doc(userId).collection('attendance')
+        .orderBy('timestamp')
+        .get()
+        .then(snapshot => {
+          const data = { login: 0, break_in: 0, break_out: 0, logoff: 0 };
+          snapshot.forEach(doc => {
+            const type = doc.data().type;
+            data[type]++;
+          });
 
-        if (chartInstance) chartInstance.destroy();
-        const ctx = document.getElementById('attendance-chart').getContext('2d');
-        chartInstance = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: ['Login', 'Break In', 'Break Out', 'Logoff'],
-            datasets: [{
-              label: 'Attendance Events',
-              data: [data.login, data.break_in, data.break_out, data.logoff],
-              backgroundColor: ['#4CAF50', '#2196F3', '#2196F3', '#F44336']
-            }]
-          },
-          options: { scales: { y: { beginAtZero: true } } }
+          if (chartInstance) chartInstance.destroy();
+          const ctx = document.getElementById('attendance-chart').getContext('2d');
+          chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ['Login', 'Break In', 'Break Out', 'Logoff'],
+              datasets: [{
+                label: 'Attendance Events',
+                data: [data.login, data.break_in, data.break_out, data.logoff],
+                backgroundColor: ['#4CAF50', '#2196F3', '#2196F3', '#F44336']
+              }]
+            },
+            options: { scales: { y: { beginAtZero: true } } }
+          });
         });
-      });
     }
-
-    // Report Generation
-    document.getElementById('generate-report').addEventListener('click', () => {
-      const user = auth.currentUser;
-      if (user) {
-        const start = document.getElementById('report-start').value;
-        const end = document.getElementById('report-end').value;
-        db.collection('reports').add({
-          userId: user.uid,
-          start,
-          end,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-          const reportOutput = document.getElementById('report-output');
-          reportOutput.innerHTML = `Report generated for ${start} to ${end}`;
-        });
-      }
-    });
   </script>
 </body>
 </html>
