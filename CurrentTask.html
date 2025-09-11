@@ -24,6 +24,8 @@
     .btn-pending { background: #e67e22; }
     .btn-continue { background: #8e44ad; }
     .btn-complete { background: #27ae60; }
+    .btn-logoff { background: #e74c3c; }
+    .btn-login { background: #2ecc71; }
     .highlight { border: 2px solid #fff; box-shadow: 0 0 8px rgba(255, 255, 255, 0.6); }
     @keyframes fadeIn { from { opacity:0; transform: scale(0.95); } to { opacity:1; transform: scale(1); } }
     
@@ -146,9 +148,10 @@
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   }
 
-  function calcTimeDetails(sessions = []) {
-    let totalWorkMs = 0, totalPauseMs = 0, pauseCount = 0, lastEnd = null;
+  function calcTimeDetails(sessions = [], logoffSessions = []) {
+    let totalWorkMs = 0, totalPauseMs = 0, totalLogoffMs = 0, pauseCount = 0, lastEnd = null;
     
+    // Calculate work time and pause time
     if (Array.isArray(sessions)) {
       sessions.forEach(sess => {
         const startMs = sess.start?.toDate ? sess.start.toDate().getTime() : null;
@@ -170,20 +173,45 @@
       });
     }
     
+    // Calculate logoff time
+    if (Array.isArray(logoffSessions)) {
+      logoffSessions.forEach(sess => {
+        const startMs = sess.start?.toDate ? sess.start.toDate().getTime() : null;
+        const endMs = sess.end?.toDate ? sess.end.toDate().getTime() : now().toDate().getTime();
+        
+        if (startMs) {
+          totalLogoffMs += endMs - startMs;
+        }
+      });
+    }
+    
     const startTime = sessions[0]?.start?.toDate ? sessions[0].start.toDate().toLocaleString() : '—';
     const endTime = sessions.length > 0 && sessions[sessions.length-1]?.end?.toDate ? 
                     sessions[sessions.length-1].end.toDate().toLocaleString() : 
                     (sessions.length > 0 && !sessions[sessions.length-1]?.end ? 'In Progress' : '—');
     
-    return { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime };
+    return { totalWorkMs, totalPauseMs, totalLogoffMs, pauseCount, startTime, endTime };
   }
 
-  function getButtonsHTML(statusKey) {
-    return {
-      "not-started": `<button class="btn-start highlight">Start</button>`,
-      "in-progress": `<button class="btn-pending">Pause</button><button class="btn-complete highlight">Complete</button>`,
-      "pending": `<button class="btn-continue highlight">Resume</button>`
-    }[statusKey] || `<em>No actions available</em>`;
+  function getButtonsHTML(statusKey, isLogoff = false) {
+    if (statusKey === "in-progress") {
+      return `
+        <button class="btn-pending">Pause</button>
+        <button class="btn-logoff highlight">Logoff</button>
+        <button class="btn-complete">Complete</button>
+      `;
+    } else if (statusKey === "pending" && isLogoff) {
+      return `
+        <button class="btn-login highlight">Login</button>
+        <button class="btn-continue">Resume</button>
+      `;
+    } else if (statusKey === "pending") {
+      return `<button class="btn-continue highlight">Resume</button>`;
+    } else if (statusKey === "not-started") {
+      return `<button class="btn-start highlight">Start</button>`;
+    }
+    
+    return `<em>No actions available</em>`;
   }
 
   function toggleComboBox(idx) {
@@ -202,8 +230,10 @@
     taskBody.innerHTML = "";
     tasks.forEach((task, idx) => {
       const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
-      const { totalWorkMs, totalPauseMs, pauseCount, startTime, endTime } = calcTimeDetails(task.workSessions || []);
+      const { totalWorkMs, totalPauseMs, totalLogoffMs, pauseCount, startTime, endTime } = 
+            calcTimeDetails(task.workSessions || [], task.logoffSessions || []);
       const ownerName = task.Owner ? task.Owner : "No Owner";
+      const isLogoff = task.isLogoff || false;
 
       const tr = document.createElement("tr");
       tr.onclick = () => toggleComboBox(idx);
@@ -226,10 +256,11 @@
         <div><strong>Ended:</strong> ${endTime}</div>
         <div><strong>Work hrs:</strong> ${formatMs(totalWorkMs)}</div>
         <div><strong>Pause hrs:</strong> ${formatMs(totalPauseMs)}</div>
+        <div><strong>Logoff hrs:</strong> ${formatMs(totalLogoffMs)}</div>
         <div><strong>Pause count:</strong> ${pauseCount}</div>
         <div><strong>Remarks:</strong> ${task.Remarks || '-'}</div>
         <hr style="margin:8px 0;">
-        ${getButtonsHTML(sk)}
+        ${getButtonsHTML(sk, isLogoff)}
       </td>`;
       taskBody.appendChild(cr);
     });
@@ -244,8 +275,9 @@
     
     tasks.forEach((task, idx) => {
       const sk = (task.Status || "").toLowerCase().replace(/\s+/g, "-");
-      const { totalWorkMs } = calcTimeDetails(task.workSessions || []);
+      const { totalWorkMs } = calcTimeDetails(task.workSessions || [], task.logoffSessions || []);
       const ownerName = task.Owner ? task.Owner : "No Owner";
+      const isLogoff = task.isLogoff || false;
       
       const card = document.createElement('div');
       card.className = 'kanban-card';
@@ -259,6 +291,9 @@
         <p><strong>Owner:</strong> ${ownerName}</p>
         <p><strong>Worked:</strong> ${formatMs(totalWorkMs)}</p>
         <span class="status ${statusLabels[sk]?.class}">${statusLabels[sk]?.label}</span>
+        <div style="margin-top: 10px;">
+          ${getButtonsHTML(sk, isLogoff)}
+        </div>
       `;
       
       // Add to appropriate column
@@ -276,6 +311,9 @@
         });
         card.classList.remove('dragging');
       });
+      
+      // Add button event listeners
+      attachKanbanButtonListeners(card, task);
     });
     
     // Make columns droppable
@@ -304,6 +342,121 @@
     });
   }
 
+  function attachKanbanButtonListeners(card, task) {
+    const buttons = card.querySelectorAll('button');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const ref = db.collection("tasks").doc(task.id);
+        const ts = now();
+        const sess = task.workSessions || [];
+        const logoffSess = task.logoffSessions || [];
+        const isLogoff = task.isLogoff || false;
+
+        try {
+          if (btn.classList.contains("btn-start")) {
+            if (sess.some(s => !s.end)) return alert("Already running");
+            sess.push({ start: ts, end: null });
+            await ref.update({ 
+              Status: "In Progress", 
+              taskStart: ts, 
+              workSessions: sess,
+              isLogoff: false
+            });
+            alert("Started");
+          }
+          if (btn.classList.contains("btn-pending")) {
+            const i = sess.findIndex(s => !s.end);
+            if (i < 0) return alert("Not running");
+            sess[i].end = ts;
+            await ref.update({ 
+              Status: "Pending", 
+              workSessions: sess,
+              isLogoff: false
+            });
+            alert("Paused");
+          }
+          if (btn.classList.contains("btn-continue")) {
+            if (sess.some(s => !s.end)) return alert("Already running");
+            sess.push({ start: ts, end: null });
+            await ref.update({ 
+              Status: "In Progress", 
+              workSessions: sess,
+              isLogoff: false
+            });
+            alert("Resumed");
+          }
+          if (btn.classList.contains("btn-logoff")) {
+            const i = sess.findIndex(s => !s.end);
+            if (i < 0) return alert("Not running");
+            sess[i].end = ts;
+            logoffSess.push({ start: ts, end: null });
+            await ref.update({ 
+              Status: "Pending", 
+              workSessions: sess,
+              logoffSessions: logoffSess,
+              isLogoff: true
+            });
+            alert("Logged off");
+          }
+          if (btn.classList.contains("btn-login")) {
+            const i = logoffSess.findIndex(s => !s.end);
+            if (i < 0) return alert("Not logged off");
+            logoffSess[i].end = ts;
+            sess.push({ start: ts, end: null });
+            await ref.update({ 
+              Status: "In Progress", 
+              workSessions: sess,
+              logoffSessions: logoffSess,
+              isLogoff: false
+            });
+            alert("Logged in");
+          }
+          if (btn.classList.contains("btn-complete")) {
+            const i = sess.findIndex(s => !s.end);
+            if (i > -1) sess[i].end = ts;
+
+            // End any active logoff session
+            const j = logoffSess.findIndex(s => !s.end);
+            if (j > -1) logoffSess[j].end = ts;
+
+            // Use the same calculation function for consistency
+            const { totalWorkMs, totalPauseMs, totalLogoffMs, pauseCount } = 
+                  calcTimeDetails(sess, logoffSess);
+            const startTime = sess[0]?.start || ts;
+            const endTime = sess.at(-1)?.end || ts;
+
+            const userRemarks = prompt("Enter remarks for completing this task:", task.Remarks || "");
+            if (userRemarks === null) return;
+
+            await ref.update({
+              Status: "Complete",
+              taskStart: startTime,
+              taskEnd: endTime,
+              workSessions: sess,
+              logoffSessions: logoffSess,
+              TimeStarted: startTime.toDate().toLocaleString(),
+              TimeEnd: endTime.toDate().toLocaleString(),
+              TotalWorkHours: formatMs(totalWorkMs),
+              TotalPauseHours: formatMs(totalPauseMs),
+              TotalLogoffHours: formatMs(totalLogoffMs),
+              Remarks: userRemarks || "-",
+              isLogoff: false
+            });
+
+            // Store the completed task ID and show attachment modal
+            currentTaskId = task.id;
+            showAttachmentModal();
+          }
+
+          loadUserTasks();
+        } catch {
+          alert("Update failed");
+        }
+      });
+    });
+  }
+
   function getDragAfterElement(container, y) {
     const draggableElements = [...container.querySelectorAll('.kanban-card:not(.dragging)')];
     
@@ -318,62 +471,66 @@
       }
     }, { offset: Number.NEGATIVE_INFINITY }).element;
   }
-async function updateTaskStatus(taskId, newStatus) {
-  try {
-    const statusMap = {
-      'not-started': 'Not Started',
-      'in-progress': 'In Progress',
-      'pending': 'Pending'
-    };
 
-    const taskRef = db.collection("tasks").doc(taskId);
-    const doc = await taskRef.get();
-    const data = doc.data();
+  async function updateTaskStatus(taskId, newStatus) {
+    try {
+      const statusMap = {
+        'not-started': 'Not Started',
+        'in-progress': 'In Progress',
+        'pending': 'Pending'
+      };
 
-    if (!doc.exists) throw new Error("Task not found");
+      const taskRef = db.collection("tasks").doc(taskId);
+      const doc = await taskRef.get();
+      const data = doc.data();
 
-    const prevStatus = (data.Status || "").toLowerCase().replace(/\s+/g, "-");
-    const sessions = Array.isArray(data.workSessions) ? [...data.workSessions] : [];
-    const nowTs = now();
+      if (!doc.exists) throw new Error("Task not found");
 
-    // 1. In Progress → Pending: close current session
-    if (prevStatus === 'in-progress' && newStatus === 'pending') {
-      const i = sessions.findIndex(s => !s.end);
-      if (i >= 0) {
-        sessions[i].end = nowTs;
+      const prevStatus = (data.Status || "").toLowerCase().replace(/\s+/g, "-");
+      const sessions = Array.isArray(data.workSessions) ? [...data.workSessions] : [];
+      const logoffSessions = Array.isArray(data.logoffSessions) ? [...data.logoffSessions] : [];
+      const nowTs = now();
+
+      // 1. In Progress → Pending: close current session
+      if (prevStatus === 'in-progress' && newStatus === 'pending') {
+        const i = sessions.findIndex(s => !s.end);
+        if (i >= 0) {
+          sessions[i].end = nowTs;
+        }
       }
-    }
 
-    // 2. Pending → In Progress: start new session
-    if (prevStatus === 'pending' && newStatus === 'in-progress') {
-      const running = sessions.some(s => !s.end);
-      if (!running) {
-        sessions.push({ start: nowTs, end: null });
+      // 2. Pending → In Progress: start new session
+      if (prevStatus === 'pending' && newStatus === 'in-progress') {
+        const running = sessions.some(s => !s.end);
+        if (!running) {
+          sessions.push({ start: nowTs, end: null });
+        }
       }
-    }
 
-    // 3. Not Started → In Progress: first session
-    if (prevStatus === 'not-started' && newStatus === 'in-progress') {
-      if (!sessions.length) {
-        sessions.push({ start: nowTs, end: null });
+      // 3. Not Started → In Progress: first session
+      if (prevStatus === 'not-started' && newStatus === 'in-progress') {
+        if (!sessions.length) {
+          sessions.push({ start: nowTs, end: null });
+        }
       }
+
+      // 4. Update Firestore
+      await taskRef.update({
+        Status: statusMap[newStatus],
+        workSessions: sessions,
+        logoffSessions: logoffSessions,
+        taskStart: data.taskStart || sessions[0]?.start || nowTs,
+        isLogoff: false // Reset logoff status when changing status via drag and drop
+      });
+
+      // 5. Refresh UI
+      loadUserTasks();
+
+    } catch (error) {
+      console.error("Error updating task status:", error);
+      alert("Failed to update task status");
     }
-
-    // 4. Update Firestore
-    await taskRef.update({
-      Status: statusMap[newStatus],
-      workSessions: sessions,
-      taskStart: data.taskStart || sessions[0]?.start || nowTs
-    });
-
-    // 5. Refresh UI
-    loadUserTasks();
-
-  } catch (error) {
-    console.error("Error updating task status:", error);
-    alert("Failed to update task status");
   }
-}
 
   function attachActions(tasks) {
     document.querySelectorAll(".combo-box").forEach((cr, idx) => {
@@ -382,33 +539,79 @@ async function updateTaskStatus(taskId, newStatus) {
           e.stopPropagation();
           const t = tasks[idx], ref = db.collection("tasks").doc(t.id);
           const ts = now(), sess = t.workSessions || [];
+          const logoffSess = t.logoffSessions || [];
+          const isLogoff = t.isLogoff || false;
 
           try {
             if (btn.classList.contains("btn-start")) {
               if (sess.some(s => !s.end)) return alert("Already running");
               sess.push({ start: ts, end: null });
-              await ref.update({ Status: "In Progress", taskStart: ts, workSessions: sess });
+              await ref.update({ 
+                Status: "In Progress", 
+                taskStart: ts, 
+                workSessions: sess,
+                isLogoff: false
+              });
               alert("Started");
             }
             if (btn.classList.contains("btn-pending")) {
               const i = sess.findIndex(s => !s.end);
               if (i < 0) return alert("Not running");
               sess[i].end = ts;
-              await ref.update({ Status: "Pending", workSessions: sess });
+              await ref.update({ 
+                Status: "Pending", 
+                workSessions: sess,
+                isLogoff: false
+              });
               alert("Paused");
             }
             if (btn.classList.contains("btn-continue")) {
               if (sess.some(s => !s.end)) return alert("Already running");
               sess.push({ start: ts, end: null });
-              await ref.update({ Status: "In Progress", workSessions: sess });
+              await ref.update({ 
+                Status: "In Progress", 
+                workSessions: sess,
+                isLogoff: false
+              });
               alert("Resumed");
+            }
+            if (btn.classList.contains("btn-logoff")) {
+              const i = sess.findIndex(s => !s.end);
+              if (i < 0) return alert("Not running");
+              sess[i].end = ts;
+              logoffSess.push({ start: ts, end: null });
+              await ref.update({ 
+                Status: "Pending", 
+                workSessions: sess,
+                logoffSessions: logoffSess,
+                isLogoff: true
+              });
+              alert("Logged off");
+            }
+            if (btn.classList.contains("btn-login")) {
+              const i = logoffSess.findIndex(s => !s.end);
+              if (i < 0) return alert("Not logged off");
+              logoffSess[i].end = ts;
+              sess.push({ start: ts, end: null });
+              await ref.update({ 
+                Status: "In Progress", 
+                workSessions: sess,
+                logoffSessions: logoffSess,
+                isLogoff: false
+              });
+              alert("Logged in");
             }
             if (btn.classList.contains("btn-complete")) {
               const i = sess.findIndex(s => !s.end);
               if (i > -1) sess[i].end = ts;
 
+              // End any active logoff session
+              const j = logoffSess.findIndex(s => !s.end);
+              if (j > -1) logoffSess[j].end = ts;
+
               // Use the same calculation function for consistency
-              const { totalWorkMs, totalPauseMs, pauseCount } = calcTimeDetails(sess);
+              const { totalWorkMs, totalPauseMs, totalLogoffMs, pauseCount } = 
+                    calcTimeDetails(sess, logoffSess);
               const startTime = sess[0]?.start || ts;
               const endTime = sess.at(-1)?.end || ts;
 
@@ -420,11 +623,14 @@ async function updateTaskStatus(taskId, newStatus) {
                 taskStart: startTime,
                 taskEnd: endTime,
                 workSessions: sess,
+                logoffSessions: logoffSess,
                 TimeStarted: startTime.toDate().toLocaleString(),
                 TimeEnd: endTime.toDate().toLocaleString(),
                 TotalWorkHours: formatMs(totalWorkMs),
                 TotalPauseHours: formatMs(totalPauseMs),
-                Remarks: userRemarks || "-"
+                TotalLogoffHours: formatMs(totalLogoffMs),
+                Remarks: userRemarks || "-",
+                isLogoff: false
               });
 
               // Store the completed task ID and show attachment modal
