@@ -186,6 +186,9 @@
       display: flex;
       align-items: center;
       font-size: 1rem;
+      padding: 8px;
+      background: #f8f9fa;
+      border-radius: 8px;
     }
 
     ul.todo-list li label {
@@ -201,6 +204,10 @@
     ul.todo-list li.completed label {
       text-decoration: line-through;
       color: #999;
+    }
+
+    ul.todo-list li.completed {
+      opacity: 0.6;
     }
 
     .add-task-container {
@@ -232,6 +239,23 @@
       background: #1abc9c;
     }
 
+    /* Delete button styles */
+    .delete-btn {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      margin-left: 8px;
+      transition: background 0.3s;
+    }
+
+    .delete-btn:hover {
+      background: #c0392b;
+    }
+
     /* New styles for left panel pending tasks */
     .pending-tasks-header {
       display: flex;
@@ -259,6 +283,12 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .pending-tasks-list li:hover {
+      background: #e9ecef;
     }
 
     .pending-tasks-list li.in-progress {
@@ -301,11 +331,10 @@
     <div class="center-datetime" id="dateTimeDisplay">Loading...</div>
     <div class="profile-container" id="profileContainer" tabindex="0" aria-haspopup="true" aria-expanded="false">
       <div class="profile-name" id="profileName">User</div>
-<div class="dropdown" id="profileDropdown">
-  <button id="settingBtn">Setting</button> <!-- New -->
-  <button id="logoutBtn">Logout</button>
-</div>
-
+      <div class="dropdown" id="profileDropdown">
+        <button id="settingBtn">Setting</button> <!-- New -->
+        <button id="logoutBtn">Logout</button>
+      </div>
     </div>
   </header>
 
@@ -386,13 +415,13 @@
       }
     });
 
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  sessionStorage.clear();
-  window.location.href = "index.html";
-});
-document.getElementById("settingBtn").addEventListener("click", () => {
-  window.location.href = "Change Password.html";
-});
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      sessionStorage.clear();
+      window.location.href = "index.html";
+    });
+    document.getElementById("settingBtn").addEventListener("click", () => {
+      window.location.href = "Change Password.html";
+    });
 
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
@@ -436,51 +465,69 @@ document.getElementById("settingBtn").addEventListener("click", () => {
       });
     }
 
-    // New function to calculate next due date based on WORK FOR and creation date
-    function calculateNextDue(createdAt, workFor, dueDate) {
-      if (!workFor || !createdAt) return null;
-      const baseDate = new Date(createdAt.toDate ? createdAt.toDate() : createdAt); // Handle Firestore Timestamp
-      const now = new Date();
-      let nextDue = new Date(baseDate);
+    // Updated function to calculate next due date based on WORK FOR, supporting Daily
+    function calculateNextDue(createdAt, workFor, dueDate, lastCompleted, nowParam = new Date()) {
+      if (!workFor) return null;
+
+      let baseDate;
+      if (lastCompleted) {
+        baseDate = new Date(lastCompleted.toDate ? lastCompleted.toDate() : lastCompleted);
+      } else if (dueDate) {
+        baseDate = new Date(dueDate.toDate ? dueDate.toDate() : dueDate);
+      } else {
+        baseDate = new Date(createdAt.toDate ? createdAt.toDate() : createdAt);
+      }
+
+      const now = new Date(nowParam.getTime());
+      now.setHours(0, 0, 0, 0);
+
+      if (workFor === 'Daily') {
+        return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      }
+
+      const targetWeekday = baseDate.getDay();
+      let candidate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      candidate.setHours(0, 0, 0, 0);
 
       switch (workFor) {
-        case 'Yearly':
-          nextDue.setFullYear(now.getFullYear() + 1);
-          if (nextDue < now) nextDue.setFullYear(nextDue.getFullYear() + 1);
-          break;
-        case 'Monthly':
-          nextDue.setMonth(now.getMonth() + 1);
-          if (nextDue < now) nextDue.setMonth(nextDue.getMonth() + 1);
-          break;
-        case 'Quarterly':
-          nextDue.setMonth(now.getMonth() + 3);
-          if (nextDue < now) nextDue.setMonth(nextDue.getMonth() + 3);
+        case 'Weekly':
+          let daysDiff = (targetWeekday - now.getDay() + 7) % 7;
+          if (daysDiff === 0) daysDiff = 7;
+          candidate.setDate(now.getDate() + daysDiff);
           break;
         case 'Bi-weekly':
-          nextDue.setDate(now.getDate() + 14);
-          if (nextDue < now) nextDue.setDate(nextDue.getDate() + 14);
+          let biDiff = (targetWeekday - now.getDay() + 14) % 14;
+          if (biDiff === 0) biDiff = 14;
+          candidate.setDate(now.getDate() + biDiff);
           break;
-        case 'Weekly':
-          // Find the next occurrence of the same weekday
-          const daysDiff = (now.getDay() - baseDate.getDay() + 7) % 7 || 7;
-          nextDue.setDate(now.getDate() + daysDiff);
-          if (nextDue <= now) nextDue.setDate(nextDue.getDate() + 7);
+        case 'Monthly':
+          candidate = new Date(now.getFullYear(), now.getMonth() + 1, baseDate.getDate());
+          const lastDay = new Date(candidate.getFullYear(), candidate.getMonth() + 1, 0).getDate();
+          if (candidate.getDate() > lastDay) candidate.setDate(lastDay);
+          if (candidate < now) candidate.setMonth(candidate.getMonth() + 1);
+          break;
+        case 'Quarterly':
+          candidate = new Date(now.getFullYear(), now.getMonth() + 3, baseDate.getDate());
+          const qLastDay = new Date(candidate.getFullYear(), candidate.getMonth() + 1, 0).getDate();
+          if (candidate.getDate() > qLastDay) candidate.setDate(qLastDay);
+          if (candidate < now) candidate.setMonth(candidate.getMonth() + 3);
+          break;
+        case 'Yearly':
+          candidate = new Date(now.getFullYear() + 1, baseDate.getMonth(), baseDate.getDate());
+          if (candidate < now) candidate.setFullYear(candidate.getFullYear() + 1);
           break;
         case 'Custom':
-          // For custom, use the Due Date if provided, or fall back to baseDate + some interval
-          if (dueDate) {
-            nextDue = new Date(dueDate.toDate ? dueDate.toDate() : dueDate);
-            nextDue.setMonth(nextDue.getMonth() + 1); // Assume monthly for custom
-            if (nextDue < now) nextDue.setMonth(nextDue.getMonth() + 1);
-          } else {
-            return null;
-          }
+          // Fallback to monthly
+          candidate = new Date(now.getFullYear(), now.getMonth() + 1, baseDate.getDate());
+          const cLastDay = new Date(candidate.getFullYear(), candidate.getMonth() + 1, 0).getDate();
+          if (candidate.getDate() > cLastDay) candidate.setDate(cLastDay);
+          if (candidate < now) candidate.setMonth(candidate.getMonth() + 1);
           break;
         default:
           return null;
       }
 
-      return nextDue;
+      return candidate;
     }
 
     // New function to load and render pending/in-progress tasks
@@ -490,10 +537,11 @@ document.getElementById("settingBtn").addEventListener("click", () => {
         const snapshot = await db.collection('tasks').where('Owner', '==', username).get();
         let pendingTasks = [];
 
+        const now = new Date();
         snapshot.forEach(doc => {
           const task = { id: doc.id, ...doc.data() };
           if (task.Status === 'Not Started' || task.Status === 'In Progress') {
-            const nextDue = calculateNextDue(task.createdAt, task['WORK FOR'], task['Due date']);
+            const nextDue = calculateNextDue(task.createdAt, task['WORK FOR'], task['Due date'], task.lastCompleted);
             task.nextDue = nextDue;
             pendingTasks.push(task);
           }
@@ -529,7 +577,6 @@ document.getElementById("settingBtn").addEventListener("click", () => {
         li.addEventListener('click', () => {
           window.location.href = `User task.html?id=${task.id}`;
         });
-        li.style.cursor = 'pointer';
         pendingTasksList.appendChild(li);
       });
     }
@@ -537,25 +584,52 @@ document.getElementById("settingBtn").addEventListener("click", () => {
     async function loadTasks(dateObj) {
       const dateKey = getFormattedDate(dateObj);
       todoDateLabel.textContent = getReadableDate(dateObj);
-      todoListEl.innerHTML = "Loading...";
+      const selectedDate = new Date(dateObj);
+      selectedDate.setHours(0, 0, 0, 0);
+      const yesterday = new Date(selectedDate.getTime() - 86400000); // For due check
+
+      let manualTasks = [];
 
       try {
         const docRef = db.collection("userTasks").doc(username);
         const docSnap = await docRef.get();
-        let tasks = [];
-
         if (docSnap.exists) {
           const data = docSnap.data();
-          if (data?.tasks?.[dateKey]) {
-            tasks = data.tasks[dateKey];
-          }
+          manualTasks = data?.tasks?.[dateKey] || [];
         }
-
-        currentTasks = tasks;
-        renderTasks(tasks);
+        currentTasks = manualTasks.map(t => ({...t}));
       } catch (error) {
-        console.error("Error loading tasks:", error);
-        todoListEl.innerHTML = "<li>Error loading tasks.</li>";
+        console.error("Error loading manual tasks:", error);
+      }
+
+      // Load reminders due on selectedDate
+      try {
+        const snapshot = await db.collection('tasks').where('Owner', '==', username).where('Status', 'in', ['Not Started', 'In Progress']).get();
+        const reminders = [];
+        snapshot.forEach(doc => {
+          const task = { id: doc.id, ...doc.data() };
+          const nextDue = calculateNextDue(task.createdAt, task['WORK FOR'], task['Due date'], task.lastCompleted, yesterday);
+          if (nextDue && getFormattedDate(nextDue) === dateKey) {
+            // Check if already in manual tasks as this reminder and completed
+            const existing = currentTasks.find(ct => ct.isReminder && ct.taskId === task.id && ct.completed);
+            if (!existing) {
+              reminders.push({
+                text: `🔄 Reminder: ${task.SINO ? `${task.SINO} - ` : ''}${task['Task'] || task['TYPE OF WORK'] || 'Task'} (${task['Existing Company Name'] || ''})`,
+                completed: false,
+                isReminder: true,
+                taskId: task.id,
+                sino: task.SINO
+              });
+            }
+          }
+        });
+
+        currentTasks.push(...reminders);
+        currentTasks.sort((a, b) => a.text.localeCompare(b.text));
+
+        renderTasks(currentTasks);
+      } catch (error) {
+        console.error("Error loading reminders:", error);
       }
     }
 
@@ -566,30 +640,76 @@ document.getElementById("settingBtn").addEventListener("click", () => {
       }
 
       todoListEl.innerHTML = "";
-      tasks.forEach((task, i) => {
+      tasks.forEach((task) => {
         const li = document.createElement("li");
         if (task.completed) li.classList.add("completed");
 
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.checked = task.completed || false;
-        checkbox.id = `task-${i}`;
 
         const label = document.createElement("label");
-        label.htmlFor = checkbox.id;
         label.textContent = task.text;
 
-        checkbox.addEventListener("change", () => {
-          task.completed = checkbox.checked;
-          li.classList.toggle("completed", checkbox.checked);
-          saveTasks(currentDate, currentTasks);
-        });
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete-btn";
+        deleteBtn.textContent = "🗑️";
 
         li.appendChild(checkbox);
         li.appendChild(label);
+        li.appendChild(deleteBtn);
         todoListEl.appendChild(li);
       });
     }
+
+    // Event delegation for todo interactions
+    todoListEl.addEventListener('change', (e) => {
+      if (e.target.type === 'checkbox') {
+        const li = e.target.closest('li');
+        const index = Array.from(todoListEl.children).indexOf(li);
+        const task = currentTasks[index];
+        if (task) {
+          task.completed = e.target.checked;
+          li.classList.toggle("completed", e.target.checked);
+          if (e.target.checked && task.isReminder) {
+            db.collection('tasks').doc(task.taskId).update({
+              lastCompleted: firebase.firestore.FieldValue.serverTimestamp()
+            }).catch(console.error);
+          }
+          if (!task.isReminder) {
+            saveTasks(currentDate, currentTasks.filter(t => !t.isReminder));
+          }
+        }
+      }
+    });
+
+    todoListEl.addEventListener('click', (e) => {
+      if (e.target.classList.contains('delete-btn')) {
+        e.stopPropagation();
+        const li = e.target.closest('li');
+        const index = Array.from(todoListEl.children).indexOf(li);
+        const task = currentTasks[index];
+        if (task) {
+          if (task.isReminder) {
+            // Treat delete as complete for reminder
+            db.collection('tasks').doc(task.taskId).update({
+              lastCompleted: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+              currentTasks.splice(index, 1);
+              renderTasks(currentTasks);
+            }).catch(err => {
+              console.error('Error completing reminder:', err);
+              alert('Error completing reminder');
+            });
+          } else {
+            // Manual task: remove
+            currentTasks.splice(index, 1);
+            renderTasks(currentTasks);
+            saveTasks(currentDate, currentTasks.filter(t => !t.isReminder));
+          }
+        }
+      }
+    });
 
     async function saveTasks(dateObj, tasks) {
       const dateKey = getFormattedDate(dateObj);
@@ -616,7 +736,7 @@ document.getElementById("settingBtn").addEventListener("click", () => {
 
       currentTasks.push({ text: taskText, completed: false });
 
-      saveTasks(currentDate, currentTasks)
+      saveTasks(currentDate, currentTasks.filter(t => !t.isReminder))
         .then(() => {
           renderTasks(currentTasks);
           newTaskInput.value = "";
@@ -643,31 +763,31 @@ document.getElementById("settingBtn").addEventListener("click", () => {
       loadTasks(currentDate);
     });
 
-document.querySelectorAll(".menu-item").forEach(item => {
-  item.addEventListener("click", () => {
-    document.querySelectorAll(".menu-item").forEach(el => el.classList.remove("active"));
-    item.classList.add("active");
+    document.querySelectorAll(".menu-item").forEach(item => {
+      item.addEventListener("click", () => {
+        document.querySelectorAll(".menu-item").forEach(el => el.classList.remove("active"));
+        item.classList.add("active");
 
-    const section = item.getAttribute("data-section");
-    switch (section) {
-      case "tasks":
-        window.location.href = "User task.html";
-        break;
-      case "chart":
-        window.location.href = "UserChart.html";
-        break;
-      case "report":
-         window.location.href = "User Generate Report.Html";
-        break;
-    }
-  });
-});
+        const section = item.getAttribute("data-section");
+        switch (section) {
+          case "tasks":
+            window.location.href = "User task.html";
+            break;
+          case "chart":
+            window.location.href = "UserChart.html";
+            break;
+          case "report":
+             window.location.href = "User Generate Report.Html";
+            break;
+        }
+      });
+    });
 
     // Initialize: Load daily tasks and pending tasks
     loadTasks(currentDate);
     loadPendingTasks();
 
-    // Refresh pending tasks every 5 minutes (or on focus for dynamic updates)
+    // Refresh pending tasks every 5 minutes
     setInterval(loadPendingTasks, 300000);
   </script>
 </body>
