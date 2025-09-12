@@ -6,6 +6,7 @@
     <title>Elegant CRM Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         :root {
             --primary: #4a6cf7;
@@ -40,13 +41,11 @@
             overflow-x: hidden;
         }
 
-        /* App Layout */
         .app-container {
             display: flex;
             min-height: 100vh;
         }
 
-        /* Sidebar Styles */
         .sidebar {
             width: var(--sidebar-width);
             background: var(--dark);
@@ -176,7 +175,6 @@
             margin-top: 1rem;
         }
 
-        /* Main Content */
         .main-content {
             flex: 1;
             margin-left: var(--sidebar-width);
@@ -187,7 +185,6 @@
             margin-left: var(--sidebar-collapsed-width);
         }
 
-        /* Header */
         .header {
             height: var(--header-height);
             background: var(--card-bg);
@@ -299,7 +296,6 @@
             color: var(--secondary);
         }
 
-        /* Content Area */
         .content {
             padding: 2rem;
         }
@@ -316,7 +312,6 @@
             margin-bottom: 2rem;
         }
 
-        /* Stats Cards */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -375,7 +370,6 @@
             font-size: 0.9rem;
         }
 
-        /* Filters */
         .filters {
             background: var(--card-bg);
             border-radius: var(--border-radius);
@@ -453,7 +447,6 @@
             background: var(--light);
         }
 
-        /* Company Cards */
         .company-cards {
             display: flex;
             flex-direction: column;
@@ -615,7 +608,6 @@
             color: var(--success);
         }
 
-        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -754,7 +746,6 @@
             background: #e2e8f0;
         }
 
-        /* Team View Styles */
         .team-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -831,7 +822,6 @@
             color: var(--secondary);
         }
 
-        /* Work Type View Styles */
         .work-type-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -875,7 +865,84 @@
             gap: 1rem;
         }
 
-        /* Responsive Design */
+        .calendar-container {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .calendar-switches {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+
+        .switch-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: var(--transition);
+            border-radius: 20px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: var(--transition);
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .chart-container {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        canvas {
+            max-width: 100%;
+        }
+
         @media (max-width: 1200px) {
             .sidebar {
                 width: var(--sidebar-collapsed-width);
@@ -945,6 +1012,11 @@
             .user-info {
                 display: none;
             }
+            
+            .calendar-switches {
+                flex-direction: column;
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
@@ -1001,7 +1073,7 @@
                     <span class="nav-text">Work Types</span>
                 </a>
                 
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-view="calendar">
                     <div class="nav-icon">
                         <i class="fas fa-calendar"></i>
                     </div>
@@ -1012,14 +1084,14 @@
                 
                 <div class="nav-title">Reports</div>
                 
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-view="analytics">
                     <div class="nav-icon">
                         <i class="fas fa-chart-bar"></i>
                     </div>
                     <span class="nav-text">Analytics</span>
                 </a>
                 
-                <a href="#" class="nav-item">
+                <a href="#" class="nav-item" data-view="reports">
                     <div class="nav-icon">
                         <i class="fas fa-file-alt"></i>
                     </div>
@@ -1083,7 +1155,6 @@
                     <h1 class="page-title">Company Task Dashboard</h1>
                     <p class="page-description">Manage all company tasks and track progress in one place</p>
 
-                    <!-- Stats Cards -->
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-icon blue">
@@ -1126,7 +1197,6 @@
                         </div>
                     </div>
 
-                    <!-- Filters -->
                     <div class="filters">
                         <div class="filter-group">
                             <label>Search Company</label>
@@ -1158,10 +1228,7 @@
                         </div>
                     </div>
 
-                    <!-- Company Cards -->
-                    <div class="company-cards" id="companyCards">
-                        <!-- Company cards will be dynamically inserted here -->
-                    </div>
+                    <div class="company-cards" id="companyCards"></div>
                 </div>
 
                 <!-- Companies View -->
@@ -1193,9 +1260,7 @@
                         </div>
                     </div>
                     
-                    <div id="companiesList">
-                        <!-- Companies list will be inserted here -->
-                    </div>
+                    <div id="companiesList"></div>
                 </div>
 
                 <!-- Tasks View -->
@@ -1235,9 +1300,7 @@
                         </div>
                     </div>
                     
-                    <div class="company-cards" id="tasksList">
-                        <!-- Tasks list will be inserted here -->
-                    </div>
+                    <div class="company-cards" id="tasksList"></div>
                 </div>
 
                 <!-- Team View -->
@@ -1258,9 +1321,7 @@
                         </div>
                     </div>
                     
-                    <div class="team-grid" id="teamGrid">
-                        <!-- Team member cards will be inserted here -->
-                    </div>
+                    <div class="team-grid" id="teamGrid"></div>
                 </div>
 
                 <!-- Work Types View -->
@@ -1287,8 +1348,66 @@
                         </div>
                     </div>
                     
-                    <div class="work-type-grid" id="workTypeGrid">
-                        <!-- Work type cards will be inserted here -->
+                    <div class="work-type-grid" id="workTypeGrid"></div>
+                </div>
+
+                <!-- Calendar View -->
+                <div id="calendar-view" class="view-content" style="display: none;">
+                    <h1 class="page-title">Calendar</h1>
+                    <p class="page-description">View tasks by due date or start to completion</p>
+                    
+                    <div class="calendar-container">
+                        <div class="calendar-switches">
+                            <div class="switch-group">
+                                <label>Task Due Date</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="dueDateSwitch" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="switch-group">
+                                <label>Task Start to Complete</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="startCompleteSwitch">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <input type="text" id="calendarPicker" placeholder="Select date...">
+                    </div>
+                    
+                    <div class="company-cards" id="calendarTasks"></div>
+                </div>
+
+                <!-- Analytics View -->
+                <div id="analytics-view" class="view-content" style="display: none;">
+                    <h1 class="page-title">Analytics</h1>
+                    <p class="page-description">View percentage distribution of company work by team members</p>
+                    
+                    <div class="chart-container">
+                        <canvas id="companyWorkChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Reports View -->
+                <div id="reports-view" class="view-content" style="display: none;">
+                    <h1 class="page-title">Reports</h1>
+                    <p class="page-description">View company work distribution by work type</p>
+                    
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Search Company</label>
+                            <input type="search" id="reportsCompanySearch" placeholder="Company name...">
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn btn-primary" id="refreshReportsBtn">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="companyWorkTypeChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -1302,15 +1421,14 @@
                 <h3 id="modalTaskTitle">Task Details</h3>
                 <button class="close-modal" id="closeModal">&times;</button>
             </div>
-            <div class="modal-body" id="modalTaskBody">
-                <!-- Task details will be inserted here -->
-            </div>
+            <div class="modal-body" id="modalTaskBody"></div>
         </div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyD9ymWqihHWbVb4IRop1lXT-huLjBvS50w",
@@ -1374,6 +1492,23 @@
         const workTypeViewFilter = document.getElementById('workTypeViewFilter');
         const refreshWorkTypesBtn = document.getElementById('refreshWorkTypesBtn');
         
+        // Calendar view elements
+        const calendarView = document.getElementById('calendar-view');
+        const calendarPicker = document.getElementById('calendarPicker');
+        const dueDateSwitch = document.getElementById('dueDateSwitch');
+        const startCompleteSwitch = document.getElementById('startCompleteSwitch');
+        const calendarTasks = document.getElementById('calendarTasks');
+        
+        // Analytics view elements
+        const analyticsView = document.getElementById('analytics-view');
+        const companyWorkChartCanvas = document.getElementById('companyWorkChart');
+        
+        // Reports view elements
+        const reportsView = document.getElementById('reports-view');
+        const reportsCompanySearch = document.getElementById('reportsCompanySearch');
+        const refreshReportsBtn = document.getElementById('refreshReportsBtn');
+        const companyWorkTypeChartCanvas = document.getElementById('companyWorkTypeChart');
+        
         // Global search
         const globalSearch = document.getElementById('globalSearch');
 
@@ -1382,21 +1517,28 @@
         let companies = {};
         let teamMembers = {};
         let workTypes = {};
+        let companyWorkChart = null;
+        let companyWorkTypeChart = null;
+
+        // Initialize Flatpickr
+        flatpickr(calendarPicker, {
+            inline: true,
+            dateFormat: "Y-m-d",
+            onChange: loadCalendarView
+        });
 
         // Navigation handling
         navItems.forEach(item => {
-            item.addEventListener('click', function() {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
                 const viewName = this.getAttribute('data-view');
                 
-                // Update active nav item
                 navItems.forEach(nav => nav.classList.remove('active'));
                 this.classList.add('active');
                 
-                // Show the selected view
                 viewContents.forEach(view => view.style.display = 'none');
                 document.getElementById(`${viewName}-view`).style.display = 'block';
                 
-                // Load data for the view if needed
                 if (viewName === 'team') {
                     loadTeamView();
                 } else if (viewName === 'work-types') {
@@ -1405,6 +1547,12 @@
                     loadCompaniesView();
                 } else if (viewName === 'tasks') {
                     loadTasksView();
+                } else if (viewName === 'calendar') {
+                    loadCalendarView();
+                } else if (viewName === 'analytics') {
+                    loadAnalyticsView();
+                } else if (viewName === 'reports') {
+                    loadReportsView();
                 }
             });
         });
@@ -1421,14 +1569,12 @@
                     const taskData = { id: doc.id, ...doc.data() };
                     allTasks.push(taskData);
                     
-                    // Group tasks by company
                     const companyName = taskData['Existing Company Name'] || 'Unknown Company';
                     if (!companies[companyName]) {
                         companies[companyName] = [];
                     }
                     companies[companyName].push(taskData);
                     
-                    // Group tasks by team member
                     const ownerName = taskData.Owner || 'Unassigned';
                     if (!teamMembers[ownerName]) {
                         teamMembers[ownerName] = {
@@ -1449,7 +1595,6 @@
                     teamMembers[ownerName].totalHours += parseFloat(taskData.TotalWorkHours || 0);
                     teamMembers[ownerName].pauseHours += parseFloat(taskData.TotalPauseHours || 0);
                     
-                    // Group tasks by work type
                     const workType = taskData['TYPE OF WORK'] || 'Other';
                     if (!workTypes[workType]) {
                         workTypes[workType] = {
@@ -1466,10 +1611,7 @@
                     else workTypes[workType].notStarted++;
                 });
 
-                // Update stats
                 updateStats();
-                
-                // Apply filters and render
                 applyFilters();
             } catch (error) {
                 console.error("Error loading tasks:", error);
@@ -1487,13 +1629,12 @@
             completedTasksEl.textContent = completedCount;
             pendingTasksEl.textContent = pendingCount;
             
-            // Update nav badges
             document.getElementById('companies-count').textContent = companyCount;
             document.getElementById('tasks-count').textContent = taskCount;
         }
 
-        function renderCompanyCards(tasksByCompany) {
-            companyCards.innerHTML = '';
+        function renderCompanyCards(tasksByCompany, container = companyCards) {
+            container.innerHTML = '';
             
             Object.keys(tasksByCompany).sort().forEach(companyName => {
                 const tasks = tasksByCompany[companyName];
@@ -1526,11 +1667,9 @@
                     const taskItem = document.createElement('div');
                     taskItem.classList.add('task-item');
                     
-                    // Get initials for avatars
                     const assigneeInitials = getInitials(task.Owner || '');
                     const assignedByInitials = getInitials(task['Assigned By'] || '');
                     
-                    // Determine status class
                     let statusClass = 'status-not-started';
                     if (task.Status === 'In Progress') statusClass = 'status-in-progress';
                     if (task.Status === 'Complete') statusClass = 'status-complete';
@@ -1557,7 +1696,6 @@
                         </div>
                     `;
                     
-                    // Add click event to show detailed modal
                     taskItem.addEventListener('click', () => {
                         showTaskDetails(task);
                     });
@@ -1577,7 +1715,7 @@
                 
                 companyCard.appendChild(companyHeader);
                 companyCard.appendChild(tasksContainer);
-                companyCards.appendChild(companyCard);
+                container.appendChild(companyCard);
             });
         }
 
@@ -1600,12 +1738,10 @@
                 const companyCard = document.createElement('div');
                 companyCard.classList.add('company-card');
                 
-                // Count tasks by status
                 const completedCount = filteredTasks.filter(task => task.Status === 'Complete').length;
                 const inProgressCount = filteredTasks.filter(task => task.Status === 'In Progress').length;
                 const notStartedCount = filteredTasks.filter(task => !task.Status || task.Status === 'Not Started').length;
                 
-                // Get unique work types for this company
                 const workTypes = [...new Set(filteredTasks.map(task => task['TYPE OF WORK'] || 'Other'))];
                 
                 companyCard.innerHTML = `
@@ -1665,7 +1801,6 @@
             const ownerSearchTerm = tasksOwnerSearch.value.toLowerCase();
             const statusFilterValue = tasksStatusFilter.value;
 
-            // Filter tasks
             const filteredTasks = allTasks.filter(task => {
                 const matchTask = task.Task?.toLowerCase().includes(taskSearchTerm);
                 const matchCompany = task['Existing Company Name']?.toLowerCase().includes(companySearchTerm);
@@ -1674,7 +1809,6 @@
                 return matchTask && matchCompany && matchOwner && matchStatus;
             });
 
-            // Render tasks
             tasksList.innerHTML = '';
 
             const taskCard = document.createElement('div');
@@ -1682,17 +1816,15 @@
 
             const tasksContainer = document.createElement('div');
             tasksContainer.classList.add('tasks-container');
-            tasksContainer.style.display = 'block'; // Always show tasks in this view
+            tasksContainer.style.display = 'block';
 
             filteredTasks.forEach(task => {
                 const taskItem = document.createElement('div');
                 taskItem.classList.add('task-item');
 
-                // Get initials for avatars
                 const assigneeInitials = getInitials(task.Owner || '');
                 const assignedByInitials = getInitials(task['Assigned By'] || '');
 
-                // Determine status class
                 let statusClass = 'status-not-started';
                 if (task.Status === 'In Progress') statusClass = 'status-in-progress';
                 if (task.Status === 'Complete') statusClass = 'status-complete';
@@ -1719,7 +1851,6 @@
                     </div>
                 `;
 
-                // Add click event to show detailed modal
                 taskItem.addEventListener('click', () => {
                     showTaskDetails(task);
                 });
@@ -1731,111 +1862,161 @@
             tasksList.appendChild(taskCard);
         }
 
-        function loadTeamView() {
-            const searchTerm = teamSearch.value.toLowerCase();
+        function loadCalendarView() {
+            const selectedDate = calendarPicker.value;
+            const showDueDate = dueDateSwitch.checked;
+            const showStartComplete = startCompleteSwitch.checked;
             
-            teamGrid.innerHTML = '';
-            
-            Object.keys(teamMembers).sort().forEach(memberName => {
-                if (searchTerm && !memberName.toLowerCase().includes(searchTerm)) return;
-                
-                const memberData = teamMembers[memberName];
-                const initials = getInitials(memberName);
-                
-                const memberCard = document.createElement('div');
-                memberCard.classList.add('team-member-card');
-                
-                memberCard.innerHTML = `
-                    <div class="member-header">
-                        <div class="member-avatar">${initials}</div>
-                        <div class="member-info">
-                            <div class="member-name">${memberName}</div>
-                            <div class="member-role">Team Member</div>
-                        </div>
-                    </div>
-                    <div class="member-stats">
-                        <div class="stat-box">
-                            <div class="stat-value">${memberData.tasks.length}</div>
-                            <div class="stat-label">Total Tasks</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value">${memberData.completed}</div>
-                            <div class="stat-label">Completed</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value">${memberData.inProgress}</div>
-                            <div class="stat-label">In Progress</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value">${memberData.notStarted}</div>
-                            <div class="stat-label">Not Started</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value">${memberData.totalHours.toFixed(1)}</div>
-                            <div class="stat-label">Work Hours</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value">${memberData.pauseHours.toFixed(1)}</div>
-                            <div class="stat-label">Pause Hours</div>
-                        </div>
-                    </div>
-                `;
-                
-                teamGrid.appendChild(memberCard);
+            if (!selectedDate || (!showDueDate && !showStartComplete)) {
+                calendarTasks.innerHTML = '<p>Please select a date and at least one filter option.</p>';
+                return;
+            }
+
+            const filteredTasks = allTasks.filter(task => {
+                if (showDueDate && task['Due date'] === selectedDate) {
+                    return true;
+                }
+                if (showStartComplete && task.taskStart && task.taskEnd) {
+                    const startDate = formatTimestamp(task.taskStart).split(',')[0];
+                    const endDate = formatTimestamp(task.taskEnd).split(',')[0];
+                    return selectedDate >= startDate && selectedDate <= endDate;
+                }
+                return false;
+            });
+
+            const tasksByCompany = {};
+            filteredTasks.forEach(task => {
+                const companyName = task['Existing Company Name'] || 'Unknown Company';
+                if (!tasksByCompany[companyName]) {
+                    tasksByCompany[companyName] = [];
+                }
+                tasksByCompany[companyName].push(task);
+            });
+
+            renderCompanyCards(tasksByCompany, calendarTasks);
+        }
+
+        function loadAnalyticsView() {
+            const memberTaskCounts = {};
+            Object.values(teamMembers).forEach(member => {
+                memberTaskCounts[member.tasks[0]?.Owner || 'Unassigned'] = member.tasks.length;
+            });
+
+            const labels = Object.keys(memberTaskCounts);
+            const data = Object.values(memberTaskCounts);
+            const total = data.reduce((sum, count) => sum + count, 0);
+            const percentages = data.map(count => ((count / total) * 100).toFixed(1));
+
+            if (companyWorkChart) {
+                companyWorkChart.destroy();
+            }
+
+            companyWorkChart = new Chart(companyWorkChartCanvas, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: percentages,
+                        backgroundColor: [
+                            '#4a6cf7',
+                            '#10b981',
+                            '#f59e0b',
+                            '#ef4444',
+                            '#8b5cf6',
+                            '#ec4899'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Work Distribution by Team Member (%)'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: context => `${context.label}: ${context.raw}%`
+                            }
+                        }
+                    }
+                }
             });
         }
 
-        function loadWorkTypesView() {
-            const workTypeFilterValue = workTypeViewFilter.value;
+        function loadReportsView() {
+            const searchTerm = reportsCompanySearch.value.toLowerCase();
             
-            workTypeGrid.innerHTML = '';
-            
-            Object.keys(workTypes).sort().forEach(workType => {
-                if (workTypeFilterValue && workType !== workTypeFilterValue) return;
-                
-                const workTypeData = workTypes[workType];
-                
-                const workTypeCard = document.createElement('div');
-                workTypeCard.classList.add('work-type-card');
-                
-                workTypeCard.innerHTML = `
-                    <div class="work-type-header">
-                        <div class="work-type-title">${workType}</div>
-                        <div class="work-type-count">${workTypeData.tasks.length} tasks</div>
-                    </div>
-                    <div class="work-type-stats">
-                        <div class="stat-box">
-                            <div class="stat-value">${workTypeData.completed}</div>
-                            <div class="stat-label">Completed</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value">${workTypeData.inProgress}</div>
-                            <div class="stat-label">In Progress</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-value">${workTypeData.notStarted}</div>
-                            <div class="stat-label">Not Started</div>
-                        </div>
-                    </div>
-                `;
-                
-                workTypeGrid.appendChild(workTypeCard);
+            const filteredCompanies = Object.keys(companies).filter(company => 
+                searchTerm ? company.toLowerCase().includes(searchTerm) : true
+            );
+
+            const workTypeCounts = {};
+            filteredCompanies.forEach(companyName => {
+                const tasks = companies[companyName];
+                tasks.forEach(task => {
+                    const workType = task['TYPE OF WORK'] || 'Other';
+                    if (!workTypeCounts[workType]) {
+                        workTypeCounts[workType] = 0;
+                    }
+                    workTypeCounts[workType]++;
+                });
+            });
+
+            const labels = Object.keys(workTypeCounts);
+            const data = Object.values(workTypeCounts);
+
+            if (companyWorkTypeChart) {
+                companyWorkTypeChart.destroy();
+            }
+
+            companyWorkTypeChart = new Chart(companyWorkTypeChartCanvas, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Tasks by Work Type',
+                        data: data,
+                        backgroundColor: '#4a6cf7'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Company Work Distribution by Work Type'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Tasks'
+                            }
+                        }
+                    }
+                }
             });
         }
 
         function showTaskDetails(task) {
             modalTaskTitle.textContent = `${task.Task || 'Task'} - ${task['Existing Company Name'] || ''}`;
             
-            // Get initials for avatars
             const assigneeInitials = getInitials(task.Owner || '');
             const assignedByInitials = getInitials(task['Assigned By'] || '');
             
-            // Determine status class
             let statusClass = 'status-not-started';
             if (task.Status === 'In Progress') statusClass = 'status-in-progress';
             if (task.Status === 'Complete') statusClass = 'status-complete';
             
-            // Format work sessions timeline
             let timelineHTML = '';
             if (task.workSessions && task.workSessions.length > 0) {
                 timelineHTML = `<div class="timeline">
@@ -1977,12 +2158,12 @@
         function formatTimestamp(ts) {
             if (!ts) return 'Not specified';
             if (typeof ts.toDate === 'function') {
-                return ts.toDate().toLocaleString();
+                return ts.toDate().toLocaleString().split(',')[0];
             }
             if (ts instanceof Date) {
-                return ts.toLocaleString();
+                return ts.toLocaleString().split(',')[0];
             }
-            return ts; // In case it's already a string
+            return ts;
         }
 
         function applyFilters() {
@@ -1990,7 +2171,6 @@
             const ownerFilter = searchOwner.value.toLowerCase();
             const status = statusFilter.value;
 
-            // Filter tasks
             filteredTasks = allTasks.filter(task => {
                 const matchCompany = task['Existing Company Name']?.toLowerCase().includes(companyFilter);
                 const matchOwner = task.Owner?.toLowerCase().includes(ownerFilter);
@@ -1998,7 +2178,6 @@
                 return matchCompany && matchOwner && matchStatus;
             });
 
-            // Regroup filtered tasks by company
             const filteredCompanies = {};
             filteredTasks.forEach(task => {
                 const companyName = task['Existing Company Name'] || 'Unknown Company';
@@ -2025,12 +2204,10 @@
         
         refreshBtn.addEventListener('click', loadTasks);
         
-        // Companies view event listeners
         companiesSearch.addEventListener('input', loadCompaniesView);
         workTypeFilter.addEventListener('change', loadCompaniesView);
         refreshCompaniesBtn.addEventListener('click', loadTasks);
         
-        // Tasks view event listeners
         [tasksSearch, tasksCompanySearch, tasksOwnerSearch, tasksStatusFilter].forEach(el =>
             el.addEventListener('input', loadTasksView)
         );
@@ -2045,15 +2222,18 @@
 
         refreshTasksBtn.addEventListener('click', loadTasks);
         
-        // Team view event listeners
         teamSearch.addEventListener('input', loadTeamView);
         refreshTeamBtn.addEventListener('click', loadTasks);
         
-        // Work types view event listeners
         workTypeViewFilter.addEventListener('change', loadWorkTypesView);
         refreshWorkTypesBtn.addEventListener('click', loadTasks);
         
-        // Global search
+        dueDateSwitch.addEventListener('change', loadCalendarView);
+        startCompleteSwitch.addEventListener('change', loadCalendarView);
+        
+        reportsCompanySearch.addEventListener('input', loadReportsView);
+        refreshReportsBtn.addEventListener('click', loadTasks);
+        
         globalSearch.addEventListener('input', () => {
             const searchTerm = globalSearch.value.toLowerCase();
             if (!searchTerm) {
@@ -2061,7 +2241,6 @@
                 return;
             }
             
-            // Filter tasks based on global search
             const searchFilteredTasks = allTasks.filter(task => {
                 return (
                     task.Task?.toLowerCase().includes(searchTerm) ||
@@ -2072,7 +2251,6 @@
                 );
             });
             
-            // Regroup filtered tasks by company
             const searchFilteredCompanies = {};
             searchFilteredTasks.forEach(task => {
                 const companyName = task['Existing Company Name'] || 'Unknown Company';
@@ -2095,17 +2273,118 @@
             }
         });
 
-        // Sidebar collapse functionality
         const collapseBtn = document.querySelector('.collapse-btn');
         const sidebar = document.querySelector('.sidebar');
         const mainContent = document.querySelector('.main-content');
-        
+
+        // Sidebar collapse/expand functionality
         collapseBtn.addEventListener('click', () => {
             sidebar.classList.toggle('collapsed');
             mainContent.classList.toggle('expanded');
         });
 
-        window.onload = loadTasks;
+        // Load Team View
+        function loadTeamView() {
+            const searchTerm = teamSearch.value.toLowerCase();
+            teamGrid.innerHTML = '';
+
+            Object.keys(teamMembers).sort().forEach(memberName => {
+                if (searchTerm && !memberName.toLowerCase().includes(searchTerm)) return;
+
+                const member = teamMembers[memberName];
+                const memberInitials = getInitials(memberName);
+
+                const memberCard = document.createElement('div');
+                memberCard.classList.add('team-member-card');
+
+                memberCard.innerHTML = `
+                    <div class="member-header">
+                        <div class="member-avatar">${memberInitials}</div>
+                        <div class="member-info">
+                            <div class="member-name">${memberName}</div>
+                            <div class="member-role">Team Member</div>
+                        </div>
+                    </div>
+                    <div class="member-stats">
+                        <div class="stat-box">
+                            <div class="stat-value">${member.tasks.length}</div>
+                            <div class="stat-label">Total Tasks</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${member.completed}</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${member.inProgress}</div>
+                            <div class="stat-label">In Progress</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${member.notStarted}</div>
+                            <div class="stat-label">Not Started</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${member.totalHours.toFixed(1)}</div>
+                            <div class="stat-label">Work Hours</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${member.pauseHours.toFixed(1)}</div>
+                            <div class="stat-label">Pause Hours</div>
+                        </div>
+                    </div>
+                `;
+
+                teamGrid.appendChild(memberCard);
+            });
+        }
+
+        // Load Work Types View
+        function loadWorkTypesView() {
+            const selectedWorkType = workTypeViewFilter.value;
+            workTypeGrid.innerHTML = '';
+
+            Object.keys(workTypes).sort().forEach(workType => {
+                if (selectedWorkType && workType !== selectedWorkType) return;
+
+                const typeData = workTypes[workType];
+
+                const workTypeCard = document.createElement('div');
+                workTypeCard.classList.add('work-type-card');
+
+                workTypeCard.innerHTML = `
+                    <div class="work-type-header">
+                        <div class="work-type-title">${workType}</div>
+                        <div class="work-type-count">${typeData.tasks.length} tasks</div>
+                    </div>
+                    <div class="work-type-stats">
+                        <div class="stat-box">
+                            <div class="stat-value">${typeData.completed}</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${typeData.inProgress}</div>
+                            <div class="stat-label">In Progress</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-value">${typeData.notStarted}</div>
+                            <div class="stat-label">Not Started</div>
+                        </div>
+                    </div>
+                `;
+
+                workTypeGrid.appendChild(workTypeCard);
+            });
+        }
+
+        // Initialize the dashboard
+        async function initialize() {
+            await loadTasks();
+            applyFilters();
+            // Set default view to dashboard
+            document.getElementById('dashboard-view').style.display = 'block';
+        }
+
+        // Call initialize when the page loads
+        document.addEventListener('DOMContentLoaded', initialize);
     </script>
 </body>
 </html>
