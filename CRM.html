@@ -1198,6 +1198,48 @@
                     </div>
                 </div>
 
+                <!-- Tasks View -->
+                <div id="tasks-view" class="view-content" style="display: none;">
+                    <h1 class="page-title">All Tasks</h1>
+                    <p class="page-description">View and manage all tasks across companies</p>
+                    
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Search Task</label>
+                            <input type="search" id="tasksSearch" placeholder="Task name...">
+                        </div>
+                        <div class="filter-group">
+                            <label>Search Company</label>
+                            <input type="search" id="tasksCompanySearch" placeholder="Company name...">
+                        </div>
+                        <div class="filter-group">
+                            <label>Search Owner</label>
+                            <input type="search" id="tasksOwnerSearch" placeholder="Owner name...">
+                        </div>
+                        <div class="filter-group">
+                            <label>Status Filter</label>
+                            <select id="tasksStatusFilter">
+                                <option value="">All Statuses</option>
+                                <option value="Not Started">Not Started</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Complete">Complete</option>
+                            </select>
+                        </div>
+                        <div class="filter-actions">
+                            <button class="btn btn-outline" id="clearTasksFiltersBtn">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                            <button class="btn btn-primary" id="refreshTasksBtn">
+                                <i class="fas fa-sync"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="company-cards" id="tasksList">
+                        <!-- Tasks list will be inserted here -->
+                    </div>
+                </div>
+
                 <!-- Team View -->
                 <div id="team-view" class="view-content" style="display: none;">
                     <h1 class="page-title">Team Members</h1>
@@ -1310,6 +1352,16 @@
         const workTypeFilter = document.getElementById('workTypeFilter');
         const refreshCompaniesBtn = document.getElementById('refreshCompaniesBtn');
         
+        // Tasks view elements
+        const tasksView = document.getElementById('tasks-view');
+        const tasksList = document.getElementById('tasksList');
+        const tasksSearch = document.getElementById('tasksSearch');
+        const tasksCompanySearch = document.getElementById('tasksCompanySearch');
+        const tasksOwnerSearch = document.getElementById('tasksOwnerSearch');
+        const tasksStatusFilter = document.getElementById('tasksStatusFilter');
+        const clearTasksFiltersBtn = document.getElementById('clearTasksFiltersBtn');
+        const refreshTasksBtn = document.getElementById('refreshTasksBtn');
+        
         // Team view elements
         const teamView = document.getElementById('team-view');
         const teamGrid = document.getElementById('teamGrid');
@@ -1351,6 +1403,8 @@
                     loadWorkTypesView();
                 } else if (viewName === 'companies') {
                     loadCompaniesView();
+                } else if (viewName === 'tasks') {
+                    loadTasksView();
                 }
             });
         });
@@ -1603,6 +1657,78 @@
                 
                 companiesList.appendChild(companyCard);
             });
+        }
+
+        function loadTasksView() {
+            const taskSearchTerm = tasksSearch.value.toLowerCase();
+            const companySearchTerm = tasksCompanySearch.value.toLowerCase();
+            const ownerSearchTerm = tasksOwnerSearch.value.toLowerCase();
+            const statusFilterValue = tasksStatusFilter.value;
+
+            // Filter tasks
+            const filteredTasks = allTasks.filter(task => {
+                const matchTask = task.Task?.toLowerCase().includes(taskSearchTerm);
+                const matchCompany = task['Existing Company Name']?.toLowerCase().includes(companySearchTerm);
+                const matchOwner = task.Owner?.toLowerCase().includes(ownerSearchTerm);
+                const matchStatus = !statusFilterValue || task.Status === statusFilterValue;
+                return matchTask && matchCompany && matchOwner && matchStatus;
+            });
+
+            // Render tasks
+            tasksList.innerHTML = '';
+
+            const taskCard = document.createElement('div');
+            taskCard.classList.add('company-card');
+
+            const tasksContainer = document.createElement('div');
+            tasksContainer.classList.add('tasks-container');
+            tasksContainer.style.display = 'block'; // Always show tasks in this view
+
+            filteredTasks.forEach(task => {
+                const taskItem = document.createElement('div');
+                taskItem.classList.add('task-item');
+
+                // Get initials for avatars
+                const assigneeInitials = getInitials(task.Owner || '');
+                const assignedByInitials = getInitials(task['Assigned By'] || '');
+
+                // Determine status class
+                let statusClass = 'status-not-started';
+                if (task.Status === 'In Progress') statusClass = 'status-in-progress';
+                if (task.Status === 'Complete') statusClass = 'status-complete';
+
+                taskItem.innerHTML = `
+                    <div class="task-info">
+                        <h4>${task.Task || ''} (${task['TYPE OF WORK'] || ''})</h4>
+                        <p>Company: ${task['Existing Company Name'] || 'Unknown Company'} | Due: ${task['Due date'] || 'No due date'}</p>
+                    </div>
+                    <div class="task-status ${statusClass}">${task.Status || 'Not Started'}</div>
+                    <div class="task-assignee">
+                        <div class="assignee-img">${assigneeInitials}</div>
+                        <div class="assignee-details">
+                            <div class="assignee-name">${task.Owner || 'Unassigned'}</div>
+                            <div class="assignee-role">Assignee</div>
+                        </div>
+                    </div>
+                    <div class="task-assigned-by">
+                        <div class="assigned-by-img">${assignedByInitials}</div>
+                        <div class="assigned-by-details">
+                            <div class="assigned-by-name">${task['Assigned By'] || 'Unknown'}</div>
+                            <div class="assigned-by-role">Assigned By</div>
+                        </div>
+                    </div>
+                `;
+
+                // Add click event to show detailed modal
+                taskItem.addEventListener('click', () => {
+                    showTaskDetails(task);
+                });
+
+                tasksContainer.appendChild(taskItem);
+            });
+
+            taskCard.appendChild(tasksContainer);
+            tasksList.appendChild(taskCard);
         }
 
         function loadTeamView() {
@@ -1903,6 +2029,21 @@
         companiesSearch.addEventListener('input', loadCompaniesView);
         workTypeFilter.addEventListener('change', loadCompaniesView);
         refreshCompaniesBtn.addEventListener('click', loadTasks);
+        
+        // Tasks view event listeners
+        [tasksSearch, tasksCompanySearch, tasksOwnerSearch, tasksStatusFilter].forEach(el =>
+            el.addEventListener('input', loadTasksView)
+        );
+
+        clearTasksFiltersBtn.addEventListener('click', () => {
+            tasksSearch.value = '';
+            tasksCompanySearch.value = '';
+            tasksOwnerSearch.value = '';
+            tasksStatusFilter.value = '';
+            loadTasksView();
+        });
+
+        refreshTasksBtn.addEventListener('click', loadTasks);
         
         // Team view event listeners
         teamSearch.addEventListener('input', loadTeamView);
