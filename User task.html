@@ -519,6 +519,8 @@
     <label>Status:<br/>
       <select name="Status" id="status">
         <option value="Not Started" selected>Not Started</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Complete">Complete</option>
       </select>
     </label><br/><br/>
 
@@ -548,7 +550,7 @@
     <label>Assigned By:<br/>
       <input list="assignedByList" name="Assigned By" id="AssignedBy">
       <datalist id="assignedByList"></datalist>
-    </label><br/><br/>
+          </label><br/><br/>
 
     <!-- Notes -->
     <label>Notes:<br/>
@@ -589,7 +591,7 @@
         
         <div>
           <label style="font-weight: 600; color: #1f3a3a; font-size: 14px;">Owner:</label>
-          <input type="text" id="editOwner" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-top: 5px;">
+          <input type="text" id="editOwner" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid 'ccc; margin-top: 5px;">
         </div>
         
         <div>
@@ -823,7 +825,7 @@
         }
         
         detailRow.innerHTML = `
-          <td colspan="6" style="background: #f9f9f9; padding: 12px; font-size: 14px; color: #555;">
+          <td colspan="6" style="background: #f9f9f9; padding: 12px; font-size: 14px; color: '555;">
             <strong>SINO:</strong> ${pickField(task, "SINO") || 'N/A'}<br/>
             <strong>Company Name:</strong> ${pickField(task, "Existing Company Name", "Company Name") || 'N/A'}<br/>
             <strong>Type of Work:</strong> ${pickField(task, "TYPE OF WORK", "Type of Work") || 'N/A'}<br/>
@@ -923,7 +925,7 @@
       // Create Next button
       const nextBtn = document.createElement('button');
       nextBtn.textContent = 'Next';
-            nextBtn.disabled = currentPage === totalPages;
+      nextBtn.disabled = currentPage === totalPages;
       nextBtn.onclick = () => {
         if (currentPage < totalPages) {
           currentPage++;
@@ -1027,22 +1029,22 @@
     });
 
     // Modal event handlers
-  createTaskBtn.addEventListener('click', async () => {
-  // Generate SINO
-  const newSINO = await generateSINO();
-  document.getElementById('SINO').value = newSINO;
+    createTaskBtn.addEventListener('click', async () => {
+      // Generate SINO
+      const newSINO = await generateSINO();
+      document.getElementById('SINO').value = newSINO;
+          
+      // Set default values
+      document.getElementById('Owner').value = username;
+      document.getElementById('Task').value = 'Daily Task';
+          
+      // Load dropdown options with current user's data
+      await loadDropdownOptions();
       
-  // Set default values
-  document.getElementById('Owner').value = username;
-  document.getElementById('Task').value = 'Daily Task';
-      
-  // Load dropdown options with current user's data
-  await loadDropdownOptions();
-  
-  // Show modal
-  taskModal.style.display = 'flex';
-  document.getElementById('modalTitle').textContent = 'Create New Task';
-});
+      // Show modal
+      taskModal.style.display = 'flex';
+      document.getElementById('modalTitle').textContent = 'Create New Task';
+    });
 
     cancelBtn.addEventListener('click', () => {
       taskModal.style.display = 'none';
@@ -1053,16 +1055,8 @@
       editTaskModal.style.display = 'none';
     });
 
-    // Close modals when clicking outside
-    window.addEventListener('click', (e) => {
-      if (e.target === taskModal) {
-        taskModal.style.display = 'none';
-        taskForm.reset();
-      }
-      if (e.target === editTaskModal) {
-        editTaskModal.style.display = 'none';
-      }
-    });
+    // MODIFICATION 1: Remove the window click event listener that closes the modal when clicking outside
+    // This prevents the modal from closing when clicking outside of it
 
     // Handle form submission for creating/editing tasks
     taskForm.addEventListener('submit', async (e) => {
@@ -1084,7 +1078,9 @@
         showToast('Task created successfully');
         taskModal.style.display = 'none';
         taskForm.reset();
-        loadTasks(); // Reload tasks
+        
+        // MODIFICATION 2: Redirect to CurrentTask.html after creating a task
+        window.location.href = 'CurrentTask.html';
       } catch (error) {
         console.error('Error creating task:', error);
         showToast('Error creating task');
@@ -1126,116 +1122,115 @@
     });
 
 
-// Load dropdown options from current user's tasks only
-async function loadDropdownOptions() {
-  try {
-    // Only get tasks for the current user
-    const snapshot = await db.collection('tasks').where('Owner', '==', username).get();
-    const companies = new Set();
-    const workTypes = new Set();
-    const accounts = new Set();
-    const assignedBys = new Set();
-    
-    snapshot.forEach(doc => {
-      const task = doc.data();
-      if (task['Existing Company Name']) companies.add(task['Existing Company Name']);
-      if (task['TYPE OF WORK']) workTypes.add(task['TYPE OF WORK']);
-      if (task['Accounts / Cards']) accounts.add(task['Accounts / Cards']);
-      if (task['Assigned By']) assignedBys.add(task['Assigned By']);
-    });
-    
-    // Update datalists
-    const companyList = document.getElementById('companyList');
-    companyList.innerHTML = '';
-    companies.forEach(company => {
-      const option = document.createElement('option');
-      option.value = company;
-      companyList.appendChild(option);
-    });
-    
-    const workTypeList = document.getElementById('workTypeList');
-    workTypeList.innerHTML = '';
-    workTypes.forEach(workType => {
-      const option = document.createElement('option');
-      option.value = workType;
-      workTypeList.appendChild(option);
-    });
-    
-    const accountsList = document.getElementById('accountsCardsList');
-    accountsList.innerHTML = '';
-    accounts.forEach(account => {
-      const option = document.createElement('option');
-      option.value = account;
-      accountsList.appendChild(option);
-    });
-    
-    const assignedByList = document.getElementById('assignedByList');
-    assignedByList.innerHTML = '';
-    assignedBys.forEach(assignedBy => {
-      const option = document.createElement('option');
-      option.value = assignedBy;
-      assignedByList.appendChild(option);
-    });
-  } catch (error) {
-    console.error('Error loading dropdown options:', error);
-  }
-}
+    // Load dropdown options from current user's tasks only
+    async function loadDropdownOptions() {
+      try {
+        // Only get tasks for the current user
+        const snapshot = await db.collection('tasks').where('Owner', '==', username).get();
+        const companies = new Set();
+        const workTypes = new Set();
+        const accounts = new Set();
+        const assignedBys = new Set();
+        
+        snapshot.forEach(doc => {
+          const task = doc.data();
+          if (task['Existing Company Name']) companies.add(task['Existing Company Name']);
+          if (task['TYPE OF WORK']) workTypes.add(task['TYPE OF WORK']);
+          if (task['Accounts / Cards']) accounts.add(task['Accounts / Cards']);
+          if (task['Assigned By']) assignedBys.add(task['Assigned By']);
+        });
+        
+        // Update datalists
+        const companyList = document.getElementById('companyList');
+        companyList.innerHTML = '';
+        companies.forEach(company => {
+          const option = document.createElement('option');
+          option.value = company;
+          companyList.appendChild(option);
+        });
+        
+        const workTypeList = document.getElementById('workTypeList');
+        workTypeList.innerHTML = '';
+        workTypes.forEach(workType => {
+          const option = document.createElement('option');
+          option.value = workType;
+          workTypeList.appendChild(option);
+        });
+        
+        const accountsList = document.getElementById('accountsCardsList');
+        accountsList.innerHTML = '';
+        accounts.forEach(account => {
+          const option = document.createElement('option');
+          option.value = account;
+          accountsList.appendChild(option);
+        });
+        
+        const assignedByList = document.getElementById('assignedByList');
+        assignedByList.innerHTML = '';
+        assignedBys.forEach(assignedBy => {
+          const option = document.createElement('option');
+          option.value = assignedBy;
+          assignedByList.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Error loading dropdown options:', error);
+      }
+    }
 
-// Handle WORK FOR dropdown change to update period placeholder
-document.getElementById('workFor').addEventListener('change', function(e) {
-  const periodInput = document.getElementById('period');
-  
-  // Set appropriate placeholder based on selection
-  switch(e.target.value) {
-    case 'Yearly':
-      periodInput.placeholder = 'Enter year (e.g., 2023)';
-      break;
-    case 'Monthly':
-      periodInput.placeholder = 'Enter month and year (e.g., Jan 2023)';
-      break;
-    case 'Quarterly':
-      periodInput.placeholder = 'Enter quarter and year (e.g., Q1 2023)';
-      break;
-    case 'Bi-weekly':
-      periodInput.placeholder = 'Enter bi-weekly period (e.g., 1-15 Jan 2023)';
-      break;
-    case 'Weekly':
-      periodInput.placeholder = 'Enter week and year (e.g., Week 5, 2023)';
-      break;
-    case 'Custom':
-      periodInput.placeholder = 'Enter custom period (e.g., Jan-Mar 2023)';
-      break;
-    default:
-      periodInput.placeholder = 'Enter period';
-  }
-  
-  // Make period field required for all options except empty selection
-  periodInput.required = e.target.value !== '';
-});
+    // Handle WORK FOR dropdown change to update period placeholder
+    document.getElementById('workFor').addEventListener('change', function(e) {
+      const periodInput = document.getElementById('period');
+      
+      // Set appropriate placeholder based on selection
+      switch(e.target.value) {
+        case 'Yearly':
+          periodInput.placeholder = 'Enter year (e.g., 2023)';
+          break;
+        case 'Monthly':
+          periodInput.placeholder = 'Enter month and year (e.g., Jan 2023)';
+          break;
+        case 'Quarterly':
+          periodInput.placeholder = 'Enter quarter and year (e.g., Q1 2023)';
+          break;
+        case 'Bi-weekly':
+          periodInput.placeholder = 'Enter bi-weekly period (e.g., 1-15 Jan 2023)';
+          break;
+        case 'Weekly':
+          periodInput.placeholder = 'Enter week and year (e.g., Week 5, 2023)';
+          break;
+        case 'Custom':
+          periodInput.placeholder = 'Enter custom period (e.g., Jan-Mar 2023)';
+          break;
+        default:
+          periodInput.placeholder = 'Enter period';
+      }
+      
+      // Make period field required for all options except empty selection
+      periodInput.required = e.target.value !== '';
+    });
 
-// Initialize the period field on page load
-document.addEventListener('DOMContentLoaded', function() {
-  const workForSelect = document.getElementById('workFor');
-  const periodInput = document.getElementById('period');
-  
-  // Set initial placeholder
-  if (workForSelect.value) {
-    workForSelect.dispatchEvent(new Event('change'));
-  } else {
-    periodInput.placeholder = 'Select WORK FOR first';
-    periodInput.disabled = true;
-  }
-  
-  // Enable period input when a WORK FOR option is selected
-  workForSelect.addEventListener('change', function() {
-    periodInput.disabled = !this.value;
-  });
-  
-  // Your other initialization code
-  loadTasks();
-  loadDropdownOptions();
-});
+    // Initialize the period field on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const workForSelect = document.getElementById('workFor');
+      const periodInput = document.getElementById('period');
+      
+      // Set initial placeholder
+      if (workForSelect.value) {
+        workForSelect.dispatchEvent(new Event('change'));
+      } else {
+        periodInput.placeholder = 'Select WORK FOR first';
+        periodInput.disabled = true;
+      }
+      
+      // Enable period input when a WORK FOR option is selected
+      workForSelect.addEventListener('change', function() {
+        periodInput.disabled = !this.value;
+      });
+      
+      // Your other initialization code
+      loadTasks();
+      loadDropdownOptions();
+    });
   </script>
 </body>
 </html>
-      
