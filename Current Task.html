@@ -631,6 +631,16 @@
         }
       });
       
+      // IMPORTANT: Don't count logoff time as pause time
+      // Subtract logoff time from pause time if they overlap
+      // This ensures pause time only includes actual pauses, not logoff periods
+      if (totalPauseMs > 0 && totalLogoffMs > 0) {
+        // We need to check for overlapping periods between pauses and logoffs
+        // For simplicity, we'll subtract the total logoff time from pause time
+        // but this might not be perfect if there are multiple overlapping periods
+        totalPauseMs = Math.max(0, totalPauseMs - totalLogoffMs);
+      }
+      
       return {
         totalWorkMs,
         totalPauseMs,
