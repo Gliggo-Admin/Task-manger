@@ -606,6 +606,7 @@ const companyInput = taskForm.elements['company'];
 const modalTitle = document.getElementById('modalTitle');
 const uploadCSVBtn = document.getElementById('uploadCSVBtn');
 const csvUpload = document.getElementById('csvUpload');
+const modalContent = document.getElementById('modalContent'); // Added
 
 const rowsPerPage = 10;
 let currentPage = 1;
@@ -704,6 +705,16 @@ function renderTablePage(page, tasks) {
     const detailsTr = document.createElement('tr');
     detailsTr.classList.add('details-row');
     detailsTr.style.display = 'none';
+    
+    // Only show time information for completed tasks
+    const timeInfoHtml = task.Status === 'Complete' ? `
+      <strong>Time Started:</strong> ${formatTimestamp(task.taskStart)}<br/>
+      <strong>Time End:</strong> ${formatTimestamp(task.taskEnd)}<br/>
+      <strong>Total Work Hours:</strong> ${task.TotalWorkHours || ''}<br/>
+      <strong>Total Pause Hours:</strong> ${task.TotalPauseHours || ''}<br/>
+      <strong>Remarks:</strong> ${task.Remarks || ''}<br/><br/>
+    ` : '';
+    
     detailsTr.innerHTML = `
       <td colspan="6">
         <div class="details-box">
@@ -715,11 +726,7 @@ function renderTablePage(page, tasks) {
           <strong>Due Date:</strong> ${task['Due date'] || ''}<br/>
           <strong>Assigned By:</strong> ${task['Assigned By'] || ''}<br/>
           <strong>Notes:</strong> ${task.Notes || ''}<br/>
-          <strong>Time Started:</strong> ${formatTimestamp(task.taskStart)}<br/>
-          <strong>Time End:</strong> ${formatTimestamp(task.taskEnd)}<br/>
-          <strong>Total Work Hours:</strong> ${task.TotalWorkHours || ''}<br/>
-          <strong>Total Pause Hours:</strong> ${task.TotalPauseHours || ''}<br/>
-          <strong>Remarks:</strong> ${task.Remarks || ''}<br/><br/>
+          ${timeInfoHtml}
           <button class="edit-btn action-btn" data-id="${task.id}">Edit</button>
           <button class="delete-btn action-btn" data-id="${task.id}">Delete</button>
         </div>
@@ -1099,9 +1106,17 @@ createTaskBtn.addEventListener('click', () => {
   taskModal.style.display = 'flex';
 });
 
-// Close modal if clicking outside form
+// Prevent modal from closing when clicking outside
 taskModal.addEventListener('click', (e) => {
+  // Only close if clicking directly on the modal background (not the content)
   if (e.target === taskModal) {
+    // Do nothing - prevent closing
+  }
+});
+
+// Close modal with cancel button or escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && taskModal.style.display === 'flex') {
     taskModal.style.display = 'none';
   }
 });
