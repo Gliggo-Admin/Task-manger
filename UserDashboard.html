@@ -272,6 +272,16 @@
       font-weight: bold;
       margin-left: 8px;
     }
+
+    .periodic-tag {
+      background: #e7f3ff;
+      color: #007bff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-left: 8px;
+    }
   </style>
 </head>
 <body>
@@ -400,6 +410,7 @@ document.getElementById("settingBtn").addEventListener("click", () => {
 
     let currentDate = new Date();
     let allUserTasks = []; // To store all detailed tasks for reminders
+    let currentTasks = []; // For right panel tasks
 
     function getFormattedDate(date) {
       return date.toISOString().split("T")[0];
@@ -411,7 +422,39 @@ document.getElementById("settingBtn").addEventListener("click", () => {
       });
     }
 
-    // Function to calculate next due date based on period
+    // Function to check if a task is due on a specific date based on period
+    function isDueOnDate(task, targetDate) {
+      const startDateStr = task['Due date'] || (task.createdAt ? task.createdAt.toDate().toISOString().split('T')[0] : null);
+      if (!startDateStr) return false;
+      const startDate = new Date(startDateStr);
+      const target = new Date(targetDate);
+      const diffTime = target.getTime() - startDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      const period = task['WORK FOR'];
+      switch (period) {
+        case 'Weekly':
+          return diffDays % 7 === 0 && target >= startDate;
+        case 'Bi-weekly':
+          return diffDays % 14 === 0 && target >= startDate;
+        case 'Monthly':
+          return startDate.getDate() === target.getDate() && target >= startDate;
+        case 'Quarterly':
+          const monthsDiff = (target.getFullYear() - startDate.getFullYear()) * 12 + (target.getMonth() - startDate.getMonth());
+          return monthsDiff % 3 === 0 && startDate.getDate() === target.getDate() && target >= startDate;
+        case 'Yearly':
+          return target.getFullYear() > startDate.getFullYear() && 
+                 startDate.getMonth() === target.getMonth() && 
+                 startDate.getDate() === target.getDate();
+        case 'Custom':
+          // For custom, check if matches a parsed period, but simplify to initial due
+          return getFormattedDate(target) === getFormattedDate(startDate);
+        default:
+          return getFormattedDate(target) === getFormattedDate(startDate);
+      }
+    }
+
+    // Function to calculate next due date based on period (for reminders)
     function calculateNextDueDate(startDateStr, period, currentDate) {
       const startDate = new Date(startDateStr);
       let nextDue = new Date(startDate);
@@ -419,37 +462,37 @@ document.getElementById("settingBtn").addEventListener("click", () => {
 
       switch (period) {
         case 'Weekly':
-          nextDue.setDate(startDate.getDate() + 7);
-          while (nextDue < today) {
+          while (nextDue <= today) {
             nextDue.setDate(nextDue.getDate() + 7);
           }
           break;
         case 'Bi-weekly':
-          nextDue.setDate(startDate.getDate() + 14);
-          while (nextDue < today) {
+          while (nextDue <= today) {
             nextDue.setDate(nextDue.getDate() + 14);
           }
           break;
         case 'Monthly':
-          nextDue.setMonth(startDate.getMonth() + 1);
-          while (nextDue < today) {
+          while (nextDue <= today) {
             nextDue.setMonth(nextDue.getMonth() + 1);
+            if (nextDue.getDate() !== startDate.getDate()) {
+              nextDue.setDate(1); // Adjust if month shorter
+            }
           }
           break;
         case 'Quarterly':
-          nextDue.setMonth(startDate.getMonth() + 3);
-          while (nextDue < today) {
+          while (nextDue <= today) {
             nextDue.setMonth(nextDue.getMonth() + 3);
+            if (nextDue.getDate() !== startDate.getDate()) {
+              nextDue.setDate(1);
+            }
           }
           break;
         case 'Yearly':
-          nextDue.setFullYear(startDate.getFullYear() + 1);
-          while (nextDue < today) {
+          while (nextDue <= today) {
             nextDue.setFullYear(nextDue.getFullYear() + 1);
           }
           break;
         case 'Custom':
-          // For custom, assume it's a one-time task unless period has date info; simplify to due date
           nextDue = new Date(startDateStr);
           break;
         default:
@@ -472,8 +515,8 @@ document.getElementById("settingBtn").addEventListener("click", () => {
         // Render pending tasks and reminders in left panel
         renderPendingTasks();
 
-        // For right panel, filter daily/simple tasks or map detailed tasks to simple format
-        await loadTasks(currentDate);
+        // Load tasks for current date in right panel
+        loadTasks(currentDate);
       } catch (error) {
         console.error("Error loading tasks:", error);
         pendingTasksContainer.innerHTML = "<p>Error loading pending tasks.</p>";
@@ -487,11 +530,13 @@ document.getElementById("settingBtn").addEventListener("click", () => {
         task.Status !== 'Complete' && task.Status !== 'Completed'
       );
 
-      // Calculate reminders for periodic tasks
+      // Calculate reminders for periodic tasks within next 7 days
       const reminders = pendingTasks
+        .filter(task => task['WORK FOR'] && ['Weekly', 'Bi-weekly', 'Monthly', 'Quarterly', 'Yearly', 'Custom'].includes(task['WORK FOR']))
         .map(task => {
-          if (task['WORK FOR'] && task['Period']) {
-            const nextDue = calculateNextDueDate(task['Due date'] || task.createdAt?.toDate?.() || today, task['WORK FOR'], today);
+          const startDateStr = task['Due date'] || (task.createdAt ? task.createdAt.toDate().toISOString().split('T')[0] : null);
+          if (startDateStr) {
+            const nextDue = calculateNextDueDate(startDateStr, task['WORK FOR'], today);
             if (nextDue <= new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)) { // Within next week
               return {
                 ...task,
@@ -509,14 +554,15 @@ document.getElementById("settingBtn").addEventListener("click", () => {
         !task['WORK FOR'] || !['Weekly', 'Bi-weekly', 'Monthly', 'Quarterly', 'Yearly', 'Custom'].includes(task['WORK FOR'])
       );
 
-      let html = '<h3>Upcoming Reminders</h3>';
+      let html = '<h3>Upcoming Reminders (Next Week+)</h3>';
       if (reminders.length > 0) {
         reminders.forEach(task => {
           const dueStr = task.nextDue.toLocaleDateString();
+          const suggestion = `Suggestion: You have to do this ${task['WORK FOR']} task on ${dueStr}`;
           html += `
             <div class="pending-item">
               <h4>${task['Existing Company Name'] || 'N/A'} - ${task['TYPE OF WORK'] || task.Task || 'Task'}</h4>
-              <p>Due: ${dueStr} (${task['WORK FOR']}) <span class="reminder-badge">Reminder</span></p>
+              <p>${suggestion} <span class="reminder-badge">Reminder</span></p>
             </div>
           `;
         });
@@ -547,10 +593,10 @@ document.getElementById("settingBtn").addEventListener("click", () => {
       todoListEl.innerHTML = "Loading...";
 
       try {
-        // For compatibility, try to load simple daily tasks first, fallback to detailed tasks
+        // Try to load simple daily tasks first
+        let tasks = [];
         const docRef = db.collection("userTasks").doc(username);
         const docSnap = await docRef.get();
-        let tasks = [];
 
         if (docSnap.exists) {
           const data = docSnap.data();
@@ -559,16 +605,19 @@ document.getElementById("settingBtn").addEventListener("click", () => {
           }
         }
 
-        // If no simple tasks, map from detailed tasks for this date
-        if (tasks.length === 0) {
-          const todayTasks = allUserTasks.filter(task => {
-            const dueDate = new Date(task['Due date']);
-            return getFormattedDate(dueDate) === dateKey && task.Status !== 'Complete';
-          });
-          tasks = todayTasks.map(task => ({ text: `${task['Existing Company Name']} - ${task['TYPE OF WORK']}`, completed: false }));
-        }
+        // Add periodic and one-time detailed tasks due on this date
+        const dueDetailedTasks = allUserTasks.filter(task => 
+          (task.Status !== 'Complete' && task.Status !== 'Completed') && isDueOnDate(task, dateObj)
+        );
+        const periodicTasksForDate = dueDetailedTasks.map(task => ({
+          text: `${task['Existing Company Name'] || 'N/A'} - ${task['TYPE OF WORK'] || task.Task || 'Task'} <span class="periodic-tag">(${task['WORK FOR'] || 'One-time'})</span>`,
+          completed: false,
+          isPeriodic: !!task['WORK FOR'],
+          id: task.id
+        }));
 
-        renderTasks(tasks);
+        currentTasks = [...tasks, ...periodicTasksForDate];
+        renderTasks(currentTasks);
       } catch (error) {
         console.error("Error loading tasks:", error);
         todoListEl.innerHTML = "<li>Error loading tasks.</li>";
@@ -592,14 +641,25 @@ document.getElementById("settingBtn").addEventListener("click", () => {
         checkbox.id = `task-${i}`;
 
         const label = document.createElement("label");
+        label.innerHTML = task.text; // Allow HTML for periodic tag
         label.htmlFor = checkbox.id;
-        label.textContent = task.text;
 
-        checkbox.addEventListener("change", () => {
+        checkbox.addEventListener("change", async () => {
           task.completed = checkbox.checked;
           li.classList.toggle("completed", checkbox.checked);
-          // For simple tasks, save back to userTasks
-          saveTasks(currentDate, tasks);
+          if (task.isPeriodic && task.id) {
+            // For periodic tasks, mark the detailed task as complete (simplified: completes the series)
+            try {
+              await db.collection('tasks').doc(task.id).update({ Status: checkbox.checked ? 'Complete' : 'In Progress' });
+              // Re-render to reflect changes
+              loadAllUserTasks();
+            } catch (error) {
+              console.error("Error updating periodic task:", error);
+            }
+          } else {
+            // For simple tasks, save to userTasks
+            saveTasks(currentDate, currentTasks);
+          }
         });
 
         li.appendChild(checkbox);
@@ -621,7 +681,7 @@ document.getElementById("settingBtn").addEventListener("click", () => {
         }
 
         allTasks[dateKey] = tasks;
-        await docRef.set({ tasks: allTasks });
+        await docRef.set({ tasks: allTasks }, { merge: true });
       } catch (error) {
         console.error("Error saving tasks:", error);
       }
@@ -632,9 +692,8 @@ document.getElementById("settingBtn").addEventListener("click", () => {
       if (!taskText) return alert("Please enter a task.");
 
       const newTask = { text: taskText, completed: false };
-      allUserTasks.push(newTask); // Temp for rendering
-
       currentTasks.push(newTask);
+
       saveTasks(currentDate, currentTasks)
         .then(() => {
           renderTasks(currentTasks);
@@ -676,7 +735,7 @@ document.querySelectorAll(".menu-item").forEach(item => {
         window.location.href = "UserChart.html";
         break;
       case "report":
-         window.location.href = "User Generate Report.Html";
+         window.location.href = "User Generate Report.html";
         break;
     }
   });
@@ -684,7 +743,6 @@ document.querySelectorAll(".menu-item").forEach(item => {
 
     // Initialize
     loadAllUserTasks();
-    loadTasks(currentDate);
   </script>
 </body>
 </html>
